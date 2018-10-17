@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "AutoSizeComments",
+	"Description": "Comment boxes that auto resize to fit the nodes inside",
+	"Category": "Other",
+	"CreatedBy": "fpwong",
+	"CreatedByURL": "https://fpwong.github.io/",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "AutoSizeComments",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
