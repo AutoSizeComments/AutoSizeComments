@@ -723,8 +723,13 @@ void SAutoSizeCommentNode::RunCollisionSolver()
 
 	bool bIsSelected = OwnerPanel->SelectionManager.IsNodeSelected(GraphNode);
 
+	bool bIsContained = GetOtherCommentNodes().Array().FindByPredicate([this](UEdGraphNode_Comment* OtherComment)
+	{
+		return OtherComment->GetNodesUnderComment().Contains(CommentNode);
+	});
+
 	// if the comment node is empty, move away from other comment nodes
-	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeSettings>()->bRunCollisionSolver && !bIsSelected)
+	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeSettings>()->bRunCollisionSolver && !bIsSelected && !bIsContained)
 	{
 		FVector2D TotalMovement(0, 0);
 

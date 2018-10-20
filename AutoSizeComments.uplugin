@@ -1,17 +1,18 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "1.1",
 	"FriendlyName": "AutoSizeComments",
 	"Description": "Comment boxes that auto resize to fit the nodes inside",
 	"Category": "Editor",
 	"CreatedBy": "fpwong",
 	"CreatedByURL": "https://fpwong.github.io/",
 	"DocsURL": "",
-	"MarketplaceURL" : "com.epicgames.launcher://ue/marketplace/content/ae89a2c4ab384de0a3f213b23de324f3",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/ae89a2c4ab384de0a3f213b23de324f3",
 	"SupportURL": "https://forums.unrealengine.com/community/released-projects/1540542",
 	"EngineVersion": "4.20.0",
 	"CanContainContent": false,
+	"IsBetaVersion": false,
 	"Installed": true,
 	"Modules": [
 		{
@@ -24,4 +25,3 @@
 		}
 	]
 }
-

@@ -85,9 +85,9 @@ private:
 	/** Returns the width to wrap the text of the comment at */
 	float GetWrapAt() const;
 
-
 	void ResizeToFit();
-	void RunCollisionSolver();
+
+	void MoveEmptyCommentBoxes();
 private:
 	FVector2D UserSize;
 
