@@ -117,7 +117,7 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 	if (RefreshNodesDelay == 0)
 	{
 		ResizeToFit();
-		RunCollisionSolver();
+		MoveEmptyCommentBoxes();
 	}
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -551,7 +551,7 @@ void SAutoSizeCommentNode::UpdateExistingCommentNodes()
 	// Do nothing if we have no nodes under ourselves
 	if (CommentNode->GetNodesUnderComment().Num() == 0)
 	{
-		if (GetDefault<UAutoSizeSettings>()->bRunCollisionSolver)
+		if (GetDefault<UAutoSizeSettings>()->bMoveEmptyCommentBoxes)
 		{
 			for (UEdGraphNode_Comment* OtherComment : OtherCommentNodes)
 			{
@@ -715,7 +715,7 @@ void SAutoSizeCommentNode::ResizeToFit()
 	}
 }
 
-void SAutoSizeCommentNode::RunCollisionSolver()
+void SAutoSizeCommentNode::MoveEmptyCommentBoxes()
 {
 	TArray<UObject*> UnderComment = CommentNode->GetNodesUnderComment();
 
@@ -729,7 +729,7 @@ void SAutoSizeCommentNode::RunCollisionSolver()
 	});
 
 	// if the comment node is empty, move away from other comment nodes
-	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeSettings>()->bRunCollisionSolver && !bIsSelected && !bIsContained)
+	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeSettings>()->bMoveEmptyCommentBoxes && !bIsSelected && !bIsContained)
 	{
 		FVector2D TotalMovement(0, 0);
 
@@ -785,7 +785,10 @@ void SAutoSizeCommentNode::RunCollisionSolver()
 	}
 }
 
-/** Util functions */
+/***************************
+****** Util functions ******
+****************************/
+
 bool SAutoSizeCommentNode::RemoveNodesFromUnderComment(UEdGraphNode_Comment* InCommentNode, TSet<UObject*>& NodesToRemove)
 {
 	bool bDidRemoveAnything = false;
@@ -881,8 +884,6 @@ bool SAutoSizeCommentNode::AnySelectedNodes()
 FSlateRect SAutoSizeCommentNode::GetBoundsForNodesInside()
 {
 	TArray<UEdGraphNode*> Nodes;
-
-	//UE_LOG(LogTemp, Warning, TEXT("%d nodes under comment"), UnderComment.Num());
 	for (UObject* Obj : CommentNode->GetNodesUnderComment())
 	{
 		if (UEdGraphNode_Comment* OtherCommentNode = Cast<UEdGraphNode_Comment>(Obj))

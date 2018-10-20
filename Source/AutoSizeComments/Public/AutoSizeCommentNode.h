@@ -112,8 +112,6 @@ public:
 
 	float GetTitleBarHeight() const;
 
-	void HandleCheckStateChanged(ECheckBoxState InCheckboxState);
-
 	/** Util functions */
 	FSlateRect GetBoundsForNodesInside();
 	FSlateRect GetNodeBounds(UEdGraphNode* Node);
