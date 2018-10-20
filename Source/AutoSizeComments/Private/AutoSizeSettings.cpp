@@ -10,6 +10,6 @@ UAutoSizeSettings::UAutoSizeSettings(const FObjectInitializer& ObjectInitializer
 	CommentNodePadding = FVector2D(30, 30);
 	bUseRandomColor = true;
 	DefaultCommentColor = FLinearColor::White;
-	bRunCollisionChecks = true;
+	bRunCollisionSolver = true;
 	CollisionMovementSpeed = 10;
 }

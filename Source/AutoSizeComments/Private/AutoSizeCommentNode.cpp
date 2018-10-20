@@ -551,7 +551,7 @@ void SAutoSizeCommentNode::UpdateExistingCommentNodes()
 	// Do nothing if we have no nodes under ourselves
 	if (CommentNode->GetNodesUnderComment().Num() == 0)
 	{
-		if (GetDefault<UAutoSizeSettings>()->bRunCollisionChecks)
+		if (GetDefault<UAutoSizeSettings>()->bRunCollisionSolver)
 		{
 			for (UEdGraphNode_Comment* OtherComment : OtherCommentNodes)
 			{
@@ -681,12 +681,7 @@ void SAutoSizeCommentNode::ResizeToFit()
 		// get bounds and apply padding
 		FVector2D Padding = GetMutableDefault<UAutoSizeSettings>()->CommentNodePadding;
 		Padding.Y += 10;
-		FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(Padding);
-
-		if (HasKeyboardFocus())
-		{
-			Bounds = Bounds.ExtendBy(Padding);
-		}
+		FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, Padding.Y));
 
 		const float TitleBarHeight = GetTitleBarHeight();
 
@@ -723,9 +718,13 @@ void SAutoSizeCommentNode::ResizeToFit()
 void SAutoSizeCommentNode::RunCollisionSolver()
 {
 	TArray<UObject*> UnderComment = CommentNode->GetNodesUnderComment();
-	const bool bIsLMBDown = FSlateApplication::Get().GetPressedMouseButtons().Contains(EKeys::LeftMouseButton);
+
+	TSharedPtr<SGraphPanel> OwnerPanel = OwnerGraphPanelPtr.Pin();
+
+	bool bIsSelected = OwnerPanel->SelectionManager.IsNodeSelected(GraphNode);
+
 	// if the comment node is empty, move away from other comment nodes
-	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeSettings>()->bRunCollisionChecks && !bIsLMBDown)
+	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeSettings>()->bRunCollisionSolver && !bIsSelected)
 	{
 		FVector2D TotalMovement(0, 0);
 

@@ -16,13 +16,15 @@ public:
 	/** This delay is to ensure that all nodes exist on the graph and have their bounds properly set */
 	int RefreshNodesDelay = 0;
 
+	bool bIsDragging = false;
+
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
 
 public:
 	SLATE_BEGIN_ARGS(SAutoSizeCommentNode) {}
 	SLATE_END_ARGS()
 
-		void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
+	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
 
 	//~ Begin SWidget Interface
 	virtual FReply OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent) override;

@@ -25,7 +25,7 @@ public:
 	FLinearColor DefaultCommentColor;
 
 	UPROPERTY(EditAnywhere, config, Category = Default)
-	bool bRunCollisionChecks;
+	bool bRunCollisionSolver;
 
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	float CollisionMovementSpeed;
