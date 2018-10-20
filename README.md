@@ -9,7 +9,7 @@ This was originally a feature from the [Blueprint Assist Plugin](https://forums.
 
 ---
 
-# Building for your version of UE4 (tested with >4.18)
+## Building for your version of UE4 (tested with >4.18)
 
 Prerequisites: Setup your environment so that you can build a C++ UE4 project
 
@@ -38,7 +38,7 @@ ProjectName
 
 ---
 
-# Build failed
+## Build failed
 
 1. Open the project in Visual Studio
 2. Try to build the project and there should be an error
