@@ -35,7 +35,7 @@ ProjectName
   
 4. Open the .uproject and it should prompt you to rebuild the plugin
 5. Hopefully the build succeeded!
-6. (Extra) Install the plugin to the engine by moving the `AutoSizeComments` folder to the plugins folder under your installation of UE4 `Epic Games\UE_4.20\Engine\Plugins`.
+6. (Extra) Install the plugin to the engine by moving the `AutoSizeComments` folder to the plugins folder (`Epic Games\UE_4.20\Engine\Plugins`) under your installation of UE4.
 
 ---
 
