@@ -15,7 +15,7 @@ void FAutoSizeCommentsModule::StartupModule()
 	// Register custom settings to appear in the project settings
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
-		SettingsModule->RegisterSettings("Project", "Plugins", "Auto Size Comments",
+		SettingsModule->RegisterSettings("Editor", "Plugins", "Auto Size Comments",
 			LOCTEXT("AutoSizeCommentsName", "Auto Size Comments"),
 			LOCTEXT("AutoSizeCommentsNameDesc", "Configure options for auto resizing comment boxes"),
 			GetMutableDefault<UAutoSizeSettings>()
@@ -25,6 +25,10 @@ void FAutoSizeCommentsModule::StartupModule()
 
 void FAutoSizeCommentsModule::ShutdownModule()
 {
+	// Remove custom settings
+	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+		SettingsModule->UnregisterSettings("Editor", "Plugins", "Auto Size Comments");
+
 	// Unregister the graph node factory
 	if (AutoSizeGraphNodeFactory.IsValid())
 	{
