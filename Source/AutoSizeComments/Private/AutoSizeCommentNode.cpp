@@ -723,10 +723,15 @@ void SAutoSizeCommentNode::MoveEmptyCommentBoxes()
 
 	bool bIsSelected = OwnerPanel->SelectionManager.IsNodeSelected(GraphNode);
 
-	bool bIsContained = GetOtherCommentNodes().Array().FindByPredicate([this](UEdGraphNode_Comment* OtherComment)
+	bool bIsContained = false;
+	for (UEdGraphNode_Comment* OtherComment : GetOtherCommentNodes())
 	{
-		return OtherComment->GetNodesUnderComment().Contains(CommentNode);
-	});
+		if (OtherComment->GetNodesUnderComment().Contains(CommentNode))
+		{
+			bIsContained = true;
+			break;
+		}
+	}
 
 	// if the comment node is empty, move away from other comment nodes
 	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeSettings>()->bMoveEmptyCommentBoxes && !bIsSelected && !bIsContained)
