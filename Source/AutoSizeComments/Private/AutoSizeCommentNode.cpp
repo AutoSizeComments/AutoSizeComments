@@ -42,7 +42,8 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 
 	// Set comment color
 	FLinearColor DefaultColor = GetMutableDefault<UAutoSizeSettings>()->DefaultCommentColor;
-	if (CommentNode && CommentNode->CommentColor == DefaultColor)
+	// If the comment color is white, then the color may be changed
+	if (CommentNode && CommentNode->CommentColor == FLinearColor::White)
 	{
 		if (GetMutableDefault<UAutoSizeSettings>()->bUseRandomColor)
 			CommentNode->CommentColor = FLinearColor::MakeRandomColor();
