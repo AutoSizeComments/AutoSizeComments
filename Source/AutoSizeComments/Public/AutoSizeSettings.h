@@ -7,7 +7,7 @@
 #include "AutoSizeSettings.generated.h"
 
 
-UCLASS(config = AutoSizeComments, defaultconfig)
+UCLASS(config = EditorSettings)
 class AUTOSIZECOMMENTS_API UAutoSizeSettings : public UObject
 {
 	GENERATED_BODY()
