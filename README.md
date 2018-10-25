@@ -1,6 +1,8 @@
 # AutoSizeComments
 Plugin for Unreal Engine 4 that adds auto resizing comment boxes
 
+Settings for the plugin are under Edit > Editor Preferences > Plugins > Auto Size Comments
+
 UE4 forum page: https://forums.unrealengine.com/community/released-projects/1540542
 
 Marketplace link: [Waiting for approval]
