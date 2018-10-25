@@ -11,5 +11,5 @@ UAutoSizeSettings::UAutoSizeSettings(const FObjectInitializer& ObjectInitializer
 	bUseRandomColor = true;
 	DefaultCommentColor = FLinearColor::White;
 	bMoveEmptyCommentBoxes = true;
-	CollisionMovementSpeed = 10;
+	EmptyCommentBoxSpeed = 10;
 }

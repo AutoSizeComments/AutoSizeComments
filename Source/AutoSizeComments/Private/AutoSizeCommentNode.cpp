@@ -784,7 +784,7 @@ void SAutoSizeCommentNode::MoveEmptyCommentBoxes()
 			TotalMovement.Y = (FMath::Rand() % 2) * 2 - 1;
 		}
 
-		TotalMovement *= GetDefault<UAutoSizeSettings>()->CollisionMovementSpeed;
+		TotalMovement *= GetDefault<UAutoSizeSettings>()->EmptyCommentBoxSpeed;
 
 		GraphNode->Modify();
 		GraphNode->NodePosX += TotalMovement.X;

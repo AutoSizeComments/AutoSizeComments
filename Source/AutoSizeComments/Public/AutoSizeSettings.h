@@ -33,5 +33,5 @@ public:
 
 	/** The speed at which empty comment boxes move */
 	UPROPERTY(EditAnywhere, config, Category = Default)
-	float CollisionMovementSpeed;
+	float EmptyCommentBoxSpeed;
 };
