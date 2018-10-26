@@ -19,13 +19,17 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	FVector2D CommentNodePadding;
 
-	/** If enabled, comment boxes will spawn with a random color */
+	/** If enabled, comment boxes will spawn with a random color. If disabled, use default color */
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	bool bUseRandomColor;
 
 	/** If Use Random Color is not enabled, comment boxes will spawn with this default color */
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	FLinearColor DefaultCommentColor;
+
+	/** Set all nodes in the graph to the default color */
+	UPROPERTY(EditAnywhere, config, Category = Default)
+	bool bAggressivelyUseDefaultColor;
 
 	/** If enabled, empty comment boxes will move out of the way of other comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = Default)

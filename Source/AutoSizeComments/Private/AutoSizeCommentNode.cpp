@@ -49,7 +49,14 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 	}
 	else // set to the default color
 	{
-		CommentNode->CommentColor = DefaultColor;
+		if (GetMutableDefault<UAutoSizeSettings>()->bAggressivelyUseDefaultColor)
+		{
+			CommentNode->CommentColor = DefaultColor;
+		}
+		else if (CommentNode->CommentColor == FLinearColor::White)
+		{
+			CommentNode->CommentColor = DefaultColor;
+		}
 	}
 }
 

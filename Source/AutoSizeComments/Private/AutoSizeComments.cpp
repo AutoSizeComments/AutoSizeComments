@@ -19,7 +19,7 @@ void FAutoSizeCommentsModule::StartupModule()
 			LOCTEXT("AutoSizeCommentsName", "Auto Size Comments"),
 			LOCTEXT("AutoSizeCommentsNameDesc", "Configure options for auto resizing comment boxes"),
 			GetMutableDefault<UAutoSizeSettings>()
-		);
+		);		
 	}
 }
 
