@@ -711,7 +711,7 @@ void SAutoSizeCommentNode::ResizeToFit()
 		// move to desired pos
 		if (!GetPosition().Equals(DesiredPos, .1f))
 		{
-			GraphNode->Modify();
+			//GraphNode->Modify();
 			GraphNode->NodePosX = DesiredPos.X;
 			GraphNode->NodePosY = DesiredPos.Y;
 		}
