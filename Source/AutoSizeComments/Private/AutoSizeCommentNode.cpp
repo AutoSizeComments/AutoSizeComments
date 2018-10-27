@@ -711,7 +711,6 @@ void SAutoSizeCommentNode::ResizeToFit()
 		// move to desired pos
 		if (!GetPosition().Equals(DesiredPos, .1f))
 		{
-			//GraphNode->Modify();
 			GraphNode->NodePosX = DesiredPos.X;
 			GraphNode->NodePosY = DesiredPos.Y;
 		}
@@ -793,7 +792,6 @@ void SAutoSizeCommentNode::MoveEmptyCommentBoxes()
 
 		TotalMovement *= GetDefault<UAutoSizeSettings>()->EmptyCommentBoxSpeed;
 
-		GraphNode->Modify();
 		GraphNode->NodePosX += TotalMovement.X;
 		GraphNode->NodePosY += TotalMovement.Y;
 	}
