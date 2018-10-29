@@ -11,4 +11,5 @@ UAutoSizeSettings::UAutoSizeSettings(const FObjectInitializer& ObjectInitializer
 	bAggressivelyUseDefaultColor = false;
 	bMoveEmptyCommentBoxes = true;
 	EmptyCommentBoxSpeed = 10;
+	bForceColorCommentBubbles = false;
 }

@@ -58,6 +58,13 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 			CommentNode->CommentColor = DefaultColor;
 		}
 	}
+
+	// If the "Force Color Comment Bubbles" user setting is checked
+	if (GetMutableDefault<UAutoSizeSettings>()->bForceColorCommentBubbles)
+	{
+		// Set this comment box to use a colored comment bubble
+		CommentNode->bColorCommentBubble = true;
+	}
 }
 
 void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
