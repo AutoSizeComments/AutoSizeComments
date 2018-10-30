@@ -38,4 +38,8 @@ public:
 	/** The speed at which empty comment boxes move */
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	float EmptyCommentBoxSpeed;
+
+	/** If enabled, this should set "Color Bubble" to true for every comment box that is created or loaded */
+	UPROPERTY(EditAnywhere, config, Category = Default)
+	bool bForceColorCommentBubbles;
 };
