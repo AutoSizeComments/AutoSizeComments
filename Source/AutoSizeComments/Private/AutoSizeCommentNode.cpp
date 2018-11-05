@@ -15,7 +15,6 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
-#include "Editor/BlueprintGraph/Classes/K2Node_Knot.h"
 #include "Editor/GraphEditor/Public/SGraphPanel.h"
 
 #include "Runtime/Engine/Classes/EdGraph/EdGraph.h"
@@ -530,9 +529,6 @@ void SAutoSizeCommentNode::RefreshNodesInsideComment()
 
 		if (GraphObject == nullptr) continue;
 
-		// skip knot nodes
-		if (Cast<UK2Node_Knot>(GraphObject)) continue;
-
 		// skip if we already contain the graph obj
 		if (CommentNode->GetNodesUnderComment().Contains(GraphObject))
 			continue;
@@ -910,10 +906,6 @@ FSlateRect SAutoSizeCommentNode::GetBoundsForNodesInside()
 			if (OtherCommentNode->GetNodesUnderComment().Contains(GraphNode) &&
 				OtherCommentNode->CommentDepth > CommentNode->CommentDepth)
 				continue;
-
-		// skip knot nodes - they are buggy?
-		if (UK2Node_Knot* KnotNode = Cast<UK2Node_Knot>(Obj))
-			continue;
 
 		if (UEdGraphNode* Node = Cast<UEdGraphNode>(Obj))
 			Nodes.Add(Node);
