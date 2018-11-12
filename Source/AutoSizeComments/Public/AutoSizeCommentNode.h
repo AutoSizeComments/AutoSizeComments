@@ -108,7 +108,7 @@ public:
 	/** Update the nodes */
 	void UpdateRefreshDelay();
 
-	void RefreshNodesInsideComment();
+	void RefreshNodesInsideComment(bool bCheckContained = true);
 
 	float GetTitleBarHeight() const;
 

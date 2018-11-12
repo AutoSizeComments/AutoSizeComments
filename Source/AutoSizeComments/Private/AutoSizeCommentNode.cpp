@@ -73,7 +73,7 @@ void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFi
 	SGraphNode::MoveTo(NewPosition, NodeFilter);
 	// Don't drag note content if either of the shift keys are down.
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
-	if (!KeysState.IsShiftDown())
+	if (!KeysState.IsAltDown())
 	{
 		UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(GraphNode);
 		if (CommentNode && CommentNode->MoveMode == ECommentBoxMode::GroupMovement)
@@ -103,7 +103,7 @@ FReply SAutoSizeCommentNode::OnMouseButtonDoubleClick(const FGeometry& InMyGeome
 {
 	/** Copied from SGraphNodeComment::OnMouseButtonDoubleClick */
 	FVector2D LocalMouseCoordinates = InMyGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-	
+
 	// If user double-clicked in the title bar area
 	if (LocalMouseCoordinates.Y < GetTitleBarHeight())
 	{
@@ -131,8 +131,16 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 
 	if (RefreshNodesDelay == 0)
 	{
-		ResizeToFit();
-		MoveEmptyCommentBoxes();
+		FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
+		if (KeysState.IsAltDown())
+		{
+			RefreshNodesInsideComment(false);
+		}
+		else
+		{
+			ResizeToFit();
+			MoveEmptyCommentBoxes();
+		}
 	}
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -493,19 +501,26 @@ FSlateRect SAutoSizeCommentNode::GetTitleRect() const
 
 void SAutoSizeCommentNode::UpdateRefreshDelay()
 {
+	if (GetDesiredSize().IsZero())
+	{
+		return;
+	}
+
 	if (RefreshNodesDelay > 0)
 	{
 		RefreshNodesDelay -= 1;
 
 		if (RefreshNodesDelay == 0)
 		{
-			RefreshNodesInsideComment();
+			RefreshNodesInsideComment(false);
 		}
 	}
 }
 
-void SAutoSizeCommentNode::RefreshNodesInsideComment()
+void SAutoSizeCommentNode::RefreshNodesInsideComment(bool bCheckContained)
 {
+	CommentNode->ClearNodesUnderComment();
+
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 
 	float TitleBarHeight = GetTitleBarHeight();
@@ -516,7 +531,7 @@ void SAutoSizeCommentNode::RefreshNodesInsideComment()
 	FVector2D NodePosition = GetPosition();
 	NodePosition.Y += TitleBarHeight;
 
-	const FSlateRect CommentRect = FSlateRect::FromPointAndExtent(NodePosition, NodeSize);
+	const FSlateRect CommentRect = FSlateRect::FromPointAndExtent(NodePosition, NodeSize).ExtendBy(1);
 
 	FChildren* PanelChildren = OwnerPanel->GetAllChildren();
 	int32 NumChildren = PanelChildren->Num();
@@ -540,7 +555,11 @@ void SAutoSizeCommentNode::RefreshNodesInsideComment()
 			const FVector2D SomeNodeSize = SomeNodeWidget->GetDesiredSize();
 			const FSlateRect NodeGeometryGraphSpace = FSlateRect::FromPointAndExtent(SomeNodePosition, SomeNodeSize);
 
-			if (FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace))
+			bool bShouldAddNode =
+				bCheckContained ? FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace)
+				: CommentRect.ContainsPoint(SomeNodePosition);
+
+			if (bShouldAddNode)
 			{
 				CommentNode->AddNodeUnderComment(GraphObject);
 			}
@@ -692,8 +711,10 @@ void SAutoSizeCommentNode::ResizeToFit()
 	{
 		// get bounds and apply padding
 		FVector2D Padding = GetMutableDefault<UAutoSizeSettings>()->CommentNodePadding;
-		Padding.Y += 10;
-		FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, Padding.Y));
+
+		float BottomPadding = FMath::Max(30.f, Padding.Y + 16.f); // ensure we can always see the buttons
+
+		FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, Padding.Y, Padding.X, BottomPadding));
 
 		const float TitleBarHeight = GetTitleBarHeight();
 
@@ -718,10 +739,10 @@ void SAutoSizeCommentNode::ResizeToFit()
 			GraphNode->NodePosY = DesiredPos.Y;
 		}
 	}
-	else if (UserSize.X != 175 && UserSize.Y != 100) // the comment has no nodes, resize to default
+	else if (UserSize.X != 225 && UserSize.Y != 150) // the comment has no nodes, resize to default
 	{
-		UserSize.X = 175;
-		UserSize.Y = 100;
+		UserSize.X = 225;
+		UserSize.Y = 150;
 		GetNodeObj()->ResizeNode(UserSize);
 	}
 }
