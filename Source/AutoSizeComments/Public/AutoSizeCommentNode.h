@@ -18,6 +18,8 @@ public:
 
 	bool bIsDragging = false;
 
+	bool bPreviousAltDown = false;
+
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
 
 public:

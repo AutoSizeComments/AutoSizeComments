@@ -73,26 +73,24 @@ void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFi
 	SGraphNode::MoveTo(NewPosition, NodeFilter);
 	// Don't drag note content if either of the shift keys are down.
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
-	if (!KeysState.IsAltDown())
+	
+	UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(GraphNode);
+	if (CommentNode && CommentNode->MoveMode == ECommentBoxMode::GroupMovement)
 	{
-		UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(GraphNode);
-		if (CommentNode && CommentNode->MoveMode == ECommentBoxMode::GroupMovement)
-		{
-			// Now update any nodes which are touching the comment but *not* selected
-			// Selected nodes will be moved as part of the normal selection code
-			TSharedPtr< SGraphPanel > Panel = GetOwnerPanel();
+		// Now update any nodes which are touching the comment but *not* selected
+		// Selected nodes will be moved as part of the normal selection code
+		TSharedPtr< SGraphPanel > Panel = GetOwnerPanel();
 
-			for (FCommentNodeSet::TConstIterator NodeIt(CommentNode->GetNodesUnderComment()); NodeIt; ++NodeIt)
+		for (FCommentNodeSet::TConstIterator NodeIt(CommentNode->GetNodesUnderComment()); NodeIt; ++NodeIt)
+		{
+			if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
 			{
-				if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
+				if (!Panel->SelectionManager.IsNodeSelected(Node) && !NodeFilter.Find(Node->DEPRECATED_NodeWidget.Pin()))
 				{
-					if (!Panel->SelectionManager.IsNodeSelected(Node) && !NodeFilter.Find(Node->DEPRECATED_NodeWidget.Pin()))
-					{
-						NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
-						Node->Modify();
-						Node->NodePosX += PositionDelta.X;
-						Node->NodePosY += PositionDelta.Y;
-					}
+					NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
+					Node->Modify();
+					Node->NodePosX += PositionDelta.X;
+					Node->NodePosY += PositionDelta.Y;
 				}
 			}
 		}
@@ -132,15 +130,20 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 	if (RefreshNodesDelay == 0)
 	{
 		FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
-		if (KeysState.IsAltDown())
+		
+		bool bIsAltDown = KeysState.IsAltDown();
+		if (!bIsAltDown)
 		{
-			RefreshNodesInsideComment(false);
-		}
-		else
-		{
+			if (bPreviousAltDown) // refresh when the alt key is released
+			{
+				RefreshNodesInsideComment(false);
+			}
+
 			ResizeToFit();
 			MoveEmptyCommentBoxes();
 		}
+
+		bPreviousAltDown = bIsAltDown;
 	}
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
