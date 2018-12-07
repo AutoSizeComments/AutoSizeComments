@@ -70,31 +70,122 @@ void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFi
 {
 	/** Copied from SGraphNodeComment::MoveTo */
 	FVector2D PositionDelta = NewPosition - GetPosition();
-	SGraphNode::MoveTo(NewPosition, NodeFilter);
+	
+	SnapVectorToGrid(PositionDelta);
+
+	FVector2D NewPos = GetPosition() + PositionDelta;
+	SGraphNode::MoveTo(NewPos, NodeFilter);
+
 	// Don't drag note content if either of the shift keys are down.
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 	
-	UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(GraphNode);
-	if (CommentNode && CommentNode->MoveMode == ECommentBoxMode::GroupMovement)
+	if (!KeysState.IsControlDown())
 	{
-		// Now update any nodes which are touching the comment but *not* selected
-		// Selected nodes will be moved as part of the normal selection code
-		TSharedPtr< SGraphPanel > Panel = GetOwnerPanel();
-
-		for (FCommentNodeSet::TConstIterator NodeIt(CommentNode->GetNodesUnderComment()); NodeIt; ++NodeIt)
+		UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(GraphNode);
+		if (CommentNode && CommentNode->MoveMode == ECommentBoxMode::GroupMovement)
 		{
-			if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
+			// Now update any nodes which are touching the comment but *not* selected
+			// Selected nodes will be moved as part of the normal selection code
+			TSharedPtr< SGraphPanel > Panel = GetOwnerPanel();
+
+			for (FCommentNodeSet::TConstIterator NodeIt(CommentNode->GetNodesUnderComment()); NodeIt; ++NodeIt)
 			{
-				if (!Panel->SelectionManager.IsNodeSelected(Node) && !NodeFilter.Find(Node->DEPRECATED_NodeWidget.Pin()))
+				if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
 				{
-					NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
-					Node->Modify();
-					Node->NodePosX += PositionDelta.X;
-					Node->NodePosY += PositionDelta.Y;
+					if (!Panel->SelectionManager.IsNodeSelected(Node) && !NodeFilter.Find(Node->DEPRECATED_NodeWidget.Pin()))
+					{
+						NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
+						Node->Modify();
+						Node->NodePosX += PositionDelta.X;
+						Node->NodePosY += PositionDelta.Y;
+					}
 				}
 			}
 		}
 	}
+}
+
+FReply SAutoSizeCommentNode::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	const FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+
+	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsEditable.Get())
+	{
+		bool bLeftCorner = MousePositionInNode.X < 40 && MousePositionInNode.Y > GetTitleBarHeight() && MousePositionInNode.Y < GetTitleBarHeight() + 40;
+
+		if (IsLocalPositionInCorner(MousePositionInNode))
+		{
+			DragSize = UserSize;
+			bUserIsDragging = true;
+			bDraggingLeftCorner = false;
+			return FReply::Handled().CaptureMouse(SharedThis(this));
+		}
+		else if (bLeftCorner)
+		{
+			DragSize = UserSize;
+			bUserIsDragging = true;
+			bDraggingLeftCorner = true;
+			return FReply::Handled().CaptureMouse(SharedThis(this));
+		}
+	}
+
+	return SGraphNode::OnMouseButtonDown(MyGeometry, MouseEvent);
+}
+
+FReply SAutoSizeCommentNode::OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	if ((MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) && bUserIsDragging)
+	{
+		bUserIsDragging = false;
+		bDraggingLeftCorner = false;
+		RefreshNodesInsideComment();
+		return FReply::Handled().ReleaseMouseCapture();
+	}
+
+	return SGraphNode::OnMouseButtonUp(MyGeometry, MouseEvent);
+}
+
+FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	if (bUserIsDragging)
+	{
+		TSharedPtr<SWindow> OwnerWindow = FSlateApplication::Get().FindWidgetWindow(AsShared());
+		FVector2D GraphSpaceCoordinates = NodeCoordToGraphCoord(MouseEvent.GetScreenSpacePosition());
+		FVector2D ScaledCoordinates = GraphSpaceCoordinates / (OwnerWindow.IsValid() ? OwnerWindow->GetDPIScaleFactor() : 1.0f);
+		FVector2D OldGraphSpaceCoordinates = NodeCoordToGraphCoord(MouseEvent.GetLastScreenSpacePosition());
+		FVector2D Delta = (GraphSpaceCoordinates - OldGraphSpaceCoordinates) / (OwnerWindow.IsValid() ? OwnerWindow->GetDPIScaleFactor() : 1.0f);
+
+		int32 OldNodeWidth = GraphNode->NodeWidth;
+		int32 OldNodeHeight = GraphNode->NodeHeight;
+
+		if (bDraggingLeftCorner)
+		{
+			DragSize -= Delta;
+		}
+		else
+		{
+			DragSize += Delta;
+		}
+
+		FVector2D ClampedSize(FMath::Max(125.f, DragSize.X), FMath::Max(100.f, DragSize.Y));
+
+		if (UserSize != ClampedSize)
+		{
+			UserSize = ClampedSize;
+			
+			GetNodeObj()->ResizeNode(UserSize);
+
+			if (bDraggingLeftCorner)
+			{
+				int32 DeltaWidth = GraphNode->NodeWidth - OldNodeWidth;
+				int32 DeltaHeight = GraphNode->NodeHeight - OldNodeHeight;
+				GraphNode->NodePosX -= DeltaWidth;
+				GraphNode->NodePosY -= DeltaHeight;
+			}
+		}
+	}
+		
+	return SGraphNode::OnMouseMove(MyGeometry, MouseEvent);
 }
 
 FReply SAutoSizeCommentNode::OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent)
@@ -131,6 +222,9 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 	{
 		FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 		
+		if (bUserIsDragging)
+			return;
+
 		bool bIsAltDown = KeysState.IsAltDown();
 		if (!bIsAltDown)
 		{
@@ -140,6 +234,7 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 			}
 
 			ResizeToFit();
+
 			MoveEmptyCommentBoxes();
 		}
 
@@ -293,6 +388,13 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			[
 				ErrorReporting->AsWidget()
 			]
+			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Left).VAlign(VAlign_Top)
+			[
+				SNew(SBox).WidthOverride(16).HeightOverride(16)
+				[
+					SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
+				]
+			]
 			+ SVerticalBox::Slot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 			[
 				SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder"))
@@ -322,7 +424,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 				]
 				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom)
 				[
-					SNew(SBox).WidthOverride(20).HeightOverride(20)
+					SNew(SBox).WidthOverride(16).HeightOverride(16)
 					[
 						SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
 					]
@@ -376,10 +478,7 @@ void SAutoSizeCommentNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPanel)
 
 bool SAutoSizeCommentNode::CanBeSelected(const FVector2D& MousePositionInNode) const
 {
-	FVector2D CornerBounds = GetDesiredSize() - FVector2D(40, 40);
-
-	return MousePositionInNode.Y <= GetTitleBarHeight()
-		|| (MousePositionInNode.Y >= CornerBounds.Y && MousePositionInNode.X >= CornerBounds.X);
+	return MousePositionInNode.Y <= GetTitleBarHeight() || IsLocalPositionInCorner(MousePositionInNode);
 }
 
 FVector2D SAutoSizeCommentNode::GetDesiredSizeForMarquee() const
@@ -742,7 +841,7 @@ void SAutoSizeCommentNode::ResizeToFit()
 			GraphNode->NodePosY = DesiredPos.Y;
 		}
 	}
-	else if (UserSize.X != 225 && UserSize.Y != 150) // the comment has no nodes, resize to default
+	else if (UserSize.X < 225 && UserSize.Y < 150) // the comment has no nodes, resize to default
 	{
 		UserSize.X = 225;
 		UserSize.Y = 150;
@@ -880,6 +979,19 @@ FSlateRect SAutoSizeCommentNode::GetCommentBounds(UEdGraphNode_Comment* InCommen
 	FVector2D Point(InCommentNode->NodePosX, InCommentNode->NodePosY);
 	FVector2D Extent(InCommentNode->NodeWidth, InCommentNode->NodeHeight);
 	return FSlateRect::FromPointAndExtent(Point, Extent);
+}
+
+void SAutoSizeCommentNode::SnapVectorToGrid(FVector2D& Vector)
+{
+	const float SnapSize = SNodePanel::GetSnapGridSize();
+	Vector.X = SnapSize * FMath::RoundToFloat(Vector.X / SnapSize);
+	Vector.Y = SnapSize * FMath::RoundToFloat(Vector.Y / SnapSize);
+}
+
+bool SAutoSizeCommentNode::IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const
+{
+	FVector2D CornerBounds = GetDesiredSize() - FVector2D(40, 40);
+	return MousePositionInNode.Y >= CornerBounds.Y && MousePositionInNode.X >= CornerBounds.X;
 }
 
 FSlateRect SAutoSizeCommentNode::GetNodeBounds(UEdGraphNode* Node)

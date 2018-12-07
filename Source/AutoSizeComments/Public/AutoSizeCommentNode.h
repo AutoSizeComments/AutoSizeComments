@@ -20,6 +20,11 @@ public:
 
 	bool bPreviousAltDown = false;
 
+	FVector2D DragSize;
+
+	bool bUserIsDragging = false;
+	bool bDraggingLeftCorner = false;
+
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
 
 public:
@@ -29,6 +34,9 @@ public:
 	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
 
 	//~ Begin SWidget Interface
+	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual FReply OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	virtual FReply OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 	//~ End SWidget Interface
@@ -122,4 +130,6 @@ public:
 	bool AnySelectedNodes();
 	static bool RemoveNodesFromUnderComment(UEdGraphNode_Comment* InCommentNode, TSet<UObject*>& NodesToRemove);
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
+	void SnapVectorToGrid(FVector2D& Vector);
+	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 };
