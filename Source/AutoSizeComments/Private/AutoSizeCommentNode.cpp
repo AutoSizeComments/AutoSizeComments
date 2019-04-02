@@ -76,12 +76,11 @@ void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFi
 	FVector2D NewPos = GetPosition() + PositionDelta;
 	SGraphNode::MoveTo(NewPos, NodeFilter);
 
-	// Don't drag note content if either of the shift keys are down.
+	// If both Alt and Ctrl are held down, we do not move our content.
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 	
-	if (!KeysState.IsControlDown())
+	if (!(KeysState.IsAltDown() && KeysState.IsControlDown()))
 	{
-		UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(GraphNode);
 		if (CommentNode && CommentNode->MoveMode == ECommentBoxMode::GroupMovement)
 		{
 			// Now update any nodes which are touching the comment but *not* selected
@@ -1003,13 +1002,13 @@ FSlateRect SAutoSizeCommentNode::GetNodeBounds(UEdGraphNode* Node)
 
 	FVector2D Size(300, 150);
 
-	TWeakPtr<SGraphNode> GraphNode = Node->DEPRECATED_NodeWidget;
-	if (GraphNode.IsValid())
+	TWeakPtr<SGraphNode> LocalGraphNode = Node->DEPRECATED_NodeWidget;
+	if (LocalGraphNode.IsValid())
 	{
-		Pos = GraphNode.Pin()->GetPosition();
-		Size = GraphNode.Pin()->GetDesiredSize();
+		Pos = LocalGraphNode.Pin()->GetPosition();
+		Size = LocalGraphNode.Pin()->GetDesiredSize();
 
-		if (SNodePanel::SNode::FNodeSlot* CommentSlot = GraphNode.Pin()->GetSlot(ENodeZone::TopCenter))
+		if (SNodePanel::SNode::FNodeSlot* CommentSlot = LocalGraphNode.Pin()->GetSlot(ENodeZone::TopCenter))
 		{
 			TSharedPtr<SCommentBubble> CommentBubble = StaticCastSharedRef<SCommentBubble>(CommentSlot->GetWidget());
 			if (CommentBubble.IsValid() && CommentBubble->IsBubbleVisible())
