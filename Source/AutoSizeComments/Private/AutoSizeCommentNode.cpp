@@ -110,20 +110,35 @@ FReply SAutoSizeCommentNode::OnMouseButtonDown(const FGeometry& MyGeometry, cons
 
 	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsEditable.Get())
 	{
-		bool bLeftCorner = MousePositionInNode.X < 40 && MousePositionInNode.Y > GetTitleBarHeight() && MousePositionInNode.Y < GetTitleBarHeight() + 40;
+		FVector2D DesiredSize = GetDesiredSize();
+		float Top = AnchorSize;
+		float Left = AnchorSize;
+		float Right = DesiredSize.X - AnchorSize;
+		float Bottom = DesiredSize.Y - AnchorSize;
 
-		if (IsLocalPositionInCorner(MousePositionInNode))
+		Anchor = NONE;
+
+		if (MousePositionInNode.X > Right && MousePositionInNode.Y > Bottom)
 		{
-			DragSize = UserSize;
-			bUserIsDragging = true;
-			bDraggingLeftCorner = false;
-			return FReply::Handled().CaptureMouse(SharedThis(this));
+			Anchor = BOTTOM_RIGHT;
 		}
-		else if (bLeftCorner)
+		else if (MousePositionInNode.X < Left && MousePositionInNode.Y < Top)
+		{
+			Anchor = TOP_LEFT;
+		}
+		else if (MousePositionInNode.X < Left && MousePositionInNode.Y > Bottom)
+		{
+			Anchor = BOTTOM_LEFT;
+		}
+		else if (MousePositionInNode.X > Right && MousePositionInNode.Y < Top)
+		{
+			Anchor = TOP_RIGHT;
+		}
+		
+		if (Anchor != NONE)
 		{
 			DragSize = UserSize;
 			bUserIsDragging = true;
-			bDraggingLeftCorner = true;
 			return FReply::Handled().CaptureMouse(SharedThis(this));
 		}
 	}
@@ -136,7 +151,7 @@ FReply SAutoSizeCommentNode::OnMouseButtonUp(const FGeometry& MyGeometry, const 
 	if ((MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) && bUserIsDragging)
 	{
 		bUserIsDragging = false;
-		bDraggingLeftCorner = false;
+		Anchor = NONE;
 		RefreshNodesInsideComment();
 		return FReply::Handled().ReleaseMouseCapture();
 	}
@@ -157,13 +172,23 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 		int32 OldNodeWidth = GraphNode->NodeWidth;
 		int32 OldNodeHeight = GraphNode->NodeHeight;
 
-		if (bDraggingLeftCorner)
+		if (Anchor == BOTTOM_RIGHT)
+		{
+			DragSize += Delta;
+		}
+		else if (Anchor == TOP_LEFT)
 		{
 			DragSize -= Delta;
 		}
-		else
+		else if (Anchor == BOTTOM_LEFT)
 		{
-			DragSize += Delta;
+			DragSize.X -= Delta.X;
+			DragSize.Y += Delta.Y;
+		}
+		else if (Anchor == TOP_RIGHT)
+		{
+			DragSize.X += Delta.X;
+			DragSize.Y -= Delta.Y;
 		}
 
 		FVector2D ClampedSize(FMath::Max(125.f, DragSize.X), FMath::Max(100.f, DragSize.Y));
@@ -174,11 +199,15 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 			
 			GetNodeObj()->ResizeNode(UserSize);
 
-			if (bDraggingLeftCorner)
+			if (Anchor == TOP_LEFT || Anchor == BOTTOM_LEFT)
 			{
 				int32 DeltaWidth = GraphNode->NodeWidth - OldNodeWidth;
-				int32 DeltaHeight = GraphNode->NodeHeight - OldNodeHeight;
 				GraphNode->NodePosX -= DeltaWidth;
+			}
+
+			if (Anchor == TOP_LEFT || Anchor == TOP_RIGHT)
+			{
+				int32 DeltaHeight = GraphNode->NodeHeight - OldNodeHeight;
 				GraphNode->NodePosY -= DeltaHeight;
 			}
 		}
@@ -351,6 +380,12 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			 ]
 		];
 
+	TSharedRef<SBox> AnchorBox = 
+		SNew(SBox).WidthOverride(16).HeightOverride(16)
+		[
+			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
+		];
+	
 	ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	GetOrAddSlot(ENodeZone::Center).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 	[
@@ -367,32 +402,35 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 				SAssignNew(TitleBar, SBorder)
 				.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleBackground"))
 				.BorderBackgroundColor(this, &SAutoSizeCommentNode::GetCommentTitleBarColor)
-				.Padding(FMargin(10, 5, 5, 3))
-				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Center)
+				.HAlign(HAlign_Fill).VAlign(VAlign_Top)
 				[
-					SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-					.Style(FEditorStyle::Get(), "Graph.CommentBlock.TitleInlineEditableText")
-					.Text(this, &SAutoSizeCommentNode::GetEditableNodeTitleAsText)
-					.OnVerifyTextChanged(this, &SAutoSizeCommentNode::OnVerifyNameTextChanged)
-					.OnTextCommitted(this, &SAutoSizeCommentNode::OnNameTextCommited)
-					.IsReadOnly(this, &SAutoSizeCommentNode::IsNameReadOnly)
-					.IsSelected(this, &SAutoSizeCommentNode::IsSelectedExclusively)
-					.WrapTextAt(this, &SAutoSizeCommentNode::GetWrapAt)
-					.MultiLine(true)
-					.ModiferKeyForNewLine(EModifierKey::Shift)
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top)
+					[
+						AnchorBox
+					]
+					+ SHorizontalBox::Slot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Top)//.Padding(FMargin(3, 5, 5, 3))
+					[
+						SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+						.Style(FEditorStyle::Get(), "Graph.CommentBlock.TitleInlineEditableText")
+						.Text(this, &SAutoSizeCommentNode::GetEditableNodeTitleAsText)
+						.OnVerifyTextChanged(this, &SAutoSizeCommentNode::OnVerifyNameTextChanged)
+						.OnTextCommitted(this, &SAutoSizeCommentNode::OnNameTextCommited)
+						.IsReadOnly(this, &SAutoSizeCommentNode::IsNameReadOnly)
+						.IsSelected(this, &SAutoSizeCommentNode::IsSelectedExclusively)
+						.WrapTextAt(this, &SAutoSizeCommentNode::GetWrapAt)
+						.MultiLine(true)
+						.ModiferKeyForNewLine(EModifierKey::Shift)
+					]
+					+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top)
+					[
+						AnchorBox
+					]
 				]
 			]
 			+ SVerticalBox::Slot().AutoHeight().Padding(1.0f)
 			[
 				ErrorReporting->AsWidget()
-			]
-			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Left).VAlign(VAlign_Top)
-			[
-				SNew(SBox).WidthOverride(16).HeightOverride(16)
-				[
-					SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
-				]
 			]
 			+ SVerticalBox::Slot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 			[
@@ -401,6 +439,10 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Bottom)
 			[
 				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom)
+				[
+					AnchorBox
+				]
 				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
 				[
 					RefreshButton
@@ -423,10 +465,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 				]
 				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom)
 				[
-					SNew(SBox).WidthOverride(16).HeightOverride(16)
-					[
-						SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
-					]
+					AnchorBox
 				]
 			]
 		]
@@ -477,7 +516,7 @@ void SAutoSizeCommentNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPanel)
 
 bool SAutoSizeCommentNode::CanBeSelected(const FVector2D& MousePositionInNode) const
 {
-	return MousePositionInNode.Y <= GetTitleBarHeight() || IsLocalPositionInCorner(MousePositionInNode);
+	return (MousePositionInNode.X > 40 && MousePositionInNode.Y <= GetTitleBarHeight()) || IsLocalPositionInCorner(MousePositionInNode);
 }
 
 FVector2D SAutoSizeCommentNode::GetDesiredSizeForMarquee() const

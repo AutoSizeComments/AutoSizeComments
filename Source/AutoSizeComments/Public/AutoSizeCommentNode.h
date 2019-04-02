@@ -10,6 +10,12 @@
 /**
  * Auto resizing comment node
  */
+enum AnchorPoint
+{
+	TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, NONE
+};
+
+
 class SAutoSizeCommentNode : public SGraphNode
 {
 public:
@@ -20,10 +26,11 @@ public:
 
 	bool bPreviousAltDown = false;
 
+	/** Variables related to resizing the comment box by dragging anchor corner points */
 	FVector2D DragSize;
-
 	bool bUserIsDragging = false;
-	bool bDraggingLeftCorner = false;
+	AnchorPoint Anchor;
+	float AnchorSize = 40.f;
 
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
 
