@@ -6,6 +6,18 @@
 #include "UObject/NoExportTypes.h"
 #include "AutoSizeSettings.generated.h"
 
+USTRUCT()
+struct FPresetCommentStyle 
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, config, Category = Default)
+	FLinearColor Color = FLinearColor::White;
+
+	UPROPERTY(EditAnywhere, config, Category = Default)
+	int FontSize = 18;
+};
+
 
 UCLASS(config = EditorSettings)
 class AUTOSIZECOMMENTS_API UAutoSizeSettings : public UObject
@@ -31,9 +43,9 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	FLinearColor FloatingColor;
 
-	/** Color for comments which are floating (they do not resize to nodes) */
+	/** Preset styles (each style will have its own button on the comment box) */
 	UPROPERTY(EditAnywhere, config, Category = Default)
-	TArray<FLinearColor> PresetColors;
+	TArray<FPresetCommentStyle> PresetStyles;
 
 	/** Set all nodes in the graph to the default color */
 	UPROPERTY(EditAnywhere, config, Category = Default)

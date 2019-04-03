@@ -7,6 +7,8 @@
 #include "Editor/GraphEditor/Public/SGraphNodeComment.h"
 #include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
 
+struct FPresetCommentStyle;
+
 /**
  * Auto resizing comment node
  */
@@ -14,7 +16,6 @@ enum AnchorPoint
 {
 	TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, NONE
 };
-
 
 class SAutoSizeCommentNode : public SGraphNode
 {
@@ -83,7 +84,7 @@ protected:
 	virtual FReply HandleRandomizeColorButtonClicked();
 	virtual FReply HandleFloatingButtonClicked();
 	virtual FReply HandleRefreshButtonClicked();
-	virtual FReply HandlePresetButtonClicked(FLinearColor Color);
+	virtual FReply HandlePresetButtonClicked(FPresetCommentStyle Color);
 	virtual FReply HandleAddButtonClicked();
 	virtual FReply HandleSubtractButtonClicked();
 	virtual FReply HandleClearButtonClicked();
@@ -122,6 +123,12 @@ private:
 
 	/** cached comment title */
 	int32 CachedWidth;
+
+	/** cached font size */
+	int32 CachedFontSize;
+
+	/** Local copy of the comment style */
+	FInlineEditableTextBlockStyle CommentStyle;
 
 public:
 	/** Update the nodes */

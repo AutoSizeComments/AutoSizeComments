@@ -247,15 +247,9 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 {
 	UpdateRefreshDelay();
 
-	if (IsFloatingComment())
-		return;
-
-	if (RefreshNodesDelay == 0)
+	if (RefreshNodesDelay == 0 && !IsFloatingComment() && !bUserIsDragging)
 	{
 		FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
-		
-		if (bUserIsDragging)
-			return;
 
 		bool bIsAltDown = KeysState.IsAltDown();
 		if (!bIsAltDown)
@@ -288,6 +282,11 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 	{
 		CachedWidth = CurrentWidth;
 	}
+
+	if (CachedFontSize != CommentNode->FontSize)
+	{
+		UpdateGraphNode();
+	}
 }
 
 void SAutoSizeCommentNode::UpdateGraphNode()
@@ -319,6 +318,11 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 	// Setup a meta tag for this node
 	FGraphNodeMetaData TagMeta(TEXT("Graphnode"));
 	PopulateMetaTag(&TagMeta);
+
+	CommentStyle = FEditorStyle::Get().GetWidgetStyle<FInlineEditableTextBlockStyle>("Graph.CommentBlock.TitleInlineEditableText");
+	CommentStyle.EditableTextBoxStyle.Font.Size = CommentNode->FontSize;
+	CommentStyle.TextStyle.Font.Size = CommentNode->FontSize;
+	CachedFontSize = CommentNode->FontSize;
 
 	// Create the random color button
 	TSharedRef<SButton> RandomColorButton = SNew(SButton)
@@ -430,13 +434,11 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			PresetHBox
 		];
 
-	for (FLinearColor Color : GetMutableDefault<UAutoSizeSettings>()->PresetColors)
+	for (FPresetCommentStyle Style : GetMutableDefault<UAutoSizeSettings>()->PresetStyles)
 	{
-		
 		TSharedRef<SButton> Button = SNew(SButton)
-			.ButtonColorAndOpacity(Color)
-			.OnClicked(this, &SAutoSizeCommentNode::HandlePresetButtonClicked, Color)
-			//.ContentPadding(FMargin(2, 2))
+			.ButtonColorAndOpacity(Style.Color)
+			.OnClicked(this, &SAutoSizeCommentNode::HandlePresetButtonClicked, Style)
 			.ToolTipText(FText::FromString("Set preset color"))
 			[
 				SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(10).HeightOverride(10)
@@ -452,7 +454,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		.BorderImage(FEditorStyle::GetBrush("Kismet.Comment.Background"))
 		.ColorAndOpacity(FLinearColor::White)
 		.BorderBackgroundColor(this, &SAutoSizeCommentNode::GetCommentBodyColor)
-		.Padding(FMargin(3.0f))
+		//.Padding(FMargin(3.0f))
 		.AddMetaData<FGraphNodeMetaData>(TagMeta)
 		[
 			SNew(SVerticalBox).ToolTipText(this, &SGraphNode::GetNodeTooltip)
@@ -468,10 +470,10 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 					[
 						AnchorBox
 					]
-					+ SHorizontalBox::Slot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Top)//.Padding(FMargin(3, 5, 5, 3))
+					+ SHorizontalBox::Slot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Top)
 					[
 						SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-						.Style(FEditorStyle::Get(), "Graph.CommentBlock.TitleInlineEditableText")
+						.Style(&CommentStyle)
 						.Text(this, &SAutoSizeCommentNode::GetEditableNodeTitleAsText)
 						.OnVerifyTextChanged(this, &SAutoSizeCommentNode::OnVerifyNameTextChanged)
 						.OnTextCommitted(this, &SAutoSizeCommentNode::OnNameTextCommited)
@@ -650,9 +652,10 @@ FReply SAutoSizeCommentNode::HandleRefreshButtonClicked()
 	return FReply::Handled();
 }
 
-FReply SAutoSizeCommentNode::HandlePresetButtonClicked(FLinearColor Color)
+FReply SAutoSizeCommentNode::HandlePresetButtonClicked(FPresetCommentStyle Style)
 {
-	CommentNode->CommentColor = Color;
+	CommentNode->CommentColor = Style.Color;
+	CommentNode->FontSize = Style.FontSize;
 	return FReply::Handled();
 }
 
