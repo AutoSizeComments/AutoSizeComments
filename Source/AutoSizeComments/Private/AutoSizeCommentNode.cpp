@@ -283,6 +283,7 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 		CachedWidth = CurrentWidth;
 	}
 
+	// Update cached font size
 	if (CachedFontSize != CommentNode->FontSize)
 	{
 		UpdateGraphNode();
@@ -333,11 +334,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			[
-				//Button Content Image
 				SNew(STextBlock).Text(FText::FromString(FString("?"))).ColorAndOpacity(FLinearColor::White)
-				//TSharedRef<SWidget>(SNew(SImage).Image(
-				//	FCoreStyle::Get().GetBrush("GenericCommands.Redo")
-				//))
 			]
 		];
 
@@ -350,7 +347,6 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			[
-				//Button Content Image
 				SNew(STextBlock).Text(FText::FromString(FString("F"))).ColorAndOpacity(FLinearColor::White)
 			]
 		];
@@ -365,10 +361,6 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			[
 				SNew(STextBlock).Text(FText::FromString(FString("R"))).ColorAndOpacity(FLinearColor::White)
-				////Button Content Image
-				//TSharedRef<SWidget>(SNew(SImage).Image(
-				//	FCoreStyle::Get().GetBrush("SoftwareCursor_Grab")
-				//))
 			]
 		];
 
@@ -381,7 +373,6 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			[
-				//Button Content Image
 				TSharedRef<SWidget>(SNew(SImage).Image(
 					FCoreStyle::Get().GetBrush("EditableComboBox.Add")
 				))
@@ -397,7 +388,6 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			[
-				//Button Content Image
 				TSharedRef<SWidget>(SNew(SImage).Image(
 					FCoreStyle::Get().GetBrush("EditableComboBox.Delete")
 				))
@@ -413,7 +403,6 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		[
 			 SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			 [
-				//Button Content Image
 				TSharedRef<SWidget>(SNew(SImage).Image(
 					FCoreStyle::Get().GetBrush("TrashCan_Small")
 				))
@@ -454,7 +443,6 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		.BorderImage(FEditorStyle::GetBrush("Kismet.Comment.Background"))
 		.ColorAndOpacity(FLinearColor::White)
 		.BorderBackgroundColor(this, &SAutoSizeCommentNode::GetCommentBodyColor)
-		//.Padding(FMargin(3.0f))
 		.AddMetaData<FGraphNodeMetaData>(TagMeta)
 		[
 			SNew(SVerticalBox).ToolTipText(this, &SGraphNode::GetNodeTooltip)
@@ -749,9 +737,7 @@ FSlateRect SAutoSizeCommentNode::GetTitleRect() const
 void SAutoSizeCommentNode::UpdateRefreshDelay()
 {
 	if (GetDesiredSize().IsZero())
-	{
 		return;
-	}
 
 	if (RefreshNodesDelay > 0)
 	{
