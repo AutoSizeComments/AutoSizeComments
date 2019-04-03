@@ -80,8 +80,10 @@ protected:
 	virtual FCursorReply OnCursorQuery(const FGeometry& MyGeometry, const FPointerEvent& CursorEvent) const override;
 	//~ End SNodePanel::SNode Interface
 
-
+	virtual FReply HandleRandomizeColorButtonClicked();
+	virtual FReply HandleFloatingButtonClicked();
 	virtual FReply HandleRefreshButtonClicked();
+	virtual FReply HandlePresetButtonClicked(FLinearColor Color);
 	virtual FReply HandleAddButtonClicked();
 	virtual FReply HandleSubtractButtonClicked();
 	virtual FReply HandleClearButtonClicked();
@@ -139,4 +141,6 @@ public:
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
 	void SnapVectorToGrid(FVector2D& Vector);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
+
+	bool IsFloatingComment();
 };

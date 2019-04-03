@@ -14,6 +14,7 @@
 #include "Widgets/Layout/SSpacer.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
+#include "Widgets/Text/STextBlock.h"
 
 #include "Editor/GraphEditor/Public/SGraphPanel.h"
 
@@ -25,6 +26,7 @@
 
 #include "AutoSizeSettings.h"
 #include "GraphEditorSettings.h"
+
 
 
 void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNode* InNode)
@@ -76,10 +78,9 @@ void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFi
 	FVector2D NewPos = GetPosition() + PositionDelta;
 	SGraphNode::MoveTo(NewPos, NodeFilter);
 
-	// If both Alt and Ctrl are held down, we do not move our content.
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 	
-	if (!(KeysState.IsAltDown() && KeysState.IsControlDown()))
+	if (!(KeysState.IsAltDown() && KeysState.IsControlDown()) && !IsFloatingComment())
 	{
 		if (CommentNode && CommentNode->MoveMode == ECommentBoxMode::GroupMovement)
 		{
@@ -110,11 +111,11 @@ FReply SAutoSizeCommentNode::OnMouseButtonDown(const FGeometry& MyGeometry, cons
 
 	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsEditable.Get())
 	{
-		FVector2D DesiredSize = GetDesiredSize();
+		FVector2D Size = GetDesiredSize();
 		float Top = AnchorSize;
 		float Left = AnchorSize;
-		float Right = DesiredSize.X - AnchorSize;
-		float Bottom = DesiredSize.Y - AnchorSize;
+		float Right = Size.X - AnchorSize;
+		float Bottom = Size.Y - AnchorSize;
 
 		Anchor = NONE;
 
@@ -246,6 +247,9 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 {
 	UpdateRefreshDelay();
 
+	if (IsFloatingComment())
+		return;
+
 	if (RefreshNodesDelay == 0)
 	{
 		FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
@@ -316,8 +320,39 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 	FGraphNodeMetaData TagMeta(TEXT("Graphnode"));
 	PopulateMetaTag(&TagMeta);
 
-	// Create the refresh button
-	TSharedRef<SButton> RefreshButton = SNew(SButton)
+	// Create the random color button
+	TSharedRef<SButton> RandomColorButton = SNew(SButton)
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentNode::GetCommentTitleBarColor)
+		.OnClicked(this, &SAutoSizeCommentNode::HandleRandomizeColorButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Randomize the color of the comment box"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				//Button Content Image
+				SNew(STextBlock).Text(FText::FromString(FString("?"))).ColorAndOpacity(FLinearColor::White)
+				//TSharedRef<SWidget>(SNew(SImage).Image(
+				//	FCoreStyle::Get().GetBrush("GenericCommands.Redo")
+				//))
+			]
+		];
+
+	// Create the random color button
+	TSharedRef<SButton> ToggleFloatingButton = SNew(SButton)
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentNode::GetCommentTitleBarColor)
+		.OnClicked(this, &SAutoSizeCommentNode::HandleFloatingButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Toggle between a floating node and a resizing node"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				//Button Content Image
+				SNew(STextBlock).Text(FText::FromString(FString("F"))).ColorAndOpacity(FLinearColor::White)
+			]
+		];
+
+	// Create the replace button
+	TSharedRef<SButton> ReplaceButton = SNew(SButton)
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentNode::GetCommentTitleBarColor)
 		.OnClicked(this, &SAutoSizeCommentNode::HandleRefreshButtonClicked)
 		.ContentPadding(FMargin(2, 2))
@@ -325,10 +360,11 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			[
-				//Button Content Image
-				TSharedRef<SWidget>(SNew(SImage).Image(
-					FCoreStyle::Get().GetBrush("GenericCommands.Redo")
-				))
+				SNew(STextBlock).Text(FText::FromString(FString("R"))).ColorAndOpacity(FLinearColor::White)
+				////Button Content Image
+				//TSharedRef<SWidget>(SNew(SImage).Image(
+				//	FCoreStyle::Get().GetBrush("SoftwareCursor_Grab")
+				//))
 			]
 		];
 
@@ -348,8 +384,8 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			]
 		];
 
-	// Create the subtract button
-	TSharedRef<SButton> SubtractButton = SNew(SButton)
+	// Create the remove button
+	TSharedRef<SButton> RemoveButton = SNew(SButton)
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentNode::GetCommentTitleBarColor)
 		.OnClicked(this, &SAutoSizeCommentNode::HandleSubtractButtonClicked)
 		.ContentPadding(FMargin(2, 2))
@@ -385,6 +421,29 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		[
 			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
 		];
+
+	TSharedRef<SHorizontalBox> PresetHBox = SNew(SHorizontalBox);
+
+	TSharedRef<SBorder> Border = SNew(SBorder)
+		.ColorAndOpacity(FLinearColor::White)
+		[
+			PresetHBox
+		];
+
+	for (FLinearColor Color : GetMutableDefault<UAutoSizeSettings>()->PresetColors)
+	{
+		
+		TSharedRef<SButton> Button = SNew(SButton)
+			.ButtonColorAndOpacity(Color)
+			.OnClicked(this, &SAutoSizeCommentNode::HandlePresetButtonClicked, Color)
+			//.ContentPadding(FMargin(2, 2))
+			.ToolTipText(FText::FromString("Set preset color"))
+			[
+				SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(10).HeightOverride(10)
+			];
+
+		PresetHBox->AddSlot().AttachWidget(Button);
+	}
 	
 	ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	GetOrAddSlot(ENodeZone::Center).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
@@ -428,9 +487,25 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 					]
 				]
 			]
-			+ SVerticalBox::Slot().AutoHeight().Padding(1.0f)
+			+ SVerticalBox::Slot().AutoHeight().Padding(1.0f) // I don't know what this does...
 			[
 				ErrorReporting->AsWidget()
+			]
+			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right).VAlign(VAlign_Top)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Fill)
+				[
+					ToggleFloatingButton
+				]
+				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
+				[
+					PresetHBox
+				]
+				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
+				[
+					RandomColorButton
+				]
 			]
 			+ SVerticalBox::Slot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 			[
@@ -445,7 +520,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 				]
 				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
 				[
-					RefreshButton
+					ReplaceButton
 				]
 				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
 				[
@@ -453,7 +528,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 				]
 				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
 				[
-					SubtractButton
+					RemoveButton
 				]
 				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
 				[
@@ -535,10 +610,33 @@ FCursorReply SAutoSizeCommentNode::OnCursorQuery(const FGeometry& MyGeometry, co
 	return FCursorReply::Unhandled();
 }
 
-
 int32 SAutoSizeCommentNode::GetSortDepth() const
 {
 	return CommentNode ? CommentNode->CommentDepth : -1;
+}
+
+FReply SAutoSizeCommentNode::HandleRandomizeColorButtonClicked()
+{
+	CommentNode->CommentColor = FLinearColor::MakeRandomColor();
+	return FReply::Handled();
+}
+
+FReply SAutoSizeCommentNode::HandleFloatingButtonClicked()
+{
+	FLinearColor FloatingColor = GetMutableDefault<UAutoSizeSettings>()->FloatingColor;
+
+	if (CommentNode->CommentColor == FloatingColor)
+	{
+		CommentNode->CommentColor = FLinearColor::MakeRandomColor();
+		RefreshNodesInsideComment(false);
+	}
+	else
+	{
+		CommentNode->CommentColor = GetMutableDefault<UAutoSizeSettings>()->FloatingColor;
+		CommentNode->ClearNodesUnderComment();
+	}
+
+	return FReply::Handled();
 }
 
 FReply SAutoSizeCommentNode::HandleRefreshButtonClicked()
@@ -549,6 +647,12 @@ FReply SAutoSizeCommentNode::HandleRefreshButtonClicked()
 		AddAllSelectedNodes();
 	}
 
+	return FReply::Handled();
+}
+
+FReply SAutoSizeCommentNode::HandlePresetButtonClicked(FLinearColor Color)
+{
+	CommentNode->CommentColor = Color;
 	return FReply::Handled();
 }
 
@@ -652,7 +756,7 @@ void SAutoSizeCommentNode::UpdateRefreshDelay()
 
 		if (RefreshNodesDelay == 0)
 		{
-			RefreshNodesInsideComment(false);
+			RefreshNodesInsideComment(true);
 		}
 	}
 }
@@ -852,9 +956,9 @@ void SAutoSizeCommentNode::ResizeToFit()
 		// get bounds and apply padding
 		FVector2D Padding = GetMutableDefault<UAutoSizeSettings>()->CommentNodePadding;
 
-		float BottomPadding = FMath::Max(30.f, Padding.Y + 16.f); // ensure we can always see the buttons
+		float VerticalPadding = FMath::Max(30.f, Padding.Y + 16.f); // ensure we can always see the buttons
 
-		FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, Padding.Y, Padding.X, BottomPadding));
+		FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, VerticalPadding, Padding.X, VerticalPadding));
 
 		const float TitleBarHeight = GetTitleBarHeight();
 
@@ -1030,6 +1134,11 @@ bool SAutoSizeCommentNode::IsLocalPositionInCorner(const FVector2D& MousePositio
 {
 	FVector2D CornerBounds = GetDesiredSize() - FVector2D(40, 40);
 	return MousePositionInNode.Y >= CornerBounds.Y && MousePositionInNode.X >= CornerBounds.X;
+}
+
+bool SAutoSizeCommentNode::IsFloatingComment()
+{
+	return CommentNode->CommentColor == GetMutableDefault<UAutoSizeSettings>()->FloatingColor;
 }
 
 FSlateRect SAutoSizeCommentNode::GetNodeBounds(UEdGraphNode* Node)

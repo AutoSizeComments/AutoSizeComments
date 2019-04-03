@@ -27,6 +27,14 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	FLinearColor DefaultCommentColor;
 
+	/** Color for comments which are floating (they do not resize to nodes) */
+	UPROPERTY(EditAnywhere, config, Category = Default)
+	FLinearColor FloatingColor;
+
+	/** Color for comments which are floating (they do not resize to nodes) */
+	UPROPERTY(EditAnywhere, config, Category = Default)
+	TArray<FLinearColor> PresetColors;
+
 	/** Set all nodes in the graph to the default color */
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	bool bAggressivelyUseDefaultColor;
