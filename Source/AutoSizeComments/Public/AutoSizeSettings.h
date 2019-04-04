@@ -67,7 +67,11 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	float EmptyCommentBoxSpeed;
 
-	/** If enabled, this should set "Color Bubble" to true for every comment box that is created or loaded */
+	/** Globally set "Color Bubble" for every comment box that is created or loaded */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
-	bool bForceColorCommentBubbles;
+	bool bGlobalColorBubble;
+
+	/** Globally set "Show Bubble When Zoomed" for every comment box that is created or loaded */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bGlobalShowBubbleWhenZoomed;
 };

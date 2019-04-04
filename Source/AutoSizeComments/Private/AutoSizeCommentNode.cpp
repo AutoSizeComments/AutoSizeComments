@@ -66,7 +66,9 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 	}
 
 	// Set comment bubble color
-	CommentNode->bColorCommentBubble = GetMutableDefault<UAutoSizeSettings>()->bForceColorCommentBubbles;
+	CommentNode->bColorCommentBubble = GetMutableDefault<UAutoSizeSettings>()->bGlobalColorBubble;
+
+	CommentNode->bCommentBubbleVisible_InDetailsPanel = GetMutableDefault<UAutoSizeSettings>()->bGlobalShowBubbleWhenZoomed;
 }
 
 void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)

@@ -82,7 +82,7 @@ protected:
 	//~ End SNodePanel::SNode Interface
 
 	virtual FReply HandleRandomizeColorButtonClicked();
-	virtual FReply HandleFloatingButtonClicked();
+	virtual FReply HandleHeaderButtonClicked();
 	virtual FReply HandleRefreshButtonClicked();
 	virtual FReply HandlePresetButtonClicked(FPresetCommentStyle Color);
 	virtual FReply HandleAddButtonClicked();
@@ -151,6 +151,6 @@ public:
 	void SnapVectorToGrid(FVector2D& Vector);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 
-	bool IsFloatingComment();
+	bool IsHeaderComment();
 	bool IsPresetStyle();
 };

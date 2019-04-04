@@ -10,9 +10,10 @@ UAutoSizeSettings::UAutoSizeSettings(const FObjectInitializer& ObjectInitializer
 	bUseDefaultFontSize = false;
 	bUseRandomColor = true;
 	DefaultCommentColor = FLinearColor::White;
-	FloatingStyle.Color = FLinearColor::Gray;
+	HeaderStyle.Color = FLinearColor::Gray;
 	bAggressivelyUseDefaultColor = false;
 	bMoveEmptyCommentBoxes = true;
 	EmptyCommentBoxSpeed = 10;
-	bForceColorCommentBubbles = false;
+	bGlobalColorBubble = false;
+	bGlobalShowBubbleWhenZoomed = true;
 }
