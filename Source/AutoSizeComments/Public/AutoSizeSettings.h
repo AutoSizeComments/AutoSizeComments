@@ -47,9 +47,9 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Color)
 	bool bAggressivelyUseDefaultColor;
 
-	/** Color for comments which are floating (they do not resize to nodes) */
+	/** Style for header comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = Styles)
-	FPresetCommentStyle FloatingStyle;
+	FPresetCommentStyle HeaderStyle;
 
 	/** Preset styles (each style will have its own button on the comment box) */
 	UPROPERTY(EditAnywhere, config, Category = Styles)

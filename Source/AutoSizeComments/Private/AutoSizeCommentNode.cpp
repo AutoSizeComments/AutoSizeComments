@@ -48,7 +48,7 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 		if (CommentNode->CommentColor == DefaultColor || CommentNode->CommentColor == FLinearColor::White) // only randomize if the node has the default color
 			CommentNode->CommentColor = FLinearColor::MakeRandomColor();
 	}
-	else if (!IsFloatingComment())
+	else if (!IsHeaderComment())
 	{
 		if (GetMutableDefault<UAutoSizeSettings>()->bAggressivelyUseDefaultColor)
 		{
@@ -60,7 +60,7 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 		}
 	}
 
-	if (GetMutableDefault<UAutoSizeSettings>()->bUseDefaultFontSize && !IsFloatingComment() && !bIsPreset)
+	if (GetMutableDefault<UAutoSizeSettings>()->bUseDefaultFontSize && !IsHeaderComment() && !bIsPreset)
 	{
 		CommentNode->FontSize = GetMutableDefault<UAutoSizeSettings>()->DefaultFontSize;
 	}
@@ -81,7 +81,7 @@ void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFi
 
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 	
-	if (!(KeysState.IsAltDown() && KeysState.IsControlDown()) && !IsFloatingComment())
+	if (!(KeysState.IsAltDown() && KeysState.IsControlDown()) && !IsHeaderComment())
 	{
 		if (CommentNode && CommentNode->MoveMode == ECommentBoxMode::GroupMovement)
 		{
@@ -175,7 +175,7 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 		int32 OldNodeHeight = GraphNode->NodeHeight;
 
 
-		if (IsFloatingComment())
+		if (IsHeaderComment())
 		{
 			Delta.Y = 0;
 		}
@@ -199,7 +199,7 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 			DragSize.Y -= Delta.Y;
 		}
 		
-		float MinY = IsFloatingComment() ? 0 : 80;
+		float MinY = IsHeaderComment() ? 0 : 80;
 		FVector2D ClampedSize(FMath::Max(125.f, DragSize.X), FMath::Max(GetTitleBarHeight() + MinY, DragSize.Y));
 
 		if (UserSize != ClampedSize)
@@ -255,7 +255,7 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 {
 	UpdateRefreshDelay();
 
-	if (RefreshNodesDelay == 0 && !IsFloatingComment() && !bUserIsDragging)
+	if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
 	{
 		FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 
@@ -277,7 +277,7 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
-	if (IsFloatingComment())
+	if (IsHeaderComment())
 	{
 		UserSize.Y = GetTitleBarHeight();
 	}
@@ -357,15 +357,15 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		];
 
 	// Create the random color button
-	TSharedRef<SButton> ToggleFloatingButton = SNew(SButton)
+	TSharedRef<SButton> ToggleHeaderButton = SNew(SButton)
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentNode::GetCommentTitleBarColor)
-		.OnClicked(this, &SAutoSizeCommentNode::HandleFloatingButtonClicked)
+		.OnClicked(this, &SAutoSizeCommentNode::HandleHeaderButtonClicked)
 		.ContentPadding(FMargin(2, 2))
-		.ToolTipText(FText::FromString("Toggle between a floating node and a resizing node"))
+		.ToolTipText(FText::FromString("Toggle between a header node and a resizing node"))
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			[
-				SNew(STextBlock).Text(FText::FromString(FString("F"))).ColorAndOpacity(FLinearColor::White)
+				SNew(STextBlock).Text(FText::FromString(FString("H"))).ColorAndOpacity(FLinearColor::White)
 			]
 		];
 
@@ -445,7 +445,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 	TArray<FPresetCommentStyle> Presets = GetMutableDefault<UAutoSizeSettings>()->PresetStyles;
 	CachedNumPresets = Presets.Num();
 
-	if (!IsFloatingComment()) // floating comments don't need color presets
+	if (!IsHeaderComment()) // header comments don't need color presets
 	{
 		for (FPresetCommentStyle Preset : Presets)
 		{
@@ -469,9 +469,9 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 	CommentControls->AddSlot().AttachWidget(RemoveButton);
 	CommentControls->AddSlot().AttachWidget(ClearButton);
 	
-	// Create the bottom horizontal box containing comment controls and anchor points (floating comments don't need these)
+	// Create the bottom horizontal box containing comment controls and anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> BottomHBox = SNew(SHorizontalBox);
-	if (!IsFloatingComment())
+	if (!IsHeaderComment())
 	{
 		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
 		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill).AttachWidget(CommentControls);
@@ -516,7 +516,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 					]
 					+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top)
 					[
-						ToggleFloatingButton
+						ToggleHeaderButton
 					]
 					+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top)
 					[
@@ -618,9 +618,9 @@ FReply SAutoSizeCommentNode::HandleRandomizeColorButtonClicked()
 	return FReply::Handled();
 }
 
-FReply SAutoSizeCommentNode::HandleFloatingButtonClicked()
+FReply SAutoSizeCommentNode::HandleHeaderButtonClicked()
 {
-	FPresetCommentStyle Style = GetMutableDefault<UAutoSizeSettings>()->FloatingStyle;
+	FPresetCommentStyle Style = GetMutableDefault<UAutoSizeSettings>()->HeaderStyle;
 
 	if (CommentNode->CommentColor == Style.Color)
 	{
@@ -1154,9 +1154,9 @@ bool SAutoSizeCommentNode::IsLocalPositionInCorner(const FVector2D& MousePositio
 	return MousePositionInNode.Y >= CornerBounds.Y && MousePositionInNode.X >= CornerBounds.X;
 }
 
-bool SAutoSizeCommentNode::IsFloatingComment()
+bool SAutoSizeCommentNode::IsHeaderComment()
 {
-	return CommentNode->CommentColor == GetMutableDefault<UAutoSizeSettings>()->FloatingStyle.Color;
+	return CommentNode->CommentColor == GetMutableDefault<UAutoSizeSettings>()->HeaderStyle.Color;
 }
 
 bool SAutoSizeCommentNode::IsPresetStyle()
