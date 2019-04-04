@@ -127,6 +127,8 @@ private:
 	/** cached font size */
 	int32 CachedFontSize;
 
+	int32 CachedNumPresets;
+
 	/** Local copy of the comment style */
 	FInlineEditableTextBlockStyle CommentStyle;
 
@@ -134,7 +136,7 @@ public:
 	/** Update the nodes */
 	void UpdateRefreshDelay();
 
-	void RefreshNodesInsideComment(bool bCheckContained = true);
+	void RefreshNodesInsideComment(bool bCheckContained);
 
 	float GetTitleBarHeight() const;
 

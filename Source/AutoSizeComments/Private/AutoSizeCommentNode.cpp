@@ -48,7 +48,7 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 		if (CommentNode->CommentColor == DefaultColor || CommentNode->CommentColor == FLinearColor::White) // only randomize if the node has the default color
 			CommentNode->CommentColor = FLinearColor::MakeRandomColor();
 	}
-	else // set to the default color
+	else if (CommentNode->CommentColor != GetMutableDefault<UAutoSizeSettings>()->FloatingColor)
 	{
 		if (GetMutableDefault<UAutoSizeSettings>()->bAggressivelyUseDefaultColor)
 		{
@@ -60,12 +60,8 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 		}
 	}
 
-	// If the "Force Color Comment Bubbles" user setting is checked
-	if (GetMutableDefault<UAutoSizeSettings>()->bForceColorCommentBubbles)
-	{
-		// Set this comment box to use a colored comment bubble
-		CommentNode->bColorCommentBubble = true;
-	}
+	// Set comment bubble color
+	CommentNode->bColorCommentBubble = GetMutableDefault<UAutoSizeSettings>()->bForceColorCommentBubbles;
 }
 
 void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
@@ -153,7 +149,7 @@ FReply SAutoSizeCommentNode::OnMouseButtonUp(const FGeometry& MyGeometry, const 
 	{
 		bUserIsDragging = false;
 		Anchor = NONE;
-		RefreshNodesInsideComment();
+		RefreshNodesInsideComment(true);
 		return FReply::Handled().ReleaseMouseCapture();
 	}
 
@@ -173,6 +169,12 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 		int32 OldNodeWidth = GraphNode->NodeWidth;
 		int32 OldNodeHeight = GraphNode->NodeHeight;
 
+
+		if (IsFloatingComment())
+		{
+			Delta.Y = 0;
+		}
+
 		if (Anchor == BOTTOM_RIGHT)
 		{
 			DragSize += Delta;
@@ -191,8 +193,9 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 			DragSize.X += Delta.X;
 			DragSize.Y -= Delta.Y;
 		}
+	
 
-		FVector2D ClampedSize(FMath::Max(125.f, DragSize.X), FMath::Max(100.f, DragSize.Y));
+		FVector2D ClampedSize(FMath::Max(125.f, DragSize.X), FMath::Max(GetTitleBarHeight() + 80, DragSize.Y));
 
 		if (UserSize != ClampedSize)
 		{
@@ -269,6 +272,11 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
+	if (IsFloatingComment())
+	{
+		UserSize.Y = GetTitleBarHeight();
+	}
+
 	// Update cached title
 	const FString CurrentCommentTitle = GetNodeComment();
 	if (CurrentCommentTitle != CachedCommentTitle)
@@ -285,6 +293,11 @@ void SAutoSizeCommentNode::Tick(const FGeometry& AllottedGeometry, const double 
 
 	// Update cached font size
 	if (CachedFontSize != CommentNode->FontSize)
+	{
+		UpdateGraphNode();
+	}
+
+	if (CachedNumPresets != GetMutableDefault<UAutoSizeSettings>()->PresetStyles.Num())
 	{
 		UpdateGraphNode();
 	}
@@ -415,27 +428,52 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
 		];
 
-	TSharedRef<SHorizontalBox> PresetHBox = SNew(SHorizontalBox);
+	TSharedRef<SHorizontalBox> ColorControls = SNew(SHorizontalBox);
 
-	TSharedRef<SBorder> Border = SNew(SBorder)
-		.ColorAndOpacity(FLinearColor::White)
+	TSharedRef<SBorder> ColorControlsWithBorder = 
+		SNew(SBorder).ColorAndOpacity(FLinearColor::White)
 		[
-			PresetHBox
+			ColorControls
 		];
 
-	for (FPresetCommentStyle Style : GetMutableDefault<UAutoSizeSettings>()->PresetStyles)
-	{
-		TSharedRef<SButton> Button = SNew(SButton)
-			.ButtonColorAndOpacity(Style.Color)
-			.OnClicked(this, &SAutoSizeCommentNode::HandlePresetButtonClicked, Style)
-			.ToolTipText(FText::FromString("Set preset color"))
-			[
-				SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(10).HeightOverride(10)
-			];
+	TArray<FPresetCommentStyle> Presets = GetMutableDefault<UAutoSizeSettings>()->PresetStyles;
+	CachedNumPresets = Presets.Num();
 
-		PresetHBox->AddSlot().AttachWidget(Button);
+	if (!IsFloatingComment())
+	{
+		for (FPresetCommentStyle Preset : Presets)
+		{
+			TSharedRef<SButton> Button = SNew(SButton)
+				.ButtonColorAndOpacity(Preset.Color)
+				.OnClicked(this, &SAutoSizeCommentNode::HandlePresetButtonClicked, Preset)
+				.ToolTipText(FText::FromString("Set preset color"))
+				[
+					SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(10).HeightOverride(10)
+				];
+
+			ColorControls->AddSlot().AttachWidget(Button);
+		}
+		ColorControls->AddSlot().AttachWidget(RandomColorButton);
 	}
 	
+	TSharedRef<SHorizontalBox> CommentControls = SNew(SHorizontalBox);
+	if (CommentNode->CommentColor != GetMutableDefault<UAutoSizeSettings>()->FloatingColor)
+	{
+		CommentControls->AddSlot().AttachWidget(ReplaceButton);
+		CommentControls->AddSlot().AttachWidget(AddButton);
+		CommentControls->AddSlot().AttachWidget(RemoveButton);
+		CommentControls->AddSlot().AttachWidget(ClearButton);
+	}
+
+	TSharedRef<SHorizontalBox> BottomHBox = SNew(SHorizontalBox);
+	if (!IsFloatingComment())
+	{
+		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill).AttachWidget(CommentControls);
+		BottomHBox->AddSlot().FillWidth(1).HAlign(HAlign_Left).VAlign(VAlign_Fill).AttachWidget(SNew(SSpacer));
+		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+	}
+
 	ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	GetOrAddSlot(ENodeZone::Center).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 	[
@@ -473,29 +511,21 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 					]
 					+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top)
 					[
+						ToggleFloatingButton
+					]
+					+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top)
+					[
 						AnchorBox
 					]
 				]
 			]
-			+ SVerticalBox::Slot().AutoHeight().Padding(1.0f) // I don't know what this does...
+			+ SVerticalBox::Slot().AutoHeight().Padding(1.0f)
 			[
 				ErrorReporting->AsWidget()
 			]
 			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right).VAlign(VAlign_Top)
 			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Fill)
-				[
-					ToggleFloatingButton
-				]
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
-				[
-					PresetHBox
-				]
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
-				[
-					RandomColorButton
-				]
+				ColorControlsWithBorder
 			]
 			+ SVerticalBox::Slot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 			[
@@ -503,35 +533,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			]
 			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Bottom)
 			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom)
-				[
-					AnchorBox
-				]
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
-				[
-					ReplaceButton
-				]
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
-				[
-					AddButton
-				]
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
-				[
-					RemoveButton
-				]
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill)
-				[
-					ClearButton
-				]
-				+ SHorizontalBox::Slot().FillWidth(1).HAlign(HAlign_Left).VAlign(VAlign_Fill)
-				[
-					SNew(SSpacer)
-				]
-				+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom)
-				[
-					AnchorBox
-				]
+				BottomHBox
 			]
 		]
 	];
@@ -625,6 +627,8 @@ FReply SAutoSizeCommentNode::HandleFloatingButtonClicked()
 		CommentNode->CommentColor = GetMutableDefault<UAutoSizeSettings>()->FloatingColor;
 		CommentNode->ClearNodesUnderComment();
 	}
+
+	UpdateGraphNode();
 
 	return FReply::Handled();
 }
@@ -739,13 +743,18 @@ void SAutoSizeCommentNode::UpdateRefreshDelay()
 	if (GetDesiredSize().IsZero())
 		return;
 
+	FVector2D NodePosition = GetPosition();
+	FVector2D BottomRight = NodePosition + FVector2D(1, 1);
+	if (!OwnerGraphPanelPtr.Pin().Get()->IsRectVisible(NodePosition, BottomRight))
+		return;
+
 	if (RefreshNodesDelay > 0)
 	{
 		RefreshNodesDelay -= 1;
 
 		if (RefreshNodesDelay == 0)
 		{
-			RefreshNodesInsideComment(true);
+			RefreshNodesInsideComment(false);
 		}
 	}
 }
@@ -769,7 +778,7 @@ void SAutoSizeCommentNode::RefreshNodesInsideComment(bool bCheckContained)
 	FChildren* PanelChildren = OwnerPanel->GetAllChildren();
 	int32 NumChildren = PanelChildren->Num();
 
-	// Iterate across all nodes in the graph,
+	// Iterate across all nodes in the graph
 	for (int32 NodeIndex = 0; NodeIndex < NumChildren; ++NodeIndex)
 	{
 		const TSharedRef<SGraphNode> SomeNodeWidget = StaticCastSharedRef<SGraphNode>(PanelChildren->GetChildAt(NodeIndex));
@@ -784,12 +793,13 @@ void SAutoSizeCommentNode::RefreshNodesInsideComment(bool bCheckContained)
 		// check if the node bounds is contained in ourself
 		if (GraphObject != CommentNode)
 		{
+
 			const FVector2D SomeNodePosition = SomeNodeWidget->GetPosition();
 			const FVector2D SomeNodeSize = SomeNodeWidget->GetDesiredSize();
 			const FSlateRect NodeGeometryGraphSpace = FSlateRect::FromPointAndExtent(SomeNodePosition, SomeNodeSize);
 
-			bool bShouldAddNode =
-				bCheckContained ? FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace)
+			bool bShouldAddNode = bCheckContained 
+				? FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace)
 				: CommentRect.ContainsPoint(SomeNodePosition);
 
 			if (bShouldAddNode)
@@ -972,11 +982,23 @@ void SAutoSizeCommentNode::ResizeToFit()
 			GraphNode->NodePosY = DesiredPos.Y;
 		}
 	}
-	else if (UserSize.X < 225 && UserSize.Y < 150) // the comment has no nodes, resize to default
+	else
 	{
-		UserSize.X = 225;
-		UserSize.Y = 150;
-		GetNodeObj()->ResizeNode(UserSize);
+		bool bEdited = false;
+		if (UserSize.X < 125) // the comment has no nodes, resize to default
+		{
+			bEdited = true;
+			UserSize.X = 225;
+		}
+
+		if (UserSize.Y < 80)
+		{
+			bEdited = true;
+			UserSize.Y = 150;
+		}
+
+		if (bEdited)
+			GetNodeObj()->ResizeNode(UserSize);
 	}
 }
 
