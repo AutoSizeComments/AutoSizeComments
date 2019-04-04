@@ -27,8 +27,6 @@
 #include "AutoSizeSettings.h"
 #include "GraphEditorSettings.h"
 
-
-
 void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNode* InNode)
 {
 	GraphNode = InNode;
@@ -41,6 +39,8 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 	UserSize.X = InNode->NodeWidth;
 	UserSize.Y = InNode->NodeHeight;
 
+	bool bIsPreset = IsPresetStyle();
+
 	// Set comment color
 	FLinearColor DefaultColor = GetMutableDefault<UAutoSizeSettings>()->DefaultCommentColor;
 	if (GetMutableDefault<UAutoSizeSettings>()->bUseRandomColor)
@@ -48,7 +48,7 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 		if (CommentNode->CommentColor == DefaultColor || CommentNode->CommentColor == FLinearColor::White) // only randomize if the node has the default color
 			CommentNode->CommentColor = FLinearColor::MakeRandomColor();
 	}
-	else if (CommentNode->CommentColor != GetMutableDefault<UAutoSizeSettings>()->FloatingColor)
+	else if (!IsFloatingComment())
 	{
 		if (GetMutableDefault<UAutoSizeSettings>()->bAggressivelyUseDefaultColor)
 		{
@@ -58,6 +58,11 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 		{
 			CommentNode->CommentColor = DefaultColor;
 		}
+	}
+
+	if (GetMutableDefault<UAutoSizeSettings>()->bUseDefaultFontSize && !IsFloatingComment() && !bIsPreset)
+	{
+		CommentNode->FontSize = GetMutableDefault<UAutoSizeSettings>()->DefaultFontSize;
 	}
 
 	// Set comment bubble color
@@ -193,9 +198,9 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 			DragSize.X += Delta.X;
 			DragSize.Y -= Delta.Y;
 		}
-	
-
-		FVector2D ClampedSize(FMath::Max(125.f, DragSize.X), FMath::Max(GetTitleBarHeight() + 80, DragSize.Y));
+		
+		float MinY = IsFloatingComment() ? 0 : 80;
+		FVector2D ClampedSize(FMath::Max(125.f, DragSize.X), FMath::Max(GetTitleBarHeight() + MinY, DragSize.Y));
 
 		if (UserSize != ClampedSize)
 		{
@@ -428,6 +433,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
 		];
 
+	// Create the color controls
 	TSharedRef<SHorizontalBox> ColorControls = SNew(SHorizontalBox);
 
 	TSharedRef<SBorder> ColorControlsWithBorder = 
@@ -439,7 +445,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 	TArray<FPresetCommentStyle> Presets = GetMutableDefault<UAutoSizeSettings>()->PresetStyles;
 	CachedNumPresets = Presets.Num();
 
-	if (!IsFloatingComment())
+	if (!IsFloatingComment()) // floating comments don't need color presets
 	{
 		for (FPresetCommentStyle Preset : Presets)
 		{
@@ -456,15 +462,14 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		ColorControls->AddSlot().AttachWidget(RandomColorButton);
 	}
 	
+	// Create the comment controls
 	TSharedRef<SHorizontalBox> CommentControls = SNew(SHorizontalBox);
-	if (CommentNode->CommentColor != GetMutableDefault<UAutoSizeSettings>()->FloatingColor)
-	{
-		CommentControls->AddSlot().AttachWidget(ReplaceButton);
-		CommentControls->AddSlot().AttachWidget(AddButton);
-		CommentControls->AddSlot().AttachWidget(RemoveButton);
-		CommentControls->AddSlot().AttachWidget(ClearButton);
-	}
-
+	CommentControls->AddSlot().AttachWidget(ReplaceButton);
+	CommentControls->AddSlot().AttachWidget(AddButton);
+	CommentControls->AddSlot().AttachWidget(RemoveButton);
+	CommentControls->AddSlot().AttachWidget(ClearButton);
+	
+	// Create the bottom horizontal box containing comment controls and anchor points (floating comments don't need these)
 	TSharedRef<SHorizontalBox> BottomHBox = SNew(SHorizontalBox);
 	if (!IsFloatingComment())
 	{
@@ -615,16 +620,18 @@ FReply SAutoSizeCommentNode::HandleRandomizeColorButtonClicked()
 
 FReply SAutoSizeCommentNode::HandleFloatingButtonClicked()
 {
-	FLinearColor FloatingColor = GetMutableDefault<UAutoSizeSettings>()->FloatingColor;
+	FPresetCommentStyle Style = GetMutableDefault<UAutoSizeSettings>()->FloatingStyle;
 
-	if (CommentNode->CommentColor == FloatingColor)
+	if (CommentNode->CommentColor == Style.Color)
 	{
 		CommentNode->CommentColor = FLinearColor::MakeRandomColor();
+		CommentNode->FontSize = GetMutableDefault<UAutoSizeSettings>()->DefaultFontSize;
 		RefreshNodesInsideComment(false);
 	}
 	else
 	{
-		CommentNode->CommentColor = GetMutableDefault<UAutoSizeSettings>()->FloatingColor;
+		CommentNode->CommentColor = Style.Color;
+		CommentNode->FontSize = Style.FontSize;
 		CommentNode->ClearNodesUnderComment();
 	}
 
@@ -1149,7 +1156,16 @@ bool SAutoSizeCommentNode::IsLocalPositionInCorner(const FVector2D& MousePositio
 
 bool SAutoSizeCommentNode::IsFloatingComment()
 {
-	return CommentNode->CommentColor == GetMutableDefault<UAutoSizeSettings>()->FloatingColor;
+	return CommentNode->CommentColor == GetMutableDefault<UAutoSizeSettings>()->FloatingStyle.Color;
+}
+
+bool SAutoSizeCommentNode::IsPresetStyle()
+{
+	for (FPresetCommentStyle Style : GetMutableDefault<UAutoSizeSettings>()->PresetStyles)
+		if (CommentNode->CommentColor == Style.Color && CommentNode->FontSize == Style.FontSize)
+			return true;
+
+	return false;
 }
 
 FSlateRect SAutoSizeCommentNode::GetNodeBounds(UEdGraphNode* Node)

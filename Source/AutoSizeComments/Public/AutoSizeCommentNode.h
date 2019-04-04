@@ -152,4 +152,5 @@ public:
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 
 	bool IsFloatingComment();
+	bool IsPresetStyle();
 };

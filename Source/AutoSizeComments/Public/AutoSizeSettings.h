@@ -27,39 +27,47 @@ class AUTOSIZECOMMENTS_API UAutoSizeSettings : public UObject
 public:
 	UAutoSizeSettings(const FObjectInitializer& ObjectInitializer);
 
-	/** Amount of padding for around the contents of a comment node */
-	UPROPERTY(EditAnywhere, config, Category = Default)
-	FVector2D CommentNodePadding;
+	/** The default font size for comment boxes */
+	UPROPERTY(EditAnywhere, config, Category = FontSize)
+	int DefaultFontSize;
 
-	/** If enabled, comment boxes will spawn with a random color. If disabled, use default color */
-	UPROPERTY(EditAnywhere, config, Category = Default)
-	bool bUseRandomColor;
+	/** If enabled, all nodes will be changed to the default font size (unless they are a preset or floating node) */
+	UPROPERTY(EditAnywhere, config, Category = FontSize)
+	bool bUseDefaultFontSize;
 
 	/** If Use Random Color is not enabled, comment boxes will spawn with this default color */
-	UPROPERTY(EditAnywhere, config, Category = Default)
+	UPROPERTY(EditAnywhere, config, Category = Color)
 	FLinearColor DefaultCommentColor;
 
-	/** Color for comments which are floating (they do not resize to nodes) */
-	UPROPERTY(EditAnywhere, config, Category = Default)
-	FLinearColor FloatingColor;
-
-	/** Preset styles (each style will have its own button on the comment box) */
-	UPROPERTY(EditAnywhere, config, Category = Default)
-	TArray<FPresetCommentStyle> PresetStyles;
+	/** If enabled, comment boxes will spawn with a random color. If disabled, use default color */
+	UPROPERTY(EditAnywhere, config, Category = Color)
+	bool bUseRandomColor;
 
 	/** Set all nodes in the graph to the default color */
-	UPROPERTY(EditAnywhere, config, Category = Default)
+	UPROPERTY(EditAnywhere, config, Category = Color)
 	bool bAggressivelyUseDefaultColor;
 
+	/** Color for comments which are floating (they do not resize to nodes) */
+	UPROPERTY(EditAnywhere, config, Category = Styles)
+	FPresetCommentStyle FloatingStyle;
+
+	/** Preset styles (each style will have its own button on the comment box) */
+	UPROPERTY(EditAnywhere, config, Category = Styles)
+	TArray<FPresetCommentStyle> PresetStyles;
+
+	/** Amount of padding for around the contents of a comment node */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	FVector2D CommentNodePadding;
+
 	/** If enabled, empty comment boxes will move out of the way of other comment boxes */
-	UPROPERTY(EditAnywhere, config, Category = Default)
+	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bMoveEmptyCommentBoxes;
 
 	/** The speed at which empty comment boxes move */
-	UPROPERTY(EditAnywhere, config, Category = Default)
+	UPROPERTY(EditAnywhere, config, Category = Misc)
 	float EmptyCommentBoxSpeed;
 
 	/** If enabled, this should set "Color Bubble" to true for every comment box that is created or loaded */
-	UPROPERTY(EditAnywhere, config, Category = Default)
+	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bForceColorCommentBubbles;
 };
