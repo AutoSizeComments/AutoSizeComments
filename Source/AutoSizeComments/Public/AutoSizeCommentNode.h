@@ -12,7 +12,7 @@ struct FPresetCommentStyle;
 /**
  * Auto resizing comment node
  */
-enum AnchorPoint
+enum ASC_AnchorPoint
 {
 	TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, NONE
 };
@@ -30,7 +30,8 @@ public:
 	/** Variables related to resizing the comment box by dragging anchor corner points */
 	FVector2D DragSize;
 	bool bUserIsDragging = false;
-	AnchorPoint Anchor;
+
+	ASC_AnchorPoint AnchorPoint = NONE;
 	float AnchorSize = 40.f;
 
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;

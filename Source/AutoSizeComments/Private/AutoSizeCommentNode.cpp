@@ -120,26 +120,26 @@ FReply SAutoSizeCommentNode::OnMouseButtonDown(const FGeometry& MyGeometry, cons
 		float Right = Size.X - AnchorSize;
 		float Bottom = Size.Y - AnchorSize;
 
-		Anchor = NONE;
+		AnchorPoint = NONE;
 
 		if (MousePositionInNode.X > Right && MousePositionInNode.Y > Bottom)
 		{
-			Anchor = BOTTOM_RIGHT;
+			AnchorPoint = BOTTOM_RIGHT;
 		}
 		else if (MousePositionInNode.X < Left && MousePositionInNode.Y < Top)
 		{
-			Anchor = TOP_LEFT;
+			AnchorPoint = TOP_LEFT;
 		}
 		else if (MousePositionInNode.X < Left && MousePositionInNode.Y > Bottom)
 		{
-			Anchor = BOTTOM_LEFT;
+			AnchorPoint = BOTTOM_LEFT;
 		}
 		else if (MousePositionInNode.X > Right && MousePositionInNode.Y < Top)
 		{
-			Anchor = TOP_RIGHT;
+			AnchorPoint = TOP_RIGHT;
 		}
 		
-		if (Anchor != NONE)
+		if (AnchorPoint != NONE)
 		{
 			DragSize = UserSize;
 			bUserIsDragging = true;
@@ -155,7 +155,7 @@ FReply SAutoSizeCommentNode::OnMouseButtonUp(const FGeometry& MyGeometry, const 
 	if ((MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) && bUserIsDragging)
 	{
 		bUserIsDragging = false;
-		Anchor = NONE;
+		AnchorPoint = NONE;
 		RefreshNodesInsideComment(true);
 		return FReply::Handled().ReleaseMouseCapture();
 	}
@@ -182,20 +182,20 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 			Delta.Y = 0;
 		}
 
-		if (Anchor == BOTTOM_RIGHT)
+		if (AnchorPoint == BOTTOM_RIGHT)
 		{
 			DragSize += Delta;
 		}
-		else if (Anchor == TOP_LEFT)
+		else if (AnchorPoint == TOP_LEFT)
 		{
 			DragSize -= Delta;
 		}
-		else if (Anchor == BOTTOM_LEFT)
+		else if (AnchorPoint == BOTTOM_LEFT)
 		{
 			DragSize.X -= Delta.X;
 			DragSize.Y += Delta.Y;
 		}
-		else if (Anchor == TOP_RIGHT)
+		else if (AnchorPoint == TOP_RIGHT)
 		{
 			DragSize.X += Delta.X;
 			DragSize.Y -= Delta.Y;
@@ -210,13 +210,13 @@ FReply SAutoSizeCommentNode::OnMouseMove(const FGeometry& MyGeometry, const FPoi
 			
 			GetNodeObj()->ResizeNode(UserSize);
 
-			if (Anchor == TOP_LEFT || Anchor == BOTTOM_LEFT)
+			if (AnchorPoint == TOP_LEFT || AnchorPoint == BOTTOM_LEFT)
 			{
 				int32 DeltaWidth = GraphNode->NodeWidth - OldNodeWidth;
 				GraphNode->NodePosX -= DeltaWidth;
 			}
 
-			if (Anchor == TOP_LEFT || Anchor == TOP_RIGHT)
+			if (AnchorPoint == TOP_LEFT || AnchorPoint == TOP_RIGHT)
 			{
 				int32 DeltaHeight = GraphNode->NodeHeight - OldNodeHeight;
 				GraphNode->NodePosY -= DeltaHeight;
