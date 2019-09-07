@@ -5,6 +5,7 @@
 
 UAutoSizeSettings::UAutoSizeSettings(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	
 	CommentNodePadding = FVector2D(30, 30);
 	DefaultFontSize = 18;
 	bUseDefaultFontSize = false;
@@ -16,4 +17,8 @@ UAutoSizeSettings::UAutoSizeSettings(const FObjectInitializer& ObjectInitializer
 	EmptyCommentBoxSpeed = 10;
 	bGlobalColorBubble = false;
 	bGlobalShowBubbleWhenZoomed = true;
+	bHideHeaderButton = false;
+	bHideCommentBoxControls = false;
+	bHidePresets = false;
+	bHideRandomizeButton = false;
 }

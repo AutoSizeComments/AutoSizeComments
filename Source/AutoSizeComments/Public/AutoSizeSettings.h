@@ -74,4 +74,20 @@ public:
 	/** Globally set "Show Bubble When Zoomed" for every comment box that is created or loaded */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bGlobalShowBubbleWhenZoomed;
+
+	/** Hide the header button */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	bool bHideHeaderButton;
+
+	/** Hide the preset buttons */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	bool bHidePresets;
+
+	/** Hide the randomize color button */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	bool bHideRandomizeButton;
+
+	/** Hide controls at the bottom of the comment box */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	bool bHideCommentBoxControls;
 };
