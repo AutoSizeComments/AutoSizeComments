@@ -493,7 +493,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 	// Create the top horizontal box containing anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> TopHBox = SNew(SHorizontalBox);
 	TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(AnchorBox);
-	TopHBox->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(CommentTextBlock);
+	TopHBox->AddSlot().Padding(2, 0, 2, 0).FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(CommentTextBlock);
 	if (!GetDefault<UAutoSizeSettings>()->bHideHeaderButton)
 	{
 		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(ToggleHeaderButton);
@@ -940,7 +940,8 @@ FSlateColor SAutoSizeCommentNode::GetCommentBubbleColor() const
 
 float SAutoSizeCommentNode::GetWrapAt() const
 {
-	return (float) FMath::Max(0.f, CachedWidth - 32.0f);
+	const float HeaderSize = GetDefault<UAutoSizeSettings>()->bHideHeaderButton ? 0 : 20;
+	return FMath::Max(0.f, CachedWidth - 50.0f - HeaderSize);
 }
 
 void SAutoSizeCommentNode::ResizeToFit()
