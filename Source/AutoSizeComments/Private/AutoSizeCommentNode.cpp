@@ -421,15 +421,15 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		.ContentPadding(FMargin(2, 2))
 		.ToolTipText(FText::FromString("Clear all nodes"))
 		[
-			 SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-			 [
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
 				TSharedRef<SWidget>(SNew(SImage).Image(
 					FCoreStyle::Get().GetBrush("TrashCan_Small")
 				))
-			 ]
+			]
 		];
 
-	TSharedRef<SBox> AnchorBox = 
+	TSharedRef<SBox> AnchorBox =
 		SNew(SBox).WidthOverride(16).HeightOverride(16)
 		[
 			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
@@ -438,7 +438,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 	// Create the color controls
 	TSharedRef<SHorizontalBox> ColorControls = SNew(SHorizontalBox);
 
-	TSharedRef<SBorder> ColorControlsWithBorder = 
+	TSharedRef<SBorder> ColorControlsWithBorder =
 		SNew(SBorder).ColorAndOpacity(FLinearColor::White)
 		[
 			ColorControls
@@ -465,13 +465,13 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 				ColorControls->AddSlot().AttachWidget(Button);
 			}
 		}
-		
+
 		if (!GetDefault<UAutoSizeSettings>()->bHideRandomizeButton)
 		{
 			ColorControls->AddSlot().AttachWidget(RandomColorButton);
 		}
 	}
-	
+
 	// Create the comment controls
 	TSharedRef<SHorizontalBox> CommentControls = SNew(SHorizontalBox);
 	CommentControls->AddSlot().AttachWidget(ReplaceButton);
@@ -489,7 +489,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		.WrapTextAt(this, &SAutoSizeCommentNode::GetWrapAt)
 		.MultiLine(true)
 		.ModiferKeyForNewLine(EModifierKey::Shift);
-	
+
 	// Create the top horizontal box containing anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> TopHBox = SNew(SHorizontalBox);
 	TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(AnchorBox);
@@ -499,7 +499,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(ToggleHeaderButton);
 	}
 	TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(AnchorBox);
-	
+
 	// Create the bottom horizontal box containing comment controls and anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> BottomHBox = SNew(SHorizontalBox);
 	if (!IsHeaderComment())
@@ -513,8 +513,27 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
 	}
 
-	
 
+	// Create the title bar
+	SAssignNew(TitleBar, SBorder)
+		.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleBackground"))
+		.BorderBackgroundColor(this, &SAutoSizeCommentNode::GetCommentTitleBarColor)
+		.HAlign(HAlign_Fill).VAlign(VAlign_Top)
+		[
+			TopHBox
+		];
+
+	// Create the main vertical box containing all the widgets
+	auto MainVBox = SNew(SVerticalBox).ToolTipText(this, &SGraphNode::GetNodeTooltip);	
+	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(TitleBar.ToSharedRef());
+	MainVBox->AddSlot().AutoHeight().Padding(1.0f).AttachWidget(ErrorReporting->AsWidget());
+	if (!GetDefault<UAutoSizeSettings>()->bHidePresets || !GetDefault<UAutoSizeSettings>()->bHideRandomizeButton)
+	{
+		MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(ColorControlsWithBorder);
+	}
+	MainVBox->AddSlot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
+	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Bottom).AttachWidget(BottomHBox);
+	
 	ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	GetOrAddSlot(ENodeZone::Center).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 	[
@@ -524,33 +543,7 @@ void SAutoSizeCommentNode::UpdateGraphNode()
 		.BorderBackgroundColor(this, &SAutoSizeCommentNode::GetCommentBodyColor)
 		.AddMetaData<FGraphNodeMetaData>(TagMeta)
 		[
-			SNew(SVerticalBox).ToolTipText(this, &SGraphNode::GetNodeTooltip)
-			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top)
-			[
-				SAssignNew(TitleBar, SBorder)
-				.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleBackground"))
-				.BorderBackgroundColor(this, &SAutoSizeCommentNode::GetCommentTitleBarColor)
-				.HAlign(HAlign_Fill).VAlign(VAlign_Top)
-				[
-					TopHBox
-				]
-			]
-			+ SVerticalBox::Slot().AutoHeight().Padding(1.0f)
-			[
-				ErrorReporting->AsWidget()
-			]
-			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right).VAlign(VAlign_Top)
-			[
-				ColorControlsWithBorder
-			]
-			+ SVerticalBox::Slot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
-			[
-				SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder"))
-			]
-			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Bottom)
-			[
-				BottomHBox
-			]
+			MainVBox
 		]
 	];
 
@@ -971,11 +964,15 @@ void SAutoSizeCommentNode::ResizeToFit()
 	if (UnderComment.Num() > 0)
 	{
 		// get bounds and apply padding
-		FVector2D Padding = GetMutableDefault<UAutoSizeSettings>()->CommentNodePadding;
+		const FVector2D Padding = GetDefault<UAutoSizeSettings>()->CommentNodePadding;
+		
+		const float VerticalPadding = FMath::Max(30.f, Padding.Y + 16.f); // ensure we can always see the buttons
 
-		float VerticalPadding = FMath::Max(30.f, Padding.Y + 16.f); // ensure we can always see the buttons
+		const float TopPadding = (!GetDefault<UAutoSizeSettings>()->bHidePresets || !GetDefault<UAutoSizeSettings>()->bHideRandomizeButton) ? VerticalPadding : Padding.Y;
 
-		FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, VerticalPadding, Padding.X, VerticalPadding));
+		const float BottomPadding = !GetDefault<UAutoSizeSettings>()->bHideCommentBoxControls ? VerticalPadding : Padding.Y;
+		
+		const FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, TopPadding, Padding.X, BottomPadding));
 
 		const float TitleBarHeight = GetTitleBarHeight();
 
