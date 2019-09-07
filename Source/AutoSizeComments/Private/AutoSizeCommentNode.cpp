@@ -1200,7 +1200,6 @@ FSlateRect SAutoSizeCommentNode::GetNodeBounds(UEdGraphNode* Node)
 
 				Pos.Y -= CommentBubbleSize.Y;
 				Size.Y += CommentBubbleSize.Y;
-				Size.X = FMath::Max(Size.X, CommentBubbleSize.X);
 			}
 		}
 	}
