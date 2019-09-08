@@ -21,4 +21,5 @@ UAutoSizeSettings::UAutoSizeSettings(const FObjectInitializer& ObjectInitializer
 	bHideCommentBoxControls = false;
 	bHidePresets = false;
 	bHideRandomizeButton = false;
+	bHideCommentBubble = false;
 }

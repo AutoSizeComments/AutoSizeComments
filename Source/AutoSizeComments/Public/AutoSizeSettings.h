@@ -90,4 +90,8 @@ public:
 	/** Hide controls at the bottom of the comment box */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideCommentBoxControls;
+
+	/** Hide the comment bubble */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	bool bHideCommentBubble;
 };
