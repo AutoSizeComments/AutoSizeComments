@@ -114,11 +114,19 @@ FReply SAutoSizeCommentNode::OnMouseButtonDown(const FGeometry& MyGeometry, cons
 
 	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsEditable.Get())
 	{
-		FVector2D Size = GetDesiredSize();
-		float Top = AnchorSize;
-		float Left = AnchorSize;
-		float Right = Size.X - AnchorSize;
-		float Bottom = Size.Y - AnchorSize;
+		const FVector2D Size = GetDesiredSize();
+
+		// check the mouse position is actually in the node
+		if (MousePositionInNode.X < 0 || MousePositionInNode.X > Size.X || 
+			MousePositionInNode.Y < 0 || MousePositionInNode.Y > Size.Y)
+		{
+			return SGraphNode::OnMouseButtonDown(MyGeometry, MouseEvent);
+		}
+		
+		const float Top = AnchorSize;
+		const float Left = AnchorSize;
+		const float Right = Size.X - AnchorSize;
+		const float Bottom = Size.Y - AnchorSize;
 
 		AnchorPoint = NONE;
 
