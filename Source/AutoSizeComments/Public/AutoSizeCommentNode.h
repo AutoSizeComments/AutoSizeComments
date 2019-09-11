@@ -6,6 +6,7 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Editor/GraphEditor/Public/SGraphNodeComment.h"
 #include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
+#include "AutoSizeCommentsCacheFile.h"
 
 struct FPresetCommentStyle;
 
@@ -41,6 +42,7 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
+	~SAutoSizeCommentNode();
 
 	//~ Begin SWidget Interface
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
@@ -154,4 +156,7 @@ public:
 
 	bool IsHeaderComment();
 	bool IsPresetStyle();
+
+	bool LoadCache();
+	void SaveToCache();
 };

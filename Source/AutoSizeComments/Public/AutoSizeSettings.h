@@ -7,7 +7,7 @@
 #include "AutoSizeSettings.generated.h"
 
 USTRUCT()
-struct FPresetCommentStyle 
+struct FPresetCommentStyle
 {
 	GENERATED_BODY()
 
@@ -18,12 +18,11 @@ struct FPresetCommentStyle
 	int FontSize = 18;
 };
 
-
 UCLASS(config = EditorSettings)
 class AUTOSIZECOMMENTS_API UAutoSizeSettings : public UObject
 {
 	GENERATED_BODY()
-		
+
 public:
 	UAutoSizeSettings(const FObjectInitializer& ObjectInitializer);
 
@@ -74,6 +73,10 @@ public:
 	/** Globally set "Show Bubble When Zoomed" for every comment box that is created or loaded */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bGlobalShowBubbleWhenZoomed;
+
+	/** If enabled, nodes inside comments will be saved to a cache file */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bSaveCommentNodeDataToFile;
 
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)

@@ -2,6 +2,9 @@
 
 #include "AutoSizeCommentNode.h"
 
+#include "AutoSizeComments.h"
+#include "AutoSizeSettings.h"
+
 #include "EdGraphNode_Comment.h"
 #include "SGraphPanel.h"
 #include "SCommentBubble.h"
@@ -17,14 +20,9 @@
 #include "Widgets/Text/STextBlock.h"
 
 #include "Editor/GraphEditor/Public/SGraphPanel.h"
-
 #include "Runtime/Engine/Classes/EdGraph/EdGraph.h"
-
 #include "Framework/Application/SlateApplication.h"
-
 #include "Modules/ModuleManager.h"
-
-#include "AutoSizeSettings.h"
 #include "GraphEditorSettings.h"
 
 void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNode* InNode)
@@ -69,6 +67,11 @@ void SAutoSizeCommentNode::Construct(const FArguments& InArgs, class UEdGraphNod
 	CommentNode->bColorCommentBubble = GetMutableDefault<UAutoSizeSettings>()->bGlobalColorBubble;
 
 	CommentNode->bCommentBubbleVisible_InDetailsPanel = GetMutableDefault<UAutoSizeSettings>()->bGlobalShowBubbleWhenZoomed;
+}
+
+SAutoSizeCommentNode::~SAutoSizeCommentNode()
+{
+	SaveToCache();
 }
 
 void SAutoSizeCommentNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
@@ -595,13 +598,17 @@ void SAutoSizeCommentNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPanel)
 {
 	SGraphNode::SetOwner(OwnerPanel);
 
-	// Refresh the nodes under the comment
-	RefreshNodesDelay = 2;
+	if (!LoadCache())
+	{
+		// Refresh the nodes under the comment
+		RefreshNodesDelay = 2;
+	}
 }
 
 bool SAutoSizeCommentNode::CanBeSelected(const FVector2D& MousePositionInNode) const
 {
-	return (MousePositionInNode.X > 40 && MousePositionInNode.Y <= GetTitleBarHeight()) || IsLocalPositionInCorner(MousePositionInNode);
+	const FVector2D Size = GetDesiredSize();
+	return MousePositionInNode.X >= 0 && MousePositionInNode.X <= Size.X && MousePositionInNode.Y >= 0 && MousePositionInNode.Y <= GetTitleBarHeight();
 }
 
 FVector2D SAutoSizeCommentNode::GetDesiredSizeForMarquee() const
@@ -1184,6 +1191,49 @@ bool SAutoSizeCommentNode::IsPresetStyle()
 			return true;
 
 	return false;
+}
+
+bool SAutoSizeCommentNode::LoadCache()
+{
+	FASCCacheFile& SizeCache = IAutoSizeCommentsModule::Get().GetSizeCache();
+	TArray<UEdGraphNode*> OutNodesUnder;
+	if (SizeCache.GetNodesUnderComment(SharedThis(this), OutNodesUnder))
+	{
+		CommentNode->ClearNodesUnderComment();
+		for (UEdGraphNode* Node : OutNodesUnder)
+		{
+			CommentNode->AddNodeUnderComment(Node);
+		}
+		
+		return true;
+	}
+	
+	return false;
+}
+
+void SAutoSizeCommentNode::SaveToCache()
+{
+	FASCCommentData& GraphData = IAutoSizeCommentsModule::Get().GetSizeCache().GetGraphData(CommentNode->GetGraph());
+	
+	const bool bNodeWasDeleted = !CommentNode->GetGraph()->Nodes.Contains(CommentNode);
+	if (bNodeWasDeleted)
+	{
+		GraphData.CommentData.Remove(CommentNode->NodeGuid);
+	}
+	else
+	{
+		FASCNodesInside& NodesInside = GraphData.CommentData.FindOrAdd(CommentNode->NodeGuid);
+		NodesInside.NodeGuids.Empty();
+		
+		// update cache file
+		for (FCommentNodeSet::TConstIterator NodeIt(CommentNode->GetNodesUnderComment()); NodeIt; ++NodeIt)
+		{
+			if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
+			{
+				NodesInside.NodeGuids.Add(Node->NodeGuid);
+			}
+		}
+	}
 }
 
 FSlateRect SAutoSizeCommentNode::GetNodeBounds(UEdGraphNode* Node)

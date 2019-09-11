@@ -45,6 +45,11 @@ public class AutoSizeComments : ModuleRules
                 "EditorStyle",
                 "UnrealEd",
                 "InputCore",
+                "Projects",
+                "Json",
+                "JsonUtilities",
+                "EngineSettings",
+                "AssetRegistry"
             }
             );
 		
