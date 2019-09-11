@@ -7,9 +7,10 @@
 
 #include "AutoSizeCommentsCacheFile.generated.h"
 
-class SAutoSizeCommentNode;
+class SAutoSizeCommentsGraphNode;
+
 USTRUCT()
-struct FASCNodesInside
+struct AUTOSIZECOMMENTS_API FASCNodesInside
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -17,9 +18,8 @@ struct FASCNodesInside
 	TArray<FGuid> NodeGuids; // containing nodes
 };
 
-
 USTRUCT()
-struct FASCCommentData
+struct AUTOSIZECOMMENTS_API FASCCommentData
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -30,7 +30,7 @@ struct FASCCommentData
 };
 
 USTRUCT()
-struct FASCGraphData
+struct AUTOSIZECOMMENTS_API FASCGraphData
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -39,7 +39,7 @@ struct FASCGraphData
 };
 
 USTRUCT()
-struct FASCPackageData
+struct AUTOSIZECOMMENTS_API FASCPackageData
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -47,10 +47,10 @@ struct FASCPackageData
 	TMap<FName, FASCGraphData> PackageData; // package -> graph
 };
 
-class FASCCacheFile
+class AUTOSIZECOMMENTS_API FAutoSizeCommentsCacheFile
 {
 public:
-	FASCCacheFile();
+	FAutoSizeCommentsCacheFile();
 
 	FASCPackageData& GetPackageData() { return PackageData; }
 
@@ -66,7 +66,7 @@ public:
 
 	FString GetCachePath();
 
-	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
+	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 
 private:
 	FASCPackageData PackageData;

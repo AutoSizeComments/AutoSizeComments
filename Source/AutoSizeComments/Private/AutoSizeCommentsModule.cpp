@@ -1,15 +1,15 @@
 // Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
 
-#include "AutoSizeComments.h"
-#include "AutoSizeGraphNodeFactory.h"
-#include "AutoSizeSettings.h"
+#include "AutoSizeCommentsModule.h"
+#include "AutoSizeCommentsGraphPanelNodeFactory.h"
+#include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsCacheFile.h"
 
 #include "ISettingsModule.h"
 
 #define LOCTEXT_NAMESPACE "FAutoSizeCommentsModule"
 
-DEFINE_LOG_CATEGORY(LogASC)
+DEFINE_LOG_CATEGORY(LogAutoSizeComments)
 
 class FAutoSizeCommentsModule : public IAutoSizeCommentsModule
 {
@@ -20,12 +20,12 @@ public:
 
 	virtual void ShutdownModule() override;
 
-	FASCCacheFile& GetSizeCache() override { return Cache; }
+	FAutoSizeCommentsCacheFile& GetSizeCache() override { return Cache; }
 
 private:
-	TSharedPtr<FAutoSizeGraphNodeFactory> AutoSizeGraphNodeFactory;
+	TSharedPtr<FAutoSizeCommentsGraphPanelNodeFactory> ASCNodeFactory;
 
-	FASCCacheFile Cache;
+	FAutoSizeCommentsCacheFile Cache;
 };
 
 IMPLEMENT_MODULE(FAutoSizeCommentsModule, AutoSizeComments)
@@ -33,8 +33,8 @@ IMPLEMENT_MODULE(FAutoSizeCommentsModule, AutoSizeComments)
 void FAutoSizeCommentsModule::StartupModule()
 {
 	// Register the graph node factory
-	AutoSizeGraphNodeFactory = MakeShareable(new FAutoSizeGraphNodeFactory());
-	FEdGraphUtilities::RegisterVisualNodeFactory(AutoSizeGraphNodeFactory);
+	ASCNodeFactory = MakeShareable(new FAutoSizeCommentsGraphPanelNodeFactory());
+	FEdGraphUtilities::RegisterVisualNodeFactory(ASCNodeFactory);
 
 	// Register custom settings to appear in the project settings
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
@@ -43,7 +43,7 @@ void FAutoSizeCommentsModule::StartupModule()
 			"Editor", "Plugins", "Auto Size Comments",
 			LOCTEXT("AutoSizeCommentsName", "Auto Size Comments"),
 			LOCTEXT("AutoSizeCommentsNameDesc", "Configure options for auto resizing comment boxes"),
-			GetMutableDefault<UAutoSizeSettings>()
+			GetMutableDefault<UAutoSizeCommentsSettings>()
 		);
 	}
 }
@@ -55,10 +55,10 @@ void FAutoSizeCommentsModule::ShutdownModule()
 		SettingsModule->UnregisterSettings("Editor", "Plugins", "Auto Size Comments");
 
 	// Unregister the graph node factory
-	if (AutoSizeGraphNodeFactory.IsValid())
+	if (ASCNodeFactory.IsValid())
 	{
-		FEdGraphUtilities::UnregisterVisualNodeFactory(AutoSizeGraphNodeFactory);
-		AutoSizeGraphNodeFactory.Reset();
+		FEdGraphUtilities::UnregisterVisualNodeFactory(ASCNodeFactory);
+		ASCNodeFactory.Reset();
 	}
 }
 

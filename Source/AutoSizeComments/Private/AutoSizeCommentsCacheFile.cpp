@@ -16,11 +16,11 @@
 #include "AssetRegistry/Public/AssetRegistryModule.h"
 #include "AssetRegistry/Public/AssetRegistryState.h"
 #include "Engine/Blueprint.h"
-#include "AutoSizeCommentNode.h"
-#include "AutoSizeSettings.h"
-#include "AutoSizeComments.h"
+#include "AutoSizeCommentsGraphNode.h"
+#include "AutoSizeCommentsSettings.h"
+#include "AutoSizeCommentsModule.h"
 
-FASCCacheFile::FASCCacheFile()
+FAutoSizeCommentsCacheFile::FAutoSizeCommentsCacheFile()
 {
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
 	AssetRegistry.OnFilesLoaded().AddLambda([&]()
@@ -28,12 +28,12 @@ FASCCacheFile::FASCCacheFile()
 		LoadCache();
 	});
 
-	FCoreDelegates::OnPreExit.AddRaw(this, &FASCCacheFile::SaveCache);
+	FCoreDelegates::OnPreExit.AddRaw(this, &FAutoSizeCommentsCacheFile::SaveCache);
 }
 
-void FASCCacheFile::LoadCache()
+void FAutoSizeCommentsCacheFile::LoadCache()
 {
-	if (!GetDefault<UAutoSizeSettings>()->bSaveCommentNodeDataToFile)
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentNodeDataToFile)
 	{
 		return;
 	}
@@ -47,20 +47,20 @@ void FASCCacheFile::LoadCache()
 
 		if (FJsonObjectConverter::JsonObjectStringToUStruct(FileData, &PackageData, 0, 0))
 		{
-			UE_LOG(LogASC, Log, TEXT("Loaded auto size comments cache: %s"), *CachePath);
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Loaded auto size comments cache: %s"), *CachePath);
 		}
 		else
 		{
-			UE_LOG(LogASC, Log, TEXT("Failed to load auto size comments cache: %s"), *CachePath);
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Failed to load auto size comments cache: %s"), *CachePath);
 		}
 	}
 
 	CleanupFiles();
 }
 
-void FASCCacheFile::SaveCache()
+void FAutoSizeCommentsCacheFile::SaveCache()
 {
-	if (!GetDefault<UAutoSizeSettings>()->bSaveCommentNodeDataToFile)
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentNodeDataToFile)
 	{
 		return;
 	}
@@ -71,24 +71,24 @@ void FASCCacheFile::SaveCache()
 	FString JsonAsString;
 	FJsonObjectConverter::UStructToJsonObjectString(PackageData, JsonAsString);
 	FFileHelper::SaveStringToFile(JsonAsString, *CachePath);
-	UE_LOG(LogASC, Log, TEXT("Saved node cache to %s"), *CachePath);
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved node cache to %s"), *CachePath);
 }
 
-void FASCCacheFile::DeleteCache()
+void FAutoSizeCommentsCacheFile::DeleteCache()
 {
 	FString CachePath = GetCachePath();
 
 	if (FPlatformFileManager::Get().GetPlatformFile().DeleteFile(*CachePath))
 	{
-		UE_LOG(LogASC, Log, TEXT("Deleted cache file at %s"), *CachePath);
+		UE_LOG(LogAutoSizeComments, Log, TEXT("Deleted cache file at %s"), *CachePath);
 	}
 	else
 	{
-		UE_LOG(LogASC, Log, TEXT("Delete cache failed: Cache file does not exist or is read-only %s"), *CachePath);
+		UE_LOG(LogAutoSizeComments, Log, TEXT("Delete cache failed: Cache file does not exist or is read-only %s"), *CachePath);
 	}
 }
 
-void FASCCacheFile::CleanupFiles()
+void FAutoSizeCommentsCacheFile::CleanupFiles()
 {
 	// Get all assets
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
@@ -115,7 +115,7 @@ void FASCCacheFile::CleanupFiles()
 	}
 }
 
-FASCCommentData& FASCCacheFile::GetGraphData(UEdGraph* Graph)
+FASCCommentData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 {
 	UPackage* Package = Graph->GetOutermost();
 
@@ -124,7 +124,7 @@ FASCCommentData& FASCCacheFile::GetGraphData(UEdGraph* Graph)
 	return CacheData.GraphData.FindOrAdd(Graph->GraphGuid);
 }
 
-FString FASCCacheFile::GetCachePath()
+FString FAutoSizeCommentsCacheFile::GetCachePath()
 {
 	const FString PluginDir = IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir();
 
@@ -134,7 +134,7 @@ FString FASCCacheFile::GetCachePath()
 	return PluginDir + "/ASCCache/" + ProjectID.ToString() + ".json";
 }
 
-bool FASCCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommentNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment)
+bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment)
 {
 	UEdGraphNode* Node = ASCNode->GetNodeObj();
 	UEdGraph* Graph = Node->GetGraph();

@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogASC, Log, All)
+DECLARE_LOG_CATEGORY_EXTERN(LogAutoSizeComments, Log, All)
 
-class FASCCacheFile;
+class FAutoSizeCommentsCacheFile;
 
 /**
 * The public interface to this module
@@ -36,5 +36,5 @@ public:
 		return FModuleManager::Get().IsModuleLoaded("AutoSizeComments");
 	}
 
-	virtual FASCCacheFile& GetSizeCache() = 0;
+	virtual FAutoSizeCommentsCacheFile& GetSizeCache() = 0;
 };

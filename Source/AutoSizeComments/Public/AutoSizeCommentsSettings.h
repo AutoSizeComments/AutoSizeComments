@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "AutoSizeSettings.generated.h"
+#include "AutoSizeCommentsSettings.generated.h"
 
 USTRUCT()
 struct FPresetCommentStyle
@@ -19,12 +19,12 @@ struct FPresetCommentStyle
 };
 
 UCLASS(config = EditorSettings)
-class AUTOSIZECOMMENTS_API UAutoSizeSettings : public UObject
+class AUTOSIZECOMMENTS_API UAutoSizeCommentsSettings : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UAutoSizeSettings(const FObjectInitializer& ObjectInitializer);
+	UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer);
 
 	/** The default font size for comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = FontSize)

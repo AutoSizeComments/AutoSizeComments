@@ -6,7 +6,6 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Editor/GraphEditor/Public/SGraphNodeComment.h"
 #include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
-#include "AutoSizeCommentsCacheFile.h"
 
 struct FPresetCommentStyle;
 
@@ -18,7 +17,7 @@ enum ASC_AnchorPoint
 	TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, NONE
 };
 
-class SAutoSizeCommentNode : public SGraphNode
+class SAutoSizeCommentsGraphNode : public SGraphNode
 {
 public:
 	/** This delay is to ensure that all nodes exist on the graph and have their bounds properly set */
@@ -38,11 +37,11 @@ public:
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
 
 public:
-	SLATE_BEGIN_ARGS(SAutoSizeCommentNode) {}
+	SLATE_BEGIN_ARGS(SAutoSizeCommentsGraphNode) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
-	~SAutoSizeCommentNode();
+	~SAutoSizeCommentsGraphNode();
 
 	//~ Begin SWidget Interface
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
