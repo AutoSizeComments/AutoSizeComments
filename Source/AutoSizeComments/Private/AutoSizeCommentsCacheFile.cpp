@@ -125,7 +125,7 @@ FASCCommentData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 }
 
 FString FAutoSizeCommentsCacheFile::GetCachePath()
-{
+{	
 	const FString PluginDir = IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir();
 
 	const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>();
@@ -144,10 +144,13 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 	{
 		for (FGuid NodeInsideGuid : Data.CommentData[Node->NodeGuid].NodeGuids)
 		{
-			TSharedPtr<SGraphNode> NodeWidget = GraphPanel->GetNodeWidgetFromGuid(NodeInsideGuid);
-			if (NodeWidget.IsValid())
+			for (UEdGraphNode* NodeOnGraph : Graph->Nodes)
 			{
-				OutNodesUnderComment.Add(NodeWidget->GetNodeObj());
+				if (NodeOnGraph->NodeGuid == NodeInsideGuid)
+				{
+					OutNodesUnderComment.Add(NodeOnGraph);
+					break;
+				}
 			}
 		}
 
