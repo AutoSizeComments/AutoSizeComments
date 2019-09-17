@@ -4,7 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Engine/EngineTypes.h"
 #include "AutoSizeCommentsSettings.generated.h"
+
+UENUM()
+enum ECommentCollisionMethod
+{
+	ASC_Collision_Point UMETA(DisplayName = "Point"),
+	ASC_Collision_Intersect UMETA(DisplayName = "Overlap"),
+	ASC_Collision_Contained UMETA(DisplayName = "Contained"),
+	ASC_Collision_Default UMETA(DisplayName = "Default (Don't use this!)"),
+};
+
 
 USTRUCT()
 struct FPresetCommentStyle
@@ -42,6 +53,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Color)
 	bool bUseRandomColor;
 
+	/** Opacity used for the random color */
+	UPROPERTY(EditAnywhere, config, Category = Color)
+	float RandomColorOpacity;
+	
 	/** Set all nodes in the graph to the default color */
 	UPROPERTY(EditAnywhere, config, Category = Color)
 	bool bAggressivelyUseDefaultColor;
@@ -77,6 +92,22 @@ public:
 	/** If enabled, nodes inside comments will be saved to a cache file */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bSaveCommentNodeDataToFile;
+
+	/** If enabled, nodes inside comments will be saved to a cache file */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bDetectNodesContainedForNewComments;
+
+	/** Collision method to use when resizing comment nodes */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	TEnumAsByte<ECommentCollisionMethod> ResizeCollisionMethod;
+
+	/** Collision method to use when releasing alt */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	TEnumAsByte<ECommentCollisionMethod> AltCollisionMethod;
+
+	/** Don't add knot nodes to comment boxes */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bIgnoreKnotNodes;
 
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)

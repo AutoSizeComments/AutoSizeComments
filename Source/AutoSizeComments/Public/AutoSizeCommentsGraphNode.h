@@ -6,6 +6,7 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Editor/GraphEditor/Public/SGraphNodeComment.h"
 #include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
+#include "AutoSizeCommentsSettings.h"
 
 struct FPresetCommentStyle;
 
@@ -14,7 +15,7 @@ struct FPresetCommentStyle;
  */
 enum ASC_AnchorPoint
 {
-	TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, NONE
+	LEFT, RIGHT, TOP, BOTTOM, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, NONE
 };
 
 class SAutoSizeCommentsGraphNode : public SGraphNode
@@ -31,7 +32,7 @@ public:
 	FVector2D DragSize;
 	bool bUserIsDragging = false;
 
-	ASC_AnchorPoint AnchorPoint = NONE;
+	ASC_AnchorPoint CachedAnchorPoint = NONE;
 	float AnchorSize = 40.f;
 
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
@@ -134,11 +135,15 @@ private:
 	/** Local copy of the comment style */
 	FInlineEditableTextBlockStyle CommentStyle;
 
+	TSharedPtr<class SButton> ToggleHeaderButton;
+	TSharedPtr<class SBorder> ColorControlsWithBorder;
+	TSharedPtr<class SHorizontalBox> CommentControls;
+
 public:
 	/** Update the nodes */
 	void UpdateRefreshDelay();
 
-	void RefreshNodesInsideComment(bool bCheckContained);
+	void RefreshNodesInsideComment(ECommentCollisionMethod OverrideCollisionMethod = ASC_Collision_Default);
 
 	float GetTitleBarHeight() const;
 
@@ -153,9 +158,17 @@ public:
 	void SnapVectorToGrid(FVector2D& Vector);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 
-	bool IsHeaderComment();
+	ASC_AnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
+
+	bool IsHeaderComment() const;
 	bool IsPresetStyle();
 
 	bool LoadCache();
 	void SaveToCache();
+
+	void QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, ECommentCollisionMethod OverrideCollisionMethod = ASC_Collision_Default);
+
+	void RandomizeColor();
+
+	void AdjustMinSize(FVector2D& InSize);
 };
