@@ -75,6 +75,8 @@ public:
 	/** return rect of the title bar */
 	virtual FSlateRect GetTitleRect() const override;
 
+	class UEdGraphNode_Comment* GetCommentNodeObj() { return CommentNode; }
+
 protected:
 	//~ Begin SGraphNode Interface
 	virtual void UpdateGraphNode() override;
@@ -150,7 +152,7 @@ public:
 	/** Util functions */
 	FSlateRect GetBoundsForNodesInside();
 	FSlateRect GetNodeBounds(UEdGraphNode* Node);
-	TSet<UEdGraphNode_Comment*> GetOtherCommentNodes();
+	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> GetOtherCommentNodes();
 	void UpdateExistingCommentNodes();
 	bool AnySelectedNodes();
 	static bool RemoveNodesFromUnderComment(UEdGraphNode_Comment* InCommentNode, TSet<UObject*>& NodesToRemove);

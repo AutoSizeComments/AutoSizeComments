@@ -657,6 +657,9 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 
 int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 {
+	if (IsHeaderComment())
+		return 101;
+	
 	if (IsSelectedExclusively())
 		return 100;
 	
@@ -839,15 +842,17 @@ float SAutoSizeCommentsGraphNode::GetTitleBarHeight() const
 void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 {
 	// Get list of all other comment nodes
-	TSet<UEdGraphNode_Comment*> OtherCommentNodes = GetOtherCommentNodes();
+	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> OtherCommentNodes = GetOtherCommentNodes();
 
 	// Do nothing if we have no nodes under ourselves
 	if (CommentNode->GetNodesUnderComment().Num() == 0)
 	{
 		if (GetDefault<UAutoSizeCommentsSettings>()->bMoveEmptyCommentBoxes)
 		{
-			for (UEdGraphNode_Comment* OtherComment : OtherCommentNodes)
+			for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : OtherCommentNodes)
 			{
+				UEdGraphNode_Comment* OtherComment =  OtherCommentNode->GetCommentNodeObj();
+				
 				// if the other comment node contains us, remove ourselves
 				if (OtherComment->GetNodesUnderComment().Contains(CommentNode))
 				{
@@ -861,8 +866,10 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 		return;
 	}
 
-	for (UEdGraphNode_Comment* OtherComment : OtherCommentNodes)
+	for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : OtherCommentNodes)
 	{
+		UEdGraphNode_Comment* OtherComment = OtherCommentNode->GetCommentNodeObj();
+		
 		// if the other comment node contains us, remove ourselves
 		if (OtherComment->GetNodesUnderComment().Contains(CommentNode))
 		{
@@ -872,8 +879,10 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 		}
 	}
 
-	for (UEdGraphNode_Comment* OtherComment : OtherCommentNodes)
+	for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : OtherCommentNodes)
 	{
+		UEdGraphNode_Comment* OtherComment = OtherCommentNode->GetCommentNodeObj();
+		
 		if (OtherComment == CommentNode)
 			continue;
 
@@ -1035,8 +1044,10 @@ void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 	bool bIsSelected = OwnerPanel->SelectionManager.IsNodeSelected(GraphNode);
 
 	bool bIsContained = false;
-	for (UEdGraphNode_Comment* OtherComment : GetOtherCommentNodes())
+	for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : GetOtherCommentNodes())
 	{
+		UEdGraphNode_Comment* OtherComment = OtherCommentNode->GetCommentNodeObj();
+		
 		if (OtherComment->GetNodesUnderComment().Contains(CommentNode))
 		{
 			bIsContained = true;
@@ -1045,14 +1056,21 @@ void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 	}
 
 	// if the comment node is empty, move away from other comment nodes
-	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeCommentsSettings>()->bMoveEmptyCommentBoxes && !bIsSelected && !bIsContained)
+	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeCommentsSettings>()->bMoveEmptyCommentBoxes && !bIsSelected && !bIsContained && !IsHeaderComment())
 	{
 		FVector2D TotalMovement(0, 0);
 
 		bool bAnyCollision = false;
 
-		for (UEdGraphNode_Comment* OtherComment : GetOtherCommentNodes())
+		for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : GetOtherCommentNodes())
 		{
+			if (OtherCommentNode->IsHeaderComment())
+			{
+				continue;
+			}
+			
+			UEdGraphNode_Comment* OtherComment = OtherCommentNode->GetCommentNodeObj();
+			
 			if (OtherComment->GetNodesUnderComment().Contains(CommentNode))
 			{
 				continue;
@@ -1129,22 +1147,26 @@ bool SAutoSizeCommentsGraphNode::RemoveNodesFromUnderComment(UEdGraphNode_Commen
 	return bDidRemoveAnything;
 }
 
-TSet<UEdGraphNode_Comment*> SAutoSizeCommentsGraphNode::GetOtherCommentNodes()
+TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> SAutoSizeCommentsGraphNode::GetOtherCommentNodes()
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 	FChildren* PanelChildren = OwnerPanel->GetAllChildren();
 	int32 NumChildren = PanelChildren->Num();
 
 	// Get list of all other comment nodes
-	TSet<UEdGraphNode_Comment*> OtherCommentNodes;
+	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> OtherCommentNodes;
 	for (int32 NodeIndex = 0; NodeIndex < NumChildren; ++NodeIndex)
 	{
-		const TSharedRef<SGraphNode> SomeNodeWidget = StaticCastSharedRef<SGraphNode>(PanelChildren->GetChildAt(NodeIndex));
-		UObject* GraphObject = SomeNodeWidget->GetObjectBeingDisplayed();
-		if (UEdGraphNode_Comment* GraphCommentNode = Cast<UEdGraphNode_Comment>(GraphObject))
+		TSharedPtr<SGraphNode> SomeNodeWidget = StaticCastSharedRef<SGraphNode>(PanelChildren->GetChildAt(NodeIndex));
+		TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = StaticCastSharedPtr<SAutoSizeCommentsGraphNode>(SomeNodeWidget);
+		if (ASCGraphNode.IsValid())
 		{
-			if (GraphCommentNode != CommentNode)
-				OtherCommentNodes.Add(GraphCommentNode);
+			UObject* GraphObject = SomeNodeWidget->GetObjectBeingDisplayed();
+			if (UEdGraphNode_Comment* GraphCommentNode = Cast<UEdGraphNode_Comment>(GraphObject))
+			{
+				if (GraphCommentNode != CommentNode)
+					OtherCommentNodes.Add(ASCGraphNode);
+			}
 		}
 	}
 
@@ -1317,7 +1339,13 @@ void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraph
 		}
 		
 		if (Cast<UEdGraphNode_Comment>(GraphObject))
-			continue;
+		{
+			TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode = StaticCastSharedRef<SAutoSizeCommentsGraphNode>(SomeNodeWidget);
+			if (!ASCNode.IsValid() || !ASCNode->IsHeaderComment())
+			{
+				continue;
+			}
+		}
 
 		// check if the node bounds is contained in ourself
 		if (GraphObject != CommentNode)
