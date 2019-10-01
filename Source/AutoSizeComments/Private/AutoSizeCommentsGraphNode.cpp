@@ -225,6 +225,8 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 		{
 			GraphNode->SetNodeUnrelated(true);
 		}
+
+		GetNodeObj()->SetNodeUnrelated(false);
 		
 		TArray<TSharedPtr<SGraphNode>> Nodes;
 		QueryNodesUnderComment(Nodes);
