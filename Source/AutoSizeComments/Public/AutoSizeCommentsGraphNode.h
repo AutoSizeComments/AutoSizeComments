@@ -94,18 +94,30 @@ protected:
 	virtual FReply HandleSubtractButtonClicked();
 	virtual FReply HandleClearButtonClicked();
 
+	virtual bool AddInitialNodes();
 	virtual bool AddAllSelectedNodes();
 	virtual bool RemoveAllSelectedNodes();
+
+	void UpdateColors(float InDeltaTime);
 
 private:
 	/** @return the color to tint the comment body */
 	FSlateColor GetCommentBodyColor() const;
 
 	/** @return the color to tint the title bar */
+	//FLinearColor TitleBarColor;
 	FSlateColor GetCommentTitleBarColor() const;
 
 	/** @return the color to tint the comment bubble */
 	FSlateColor GetCommentBubbleColor() const;
+
+	FLinearColor CommentControlsColor;
+	FSlateColor GetCommentControlsColor() const;
+
+	FLinearColor CommentControlsTextColor;
+	FSlateColor GetCommentControlsTextColor() const;
+
+	FSlateColor GetPresetColor(FLinearColor Color) const;
 
 	/** Returns the width to wrap the text of the comment at */
 	float GetWrapAt() const;
@@ -113,7 +125,10 @@ private:
 	void ResizeToFit();
 
 	void MoveEmptyCommentBoxes();
-private:
+
+	void CreateCommentControls();
+	void CreateColorControls();
+
 	FVector2D UserSize;
 
 	bool bHasSetNodesUnderComment;
@@ -134,11 +149,16 @@ private:
 
 	int32 CachedNumPresets;
 
+	float OpacityValue;
+
+	// TODO: Look into resize transaction perhaps requires the EdGraphNode_Comment to have UPROPERTY() for NodesUnderComment
+	// TSharedPtr<FScopedTransaction> ResizeTransaction;
+
 	/** Local copy of the comment style */
 	FInlineEditableTextBlockStyle CommentStyle;
 
 	TSharedPtr<class SButton> ToggleHeaderButton;
-	TSharedPtr<class SBorder> ColorControlsWithBorder;
+	TSharedPtr<class SHorizontalBox> ColorControls;
 	TSharedPtr<class SHorizontalBox> CommentControls;
 
 public:
@@ -159,6 +179,7 @@ public:
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
 	void SnapVectorToGrid(FVector2D& Vector);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
+	TArray<UEdGraphNode*> GetEdGraphNodesUnderComment() const;
 
 	ASC_AnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
 
@@ -173,4 +194,6 @@ public:
 	void RandomizeColor();
 
 	void AdjustMinSize(FVector2D& InSize);
+
+	bool HasNodeBeenDeleted(UEdGraphNode* Node);
 };

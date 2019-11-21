@@ -26,6 +26,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Modules/ModuleManager.h"
 #include "GraphEditorSettings.h"
+//#include "ScopedTransaction.h"
 
 void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGraphNode* InNode)
 {
@@ -39,11 +40,13 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	UserSize.X = InNode->NodeWidth;
 	UserSize.Y = InNode->NodeHeight;
 
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+
 	bool bIsPreset = IsPresetStyle();
 
 	// Set comment color
-	FLinearColor DefaultColor = GetMutableDefault<UAutoSizeCommentsSettings>()->DefaultCommentColor;
-	if (GetMutableDefault<UAutoSizeCommentsSettings>()->bUseRandomColor)
+	FLinearColor DefaultColor = ASCSettings->DefaultCommentColor;
+	if (ASCSettings->bUseRandomColor)
 	{
 		if (CommentNode->CommentColor == DefaultColor || CommentNode->CommentColor == FLinearColor::White) // only randomize if the node has the default color
 		{
@@ -52,7 +55,7 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	}
 	else if (!IsHeaderComment())
 	{
-		if (GetMutableDefault<UAutoSizeCommentsSettings>()->bAggressivelyUseDefaultColor)
+		if (ASCSettings->bAggressivelyUseDefaultColor)
 		{
 			CommentNode->CommentColor = DefaultColor;
 		}
@@ -62,15 +65,20 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 		}
 	}
 
-	if (GetMutableDefault<UAutoSizeCommentsSettings>()->bUseDefaultFontSize && !IsHeaderComment() && !bIsPreset)
+	if (ASCSettings->bUseDefaultFontSize && !IsHeaderComment() && !bIsPreset)
 	{
-		CommentNode->FontSize = GetMutableDefault<UAutoSizeCommentsSettings>()->DefaultFontSize;
+		CommentNode->FontSize = ASCSettings->DefaultFontSize;
 	}
 
 	// Set comment bubble color
-	CommentNode->bColorCommentBubble = GetMutableDefault<UAutoSizeCommentsSettings>()->bGlobalColorBubble;
+	CommentNode->bColorCommentBubble = ASCSettings->bGlobalColorBubble;
 
-	CommentNode->bCommentBubbleVisible_InDetailsPanel = GetMutableDefault<UAutoSizeCommentsSettings>()->bGlobalShowBubbleWhenZoomed;
+	CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings->bGlobalShowBubbleWhenZoomed;
+
+	// Set widget colors
+	OpacityValue = ASCSettings->MinimumControlOpacity;
+	CommentControlsTextColor = FLinearColor(1, 1, 1, OpacityValue);
+	CommentControlsColor = FLinearColor(CommentNode->CommentColor.R, CommentNode->CommentColor.G, CommentNode->CommentColor.B, OpacityValue);
 }
 
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
@@ -96,20 +104,13 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 		{
 			// Now update any nodes which are touching the comment but *not* selected
 			// Selected nodes will be moved as part of the normal selection code
-			TSharedPtr< SGraphPanel > Panel = GetOwnerPanel();
-
-			for (FCommentNodeSet::TConstIterator NodeIt(CommentNode->GetNodesUnderComment()); NodeIt; ++NodeIt)
+			const TArray<UEdGraphNode*> Nodes = GetEdGraphNodesUnderComment();
+			for (UEdGraphNode* Node : Nodes)
 			{
-				if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
-				{
-					if (!Panel->SelectionManager.IsNodeSelected(Node) && !NodeFilter.Find(Node->DEPRECATED_NodeWidget.Pin()))
-					{
-						NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
-						Node->Modify();
-						Node->NodePosX += PositionDelta.X;
-						Node->NodePosY += PositionDelta.Y;
-					}
-				}
+				NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
+				Node->Modify();
+				Node->NodePosX += PositionDelta.X;
+				Node->NodePosY += PositionDelta.Y;
 			}
 		}
 	}
@@ -126,6 +127,8 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 		{
 			DragSize = UserSize;
 			bUserIsDragging = true;
+			// ResizeTransaction = MakeShareable(new FScopedTransaction(NSLOCTEXT("UnrealEd", "Resize Comment Node", "Resize Comment Node")));
+			// CommentNode->Modify();
 			return FReply::Handled().CaptureMouse(SharedThis(this));
 		}
 	}
@@ -143,9 +146,9 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, 
 
 #if ENGINE_MINOR_VERSION >= 23
 		TArray<UEdGraphNode*> AllNodes = GetNodeObj()->GetGraph()->Nodes;
-		for (auto& GraphNode : AllNodes)
+		for (auto& Node : AllNodes)
 		{
-			GraphNode->SetNodeUnrelated(false);
+			Node->SetNodeUnrelated(false);
 		}
 #endif
 		
@@ -221,9 +224,9 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 
 #if ENGINE_MINOR_VERSION >= 23
 		TArray<UEdGraphNode*> AllNodes = GetNodeObj()->GetGraph()->Nodes;
-		for (auto& GraphNode : AllNodes)
+		for (auto& Node : AllNodes)
 		{
-			GraphNode->SetNodeUnrelated(true);
+			Node->SetNodeUnrelated(true);
 		}
 
 		GetNodeObj()->SetNodeUnrelated(false);
@@ -285,6 +288,11 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 			ResizeToFit();
 
 			MoveEmptyCommentBoxes();
+
+			// if (ResizeTransaction.IsValid())
+			// {
+			// 	ResizeTransaction.Reset();
+			// }
 		}
 
 		bPreviousAltDown = bIsAltDown;
@@ -292,6 +300,8 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
+	const auto ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	
 	if (IsHeaderComment())
 	{
 		UserSize.Y = GetTitleBarHeight();
@@ -317,10 +327,12 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		UpdateGraphNode();
 	}
 
-	if (CachedNumPresets != GetMutableDefault<UAutoSizeCommentsSettings>()->PresetStyles.Num())
+	if (CachedNumPresets != ASCSettings->PresetStyles.Num())
 	{
 		UpdateGraphNode();
 	}
+
+	UpdateColors(InDeltaTime);
 }
 
 void SAutoSizeCommentsGraphNode::UpdateGraphNode()
@@ -358,87 +370,46 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	CommentStyle.TextStyle.Font.Size = CommentNode->FontSize;
 	CachedFontSize = CommentNode->FontSize;
 
-	// Create the random color button
-	TSharedRef<SButton> RandomColorButton = SNew(SButton)
-		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentTitleBarColor)
-		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked)
-		.ContentPadding(FMargin(2, 2))
-		.ToolTipText(FText::FromString("Randomize the color of the comment box"))
-		[
-			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-			[
-				SNew(STextBlock).Text(FText::FromString(FString("?"))).ColorAndOpacity(FLinearColor::White)
-			]
-		];
+	FSlateColor CommentBubbleColor = GetCommentBubbleColor();
+	
+	// Create comment bubble
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bHideCommentBubble)
+	{
+		TSharedRef<SCommentBubble> CommentBubble = SNew(SCommentBubble)
+			.GraphNode(GraphNode)
+			.Text(this, &SAutoSizeCommentsGraphNode::GetNodeComment)
+			.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
+			//.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentBubbleColor)
+			.ColorAndOpacity(CommentBubbleColor)
+			.AllowPinning(true)
+			.EnableTitleBarBubble(false)
+			.EnableBubbleCtrls(false)
+			.GraphLOD(this, &SGraphNode::GetCurrentLOD)
+			.InvertLODCulling(true)
+			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
-	// Create the random color button
+		GetOrAddSlot(ENodeZone::TopCenter)
+			.SlotOffset(TAttribute<FVector2D>(CommentBubble, &SCommentBubble::GetOffset))
+			.SlotSize(TAttribute<FVector2D>(CommentBubble, &SCommentBubble::GetSize))
+			.AllowScaling(TAttribute<bool>(CommentBubble, &SCommentBubble::IsScalingAllowed))
+			.VAlign(VAlign_Top)
+			[
+				CommentBubble
+			];
+	}
+	
+	// Create the toggle header button
 	ToggleHeaderButton = SNew(SButton)
-		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentTitleBarColor)
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked)
 		.ContentPadding(FMargin(2, 2))
 		.ToolTipText(FText::FromString("Toggle between a header node and a resizing node"))
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 			[
-				SNew(STextBlock).Text(FText::FromString(FString("H"))).ColorAndOpacity(FLinearColor::White)
-			]
-		];
-
-	// Create the replace button
-	TSharedRef<SButton> ReplaceButton = SNew(SButton)
-		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentTitleBarColor)
-		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked)
-		.ContentPadding(FMargin(2, 2))
-		.ToolTipText(FText::FromString("Replace with selected nodes"))
-		[
-			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-			[
-				SNew(STextBlock).Text(FText::FromString(FString("R"))).ColorAndOpacity(FLinearColor::White)
-			]
-		];
-
-	// Create the add button
-	TSharedRef<SButton> AddButton = SNew(SButton)
-		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentTitleBarColor)
-		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleAddButtonClicked)
-		.ContentPadding(FMargin(2, 2))
-		.ToolTipText(FText::FromString("Add selected nodes"))
-		[
-			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-			[
-				TSharedRef<SWidget>(SNew(SImage).Image(
-					FCoreStyle::Get().GetBrush("EditableComboBox.Add")
-				))
-			]
-		];
-
-	// Create the remove button
-	TSharedRef<SButton> RemoveButton = SNew(SButton)
-		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentTitleBarColor)
-		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked)
-		.ContentPadding(FMargin(2, 2))
-		.ToolTipText(FText::FromString("Remove selected nodes"))
-		[
-			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-			[
-				TSharedRef<SWidget>(SNew(SImage).Image(
-					FCoreStyle::Get().GetBrush("EditableComboBox.Delete")
-				))
-			]
-		];
-
-	// Create the clear button
-	TSharedRef<SButton> ClearButton = SNew(SButton)
-		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentTitleBarColor)
-		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleClearButtonClicked)
-		.ContentPadding(FMargin(2, 2))
-		.ToolTipText(FText::FromString("Clear all nodes"))
-		[
-			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-			[
-				TSharedRef<SWidget>(SNew(SImage).Image(
-					FCoreStyle::Get().GetBrush("TrashCan_Small")
-				))
+				SNew(STextBlock)
+				.Text(FText::FromString(FString("H")))
+				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
 			]
 		];
 
@@ -447,48 +418,10 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		[
 			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
 		];
+	
+	CreateCommentControls();
 
-	// Create the color controls
-	TSharedRef<SHorizontalBox> ColorControls = SNew(SHorizontalBox);
-	ColorControlsWithBorder = SNew(SBorder).ColorAndOpacity(FLinearColor::White) [ ColorControls ];
-
-	TArray<FPresetCommentStyle> Presets = GetMutableDefault<UAutoSizeCommentsSettings>()->PresetStyles;
-	CachedNumPresets = Presets.Num();
-
-	if (!IsHeaderComment()) // header comments don't need color presets
-	{
-		if (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets)
-		{
-			for (FPresetCommentStyle Preset : Presets)
-			{
-				FLinearColor ColorWithoutOpacity = Preset.Color;
-				ColorWithoutOpacity.A = 1;
-				
-				TSharedRef<SButton> Button = SNew(SButton)
-					.ButtonColorAndOpacity(ColorWithoutOpacity)
-					.OnClicked(this, &SAutoSizeCommentsGraphNode::HandlePresetButtonClicked, Preset)
-					.ContentPadding(FMargin(2, 2))
-					.ToolTipText(FText::FromString("Set preset color"))
-					[
-						SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-					];
-
-				ColorControls->AddSlot().AttachWidget(Button);
-			}
-		}
-
-		if (!GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton)
-		{
-			ColorControls->AddSlot().AttachWidget(RandomColorButton);
-		}
-	}
-
-	// Create the comment controls
-	CommentControls = SNew(SHorizontalBox);
-	CommentControls->AddSlot().AttachWidget(ReplaceButton);
-	CommentControls->AddSlot().AttachWidget(AddButton);
-	CommentControls->AddSlot().AttachWidget(RemoveButton);
-	CommentControls->AddSlot().AttachWidget(ClearButton);
+	CreateColorControls();
 
 	TSharedRef<SInlineEditableTextBlock> CommentTextBlock = SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 		.Style(&CommentStyle)
@@ -500,7 +433,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		.WrapTextAt(this, &SAutoSizeCommentsGraphNode::GetWrapAt)
 		.MultiLine(true)
 		.ModiferKeyForNewLine(EModifierKey::Shift);
-
+	
 	// Create the top horizontal box containing anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> TopHBox = SNew(SHorizontalBox);
 	TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(AnchorBox);
@@ -524,7 +457,6 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
 	}
 
-
 	// Create the title bar
 	SAssignNew(TitleBar, SBorder)
 		.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleBackground"))
@@ -540,7 +472,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	MainVBox->AddSlot().AutoHeight().Padding(1.0f).AttachWidget(ErrorReporting->AsWidget());
 	if (!IsHeaderComment() && (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets || !GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton))
 	{
-		MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(ColorControlsWithBorder.ToSharedRef());
+		MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(ColorControls.ToSharedRef());//ColorControlsWithBorder.ToSharedRef());
 	}
 	MainVBox->AddSlot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
 	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Bottom).AttachWidget(BottomHBox);
@@ -557,31 +489,6 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			MainVBox
 		]
 	];
-
-	// Create comment bubble
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bHideCommentBubble)
-	{ 
-		TSharedRef<SCommentBubble> CommentBubble = SNew(SCommentBubble)
-			.GraphNode(GraphNode)
-			.Text(this, &SAutoSizeCommentsGraphNode::GetNodeComment)
-			.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
-			.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentBubbleColor)
-			.AllowPinning(true)
-			.EnableTitleBarBubble(false)
-			.EnableBubbleCtrls(false)
-			.GraphLOD(this, &SGraphNode::GetCurrentLOD)
-			.InvertLODCulling(true)
-			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
-
-		GetOrAddSlot(ENodeZone::TopCenter)
-			.SlotOffset(TAttribute<FVector2D>(CommentBubble, &SCommentBubble::GetOffset))
-			.SlotSize(TAttribute<FVector2D>(CommentBubble, &SCommentBubble::GetSize))
-			.AllowScaling(TAttribute<bool>(CommentBubble, &SCommentBubble::IsScalingAllowed))
-			.VAlign(VAlign_Top)
-			[
-				CommentBubble
-			];
-	}
 }
 
 FVector2D SAutoSizeCommentsGraphNode::ComputeDesiredSize(float) const
@@ -598,13 +505,20 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 {
 	SGraphNode::SetOwner(OwnerPanel);
 
-	if (!LoadCache())
+	if (LoadCache())
 	{
-		if (GetDefault<UAutoSizeCommentsSettings>()->bDetectNodesContainedForNewComments)
-		{
-			// Refresh the nodes under the comment
-			RefreshNodesDelay = 2;
-		}
+		return;
+	}
+
+	if (AnySelectedNodes() && AddInitialNodes())
+	{
+		return;
+	}
+	
+	if (GetDefault<UAutoSizeCommentsSettings>()->bDetectNodesContainedForNewComments)
+	{
+		// Refresh the nodes under the comment
+		RefreshNodesDelay = 2;
 	}
 }
 
@@ -621,7 +535,7 @@ FVector2D SAutoSizeCommentsGraphNode::GetDesiredSizeForMarquee() const
 
 FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeometry, const FPointerEvent& CursorEvent) const
 {
-	if (ToggleHeaderButton->IsHovered() || ColorControlsWithBorder->IsHovered() || CommentControls->IsHovered())
+	if (ToggleHeaderButton->IsHovered() || ColorControls->IsHovered() || CommentControls->IsHovered())
 	{
 		return FCursorReply::Unhandled();
 	}
@@ -660,10 +574,10 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 {
 	if (IsHeaderComment())
-		return 101;
+		return 1;
 	
 	if (IsSelectedExclusively())
-		return 100;
+		return 0;
 	
 	return CommentNode ? CommentNode->CommentDepth : -1;
 }
@@ -733,21 +647,62 @@ FReply SAutoSizeCommentsGraphNode::HandleClearButtonClicked()
 	return FReply::Handled();
 }
 
+bool SAutoSizeCommentsGraphNode::AddInitialNodes()
+{
+	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
+
+	bool bDidAddAnything = false;
+
+	if (!OwnerPanel.IsValid())
+		return false;
+	
+	auto SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
+	const auto IsCommentNode = [](UObject* Obj)
+	{
+		return Cast<UEdGraphNode_Comment>(Obj) != nullptr;
+	};
+
+	const auto SelectedCommentNodes = SelectedNodes.Array().FilterByPredicate(IsCommentNode);
+	if (SelectedCommentNodes.Num() > 0)
+	{
+		return false;
+	}
+	
+	for (UObject* SelectedObj : SelectedNodes)
+	{
+		if (SelectedObj != CommentNode)
+		{
+			CommentNode->AddNodeUnderComment(SelectedObj);
+			bDidAddAnything = true;
+		}
+	}
+
+	if (bDidAddAnything)
+	{
+		UpdateExistingCommentNodes();
+	}
+
+	return bDidAddAnything;
+}
+
 bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes()
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 
 	bool bDidAddAnything = false;
 
-	if (OwnerPanel.IsValid() && OwnerPanel->SelectionManager.GetSelectedNodes().Num() > 0)
+	if (OwnerPanel.IsValid())
 	{
-		for (UObject* SelectedObj : OwnerPanel->SelectionManager.GetSelectedNodes())
+		return false;
+	}
+	
+	auto SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
+	for (UObject* SelectedObj : SelectedNodes)
+	{
+		if (SelectedObj != CommentNode)
 		{
-			if (SelectedObj != CommentNode)
-			{
-				CommentNode->AddNodeUnderComment(SelectedObj);
-				bDidAddAnything = true;
-			}
+			CommentNode->AddNodeUnderComment(SelectedObj);
+			bDidAddAnything = true;
 		}
 	}
 
@@ -790,6 +745,31 @@ bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes()
 	}
 
 	return bDidRemoveAnything;
+}
+
+void SAutoSizeCommentsGraphNode::UpdateColors(float InDeltaTime)
+{
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	
+	if (IsHovered())
+	{
+		if (OpacityValue < 1.f)
+		{
+			const float FadeUpAmt = InDeltaTime * 5.f;
+			OpacityValue = FMath::Min(OpacityValue + FadeUpAmt, 1.f);
+		}
+	}
+	else
+	{
+		if (OpacityValue > ASCSettings->MinimumControlOpacity)
+		{
+			const float FadeDownAmt = InDeltaTime * 5.f;
+			OpacityValue = FMath::Max(OpacityValue - FadeDownAmt, ASCSettings->MinimumControlOpacity);
+		}
+	}
+
+	CommentControlsColor = FLinearColor(CommentNode->CommentColor.R, CommentNode->CommentColor.G, CommentNode->CommentColor.B, OpacityValue);
+	CommentControlsTextColor.A = OpacityValue;
 }
 
 FSlateRect SAutoSizeCommentsGraphNode::GetTitleRect() const
@@ -940,8 +920,10 @@ FSlateColor SAutoSizeCommentsGraphNode::GetCommentBubbleColor() const
 {
 	if (CommentNode)
 	{
-		const FLinearColor Color = CommentNode->bColorCommentBubble ? (CommentNode->CommentColor * 0.6f) :
-			GetDefault<UGraphEditorSettings>()->DefaultCommentNodeTitleColor;
+		const FLinearColor Color = CommentNode->bColorCommentBubble
+			? (CommentNode->CommentColor * 0.6f)
+			: GetDefault<UGraphEditorSettings>()->DefaultCommentNodeTitleColor;
+
 		return FLinearColor(Color.R, Color.G, Color.B);
 	}
 	else
@@ -949,6 +931,23 @@ FSlateColor SAutoSizeCommentsGraphNode::GetCommentBubbleColor() const
 		const FLinearColor Color = FLinearColor::White * 0.6f;
 		return FLinearColor(Color.R, Color.G, Color.B);
 	}
+}
+
+FSlateColor SAutoSizeCommentsGraphNode::GetCommentControlsColor() const
+{
+	return CommentControlsColor;
+}
+
+FSlateColor SAutoSizeCommentsGraphNode::GetCommentControlsTextColor() const
+{
+	return CommentControlsTextColor;
+}
+
+FSlateColor SAutoSizeCommentsGraphNode::GetPresetColor(FLinearColor Color) const
+{
+	FLinearColor MyColor = Color;
+	MyColor.A = OpacityValue;
+	return MyColor;
 }
 
 float SAutoSizeCommentsGraphNode::GetWrapAt() const
@@ -1120,6 +1119,137 @@ void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 	}
 }
 
+void SAutoSizeCommentsGraphNode::CreateCommentControls()
+{
+	// Create the replace button
+	TSharedRef<SButton> ReplaceButton = SNew(SButton)
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Replace with selected nodes"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(FString("R")))
+				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+			]
+		];
+
+	// Create the add button
+	TSharedRef<SButton> AddButton = SNew(SButton)
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleAddButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Add selected nodes"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				TSharedRef<SWidget>(
+					SNew(SImage)
+					.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+					.Image(FCoreStyle::Get().GetBrush("EditableComboBox.Add")
+					))
+			]
+		];
+
+
+	// Create the remove button
+	TSharedRef<SButton> RemoveButton = SNew(SButton)
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Remove selected nodes"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				TSharedRef<SWidget>(
+					SNew(SImage)
+					.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+					.Image(FCoreStyle::Get().GetBrush("EditableComboBox.Delete")
+					))
+			]
+		];
+
+	// Create the clear button
+	TSharedRef<SButton> ClearButton = SNew(SButton)
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleClearButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Clear all nodes"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				TSharedRef<SWidget>(
+					SNew(SImage)
+					.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+					.Image(FCoreStyle::Get().GetBrush("TrashCan_Small")
+					))
+			]
+		];
+
+	// Create the comment controls
+	CommentControls = SNew(SHorizontalBox);
+	CommentControls->AddSlot().AttachWidget(ReplaceButton);
+	CommentControls->AddSlot().AttachWidget(AddButton);
+	CommentControls->AddSlot().AttachWidget(RemoveButton);
+	CommentControls->AddSlot().AttachWidget(ClearButton);
+}
+
+void SAutoSizeCommentsGraphNode::CreateColorControls()
+{
+	// Create the random color button
+	TSharedRef<SButton> RandomColorButton = SNew(SButton)
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Randomize the color of the comment box"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(FString("?")))
+				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+			]
+		];
+
+	// Create the color controls
+	ColorControls = SNew(SHorizontalBox);
+
+	TArray<FPresetCommentStyle> Presets = GetMutableDefault<UAutoSizeCommentsSettings>()->PresetStyles;
+	CachedNumPresets = Presets.Num();
+
+	if (!IsHeaderComment()) // header comments don't need color presets
+	{
+		if (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets)
+		{
+			for (FPresetCommentStyle Preset : Presets)
+			{
+				FLinearColor ColorWithoutOpacity = Preset.Color;
+				ColorWithoutOpacity.A = 1;
+
+				const auto OpacityValueCapture = OpacityValue;
+
+				TSharedRef<SButton> Button = SNew(SButton)
+					.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetPresetColor, ColorWithoutOpacity)
+					.OnClicked(this, &SAutoSizeCommentsGraphNode::HandlePresetButtonClicked, Preset)
+					.ContentPadding(FMargin(2, 2))
+					.ToolTipText(FText::FromString("Set preset color"))
+					[
+						SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+					];
+
+				ColorControls->AddSlot().AttachWidget(Button);
+			}
+		}
+
+		if (!GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton)
+		{
+			ColorControls->AddSlot().AttachWidget(RandomColorButton);
+		}
+	}
+}
+
 /***************************
 ****** Util functions ******
 ****************************/
@@ -1276,7 +1406,10 @@ bool SAutoSizeCommentsGraphNode::LoadCache()
 		CommentNode->ClearNodesUnderComment();
 		for (UEdGraphNode* Node : OutNodesUnder)
 		{
-			CommentNode->AddNodeUnderComment(Node);
+			if (!HasNodeBeenDeleted(Node))
+			{
+				CommentNode->AddNodeUnderComment(Node);
+			}
 		}
 		
 		return true;
@@ -1289,8 +1422,7 @@ void SAutoSizeCommentsGraphNode::SaveToCache()
 {
 	FASCCommentData& GraphData = IAutoSizeCommentsModule::Get().GetSizeCache().GetGraphData(CommentNode->GetGraph());
 	
-	const bool bNodeWasDeleted = !CommentNode->GetGraph()->Nodes.Contains(CommentNode);
-	if (bNodeWasDeleted)
+	if (HasNodeBeenDeleted(CommentNode))
 	{
 		GraphData.CommentData.Remove(CommentNode->NodeGuid);
 	}
@@ -1300,9 +1432,10 @@ void SAutoSizeCommentsGraphNode::SaveToCache()
 		NodesInside.NodeGuids.Empty();
 		
 		// update cache file
-		for (FCommentNodeSet::TConstIterator NodeIt(CommentNode->GetNodesUnderComment()); NodeIt; ++NodeIt)
+		const auto Nodes = GetEdGraphNodesUnderComment();
+		for (auto Node : Nodes)
 		{
-			if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
+			if (!HasNodeBeenDeleted(Node))
 			{
 				NodesInside.NodeGuids.Add(Node->NodeGuid);
 			}
@@ -1394,8 +1527,18 @@ void SAutoSizeCommentsGraphNode::RandomizeColor()
 
 void SAutoSizeCommentsGraphNode::AdjustMinSize(FVector2D& InSize)
 {
-	float MinY = IsHeaderComment() ? 0 : 80;
+	const float MinY = IsHeaderComment() ? 0 : 80;
 	InSize = FVector2D(FMath::Max(125.f, InSize.X), FMath::Max(GetTitleBarHeight() + MinY, InSize.Y));
+}
+
+bool SAutoSizeCommentsGraphNode::HasNodeBeenDeleted(UEdGraphNode* Node)
+{
+	if (Node == nullptr)
+	{
+		return true;
+	}
+	
+	return !CommentNode->GetGraph()->Nodes.Contains(Node);
 }
 
 FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
@@ -1457,7 +1600,7 @@ FSlateRect SAutoSizeCommentsGraphNode::GetBoundsForNodesInside()
 		UEdGraphNode* Node = Nodes[i];
 
 		if (!Node) continue;
-
+		
 		// initialize bounds from first valid node
 		if (!bBoundsInit)
 		{
@@ -1471,4 +1614,18 @@ FSlateRect SAutoSizeCommentsGraphNode::GetBoundsForNodesInside()
 	}
 
 	return Bounds;
+}
+
+TArray<UEdGraphNode*> SAutoSizeCommentsGraphNode::GetEdGraphNodesUnderComment() const
+{
+	TArray<UEdGraphNode*> OutNodes;
+	for (UObject* Obj : CommentNode->GetNodesUnderComment())
+	{
+		if (UEdGraphNode* Node = Cast<UEdGraphNode>(Obj))
+		{
+			OutNodes.Add(Node);
+		}
+	}
+
+	return OutNodes;
 }

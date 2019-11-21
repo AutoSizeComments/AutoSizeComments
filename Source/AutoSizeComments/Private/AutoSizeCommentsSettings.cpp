@@ -11,7 +11,8 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	DefaultFontSize = 18;
 	bUseDefaultFontSize = false;
 	bUseRandomColor = true;
-	RandomColorOpacity = 0.5f;
+	RandomColorOpacity = 1.f;
+	MinimumControlOpacity = 0.f;
 	DefaultCommentColor = FLinearColor::White;
 	HeaderStyle.Color = FLinearColor::Gray;
 	bAggressivelyUseDefaultColor = false;

@@ -56,6 +56,10 @@ public:
 	/** Opacity used for the random color */
 	UPROPERTY(EditAnywhere, config, Category = Color)
 	float RandomColorOpacity;
+
+	/** Minimum opacity for comment box controls when not hovered */
+	UPROPERTY(EditAnywhere, config, Category = Color)
+	float MinimumControlOpacity;
 	
 	/** Set all nodes in the graph to the default color */
 	UPROPERTY(EditAnywhere, config, Category = Color)
