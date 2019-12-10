@@ -687,15 +687,9 @@ bool SAutoSizeCommentsGraphNode::AddInitialNodes()
 
 bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes()
 {
-	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
-
 	bool bDidAddAnything = false;
-
-	if (OwnerPanel.IsValid())
-	{
-		return false;
-	}
 	
+	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 	auto SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
 	for (UObject* SelectedObj : SelectedNodes)
 	{
@@ -1575,7 +1569,7 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 bool SAutoSizeCommentsGraphNode::AnySelectedNodes()
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
-	return OwnerPanel.IsValid() && OwnerPanel->SelectionManager.GetSelectedNodes().Num() > 0;
+	return OwnerPanel->SelectionManager.GetSelectedNodes().Num() > 0;
 }
 
 FSlateRect SAutoSizeCommentsGraphNode::GetBoundsForNodesInside()
