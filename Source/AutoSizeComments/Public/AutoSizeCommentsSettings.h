@@ -109,6 +109,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	TEnumAsByte<ECommentCollisionMethod> AltCollisionMethod;
 
+	/** Snap to the grid when resizing the node */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bSnapToGridWhileResizing;
+
 	/** Don't add knot nodes to comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bIgnoreKnotNodes;

@@ -196,4 +196,7 @@ public:
 	void AdjustMinSize(FVector2D& InSize);
 
 	bool HasNodeBeenDeleted(UEdGraphNode* Node);
+
+	bool CanAddNode(TSharedPtr<SGraphNode> OtherGraphNode) const;
+	bool CanAddNode(UObject* Node) const;
 };

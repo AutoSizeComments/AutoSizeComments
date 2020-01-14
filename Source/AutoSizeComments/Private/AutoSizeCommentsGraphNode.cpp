@@ -91,8 +91,6 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 	/** Copied from SGraphNodeComment::MoveTo */
 	FVector2D PositionDelta = NewPosition - GetPosition();
 	
-	SnapVectorToGrid(PositionDelta);
-
 	FVector2D NewPos = GetPosition() + PositionDelta;
 	SGraphNode::MoveTo(NewPos, NodeFilter);
 
@@ -104,13 +102,20 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 		{
 			// Now update any nodes which are touching the comment but *not* selected
 			// Selected nodes will be moved as part of the normal selection code
-			const TArray<UEdGraphNode*> Nodes = GetEdGraphNodesUnderComment();
-			for (UEdGraphNode* Node : Nodes)
+			TSharedPtr<SGraphPanel> Panel = GetOwnerPanel();
+
+			for (FCommentNodeSet::TConstIterator NodeIt(CommentNode->GetNodesUnderComment()); NodeIt; ++NodeIt)
 			{
-				NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
-				Node->Modify();
-				Node->NodePosX += PositionDelta.X;
-				Node->NodePosY += PositionDelta.Y;
+				if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
+				{
+					if (!Panel->SelectionManager.IsNodeSelected(Node) && !NodeFilter.Find(Node->DEPRECATED_NodeWidget.Pin()))
+					{
+						NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
+						Node->Modify();
+						Node->NodePosX += PositionDelta.X;
+						Node->NodePosY += PositionDelta.Y;
+					}
+				}
 			}
 		}
 	}
@@ -202,6 +207,11 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 		}
 
 		AdjustMinSize(NewSize);
+
+		if (GetDefault<UAutoSizeCommentsSettings>()->bSnapToGridWhileResizing)
+		{
+			SnapVectorToGrid(NewSize);
+		}
 		
 		if (UserSize != NewSize)
 		{
@@ -670,7 +680,7 @@ bool SAutoSizeCommentsGraphNode::AddInitialNodes()
 	
 	for (UObject* SelectedObj : SelectedNodes)
 	{
-		if (SelectedObj != CommentNode)
+		if (CanAddNode(SelectedObj))
 		{
 			CommentNode->AddNodeUnderComment(SelectedObj);
 			bDidAddAnything = true;
@@ -693,7 +703,7 @@ bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes()
 	auto SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
 	for (UObject* SelectedObj : SelectedNodes)
 	{
-		if (SelectedObj != CommentNode)
+		if (CanAddNode(SelectedObj))
 		{
 			CommentNode->AddNodeUnderComment(SelectedObj);
 			bDidAddAnything = true;
@@ -1458,57 +1468,42 @@ void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraph
 	for (int32 NodeIndex = 0; NodeIndex < NumChildren; ++NodeIndex)
 	{
 		const TSharedRef<SGraphNode> SomeNodeWidget = StaticCastSharedRef<SGraphNode>(PanelChildren->GetChildAt(NodeIndex));
-		UObject* GraphObject = SomeNodeWidget->GetObjectBeingDisplayed();
-		if (GraphObject == nullptr)
-			continue;
-
-		if (GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodes && Cast<UK2Node_Knot>(GraphObject) != nullptr)
+		
+		if (!CanAddNode(SomeNodeWidget))
 		{
 			continue;
+		}
+
+		// check if the node bounds collides with our bounds
+		const FVector2D SomeNodePosition = SomeNodeWidget->GetPosition();
+		const FVector2D SomeNodeSize = SomeNodeWidget->GetDesiredSize();
+		const FSlateRect NodeGeometryGraphSpace = FSlateRect::FromPointAndExtent(SomeNodePosition, SomeNodeSize);
+
+		bool bIsOverlapping = false;
+		ECommentCollisionMethod CollisionMethod = OverrideCollisionMethod == ASC_Collision_Default
+			? GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod.GetValue()
+			: OverrideCollisionMethod;
+		
+		switch (CollisionMethod)
+		{
+		case ASC_Collision_Point:
+			bIsOverlapping = CommentRect.ContainsPoint(SomeNodePosition);
+			break;
+		case ASC_Collision_Intersect:
+			CommentRect.IntersectionWith(NodeGeometryGraphSpace, bIsOverlapping);
+			break;
+		case ASC_Collision_Contained:
+			bIsOverlapping = FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace);
+			break;
+		case ASC_Collision_Default:
+			bIsOverlapping = FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace);
+			break;
+		default: ;
 		}
 		
-		if (Cast<UEdGraphNode_Comment>(GraphObject))
+		if (bIsOverlapping)
 		{
-			TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode = StaticCastSharedRef<SAutoSizeCommentsGraphNode>(SomeNodeWidget);
-			if (!ASCNode.IsValid() || !ASCNode->IsHeaderComment())
-			{
-				continue;
-			}
-		}
-
-		// check if the node bounds is contained in ourself
-		if (GraphObject != CommentNode)
-		{
-			const FVector2D SomeNodePosition = SomeNodeWidget->GetPosition();
-			const FVector2D SomeNodeSize = SomeNodeWidget->GetDesiredSize();
-			const FSlateRect NodeGeometryGraphSpace = FSlateRect::FromPointAndExtent(SomeNodePosition, SomeNodeSize);
-
-			bool bIsOverlapping = false;
-			ECommentCollisionMethod CollisionMethod = OverrideCollisionMethod == ASC_Collision_Default
-				? GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod.GetValue()
-				: OverrideCollisionMethod;
-			
-			switch (CollisionMethod)
-			{
-			case ASC_Collision_Point:
-				bIsOverlapping = CommentRect.ContainsPoint(SomeNodePosition);
-				break;
-			case ASC_Collision_Intersect:
-				CommentRect.IntersectionWith(NodeGeometryGraphSpace, bIsOverlapping);
-				break;
-			case ASC_Collision_Contained:
-				bIsOverlapping = FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace);
-				break;
-			case ASC_Collision_Default:
-				bIsOverlapping = FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace);
-				break;
-			default: ;
-			}
-			
-			if (bIsOverlapping)
-			{
-				OutNodesUnderComment.Add(SomeNodeWidget);
-			}
+			OutNodesUnderComment.Add(SomeNodeWidget);
 		}
 	}
 }
@@ -1533,6 +1528,56 @@ bool SAutoSizeCommentsGraphNode::HasNodeBeenDeleted(UEdGraphNode* Node)
 	}
 	
 	return !CommentNode->GetGraph()->Nodes.Contains(Node);
+}
+
+bool SAutoSizeCommentsGraphNode::CanAddNode(TSharedPtr<SGraphNode> OtherGraphNode) const
+{
+	UObject* GraphObject = OtherGraphNode->GetObjectBeingDisplayed();
+	if (GraphObject == nullptr || GraphObject == CommentNode)
+	{
+		return false;
+	}
+
+	if (CommentNode->GetNodesUnderComment().Contains(GraphObject))
+	{
+		return false;
+	}
+
+	if (GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodes && Cast<UK2Node_Knot>(GraphObject) != nullptr)
+	{
+		return false;
+	}
+	
+	if (Cast<UEdGraphNode_Comment>(GraphObject))
+	{
+		TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode = StaticCastSharedPtr<SAutoSizeCommentsGraphNode>(OtherGraphNode);
+		if (!ASCNode.IsValid() || !ASCNode->IsHeaderComment())
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool SAutoSizeCommentsGraphNode::CanAddNode(UObject* Node) const
+{
+	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
+	if (!OwnerPanel.IsValid())
+		return false;
+	
+	FChildren* PanelChildren = OwnerPanel->GetAllChildren();
+	int32 NumChildren = PanelChildren->Num();
+
+	UEdGraphNode* EdGraphNode = Cast<UEdGraphNode>(Node);
+	if (!EdGraphNode)
+		return false;
+	
+	TSharedPtr<SGraphNode> NodeAsGraphNode = OwnerPanel->GetNodeWidgetFromGuid(EdGraphNode->NodeGuid);
+	if (!NodeAsGraphNode.IsValid())
+		return false;
+	
+	return CanAddNode(NodeAsGraphNode);
 }
 
 FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)

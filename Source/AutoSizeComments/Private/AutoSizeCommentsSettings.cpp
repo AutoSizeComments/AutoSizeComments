@@ -16,7 +16,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	DefaultCommentColor = FLinearColor::White;
 	HeaderStyle.Color = FLinearColor::Gray;
 	bAggressivelyUseDefaultColor = false;
-	bMoveEmptyCommentBoxes = true;
+	bMoveEmptyCommentBoxes = false;
 	EmptyCommentBoxSpeed = 10;
 	bGlobalColorBubble = false;
 	bGlobalShowBubbleWhenZoomed = true;
@@ -24,6 +24,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bDetectNodesContainedForNewComments = true;
 	ResizeCollisionMethod = ASC_Collision_Contained;
 	AltCollisionMethod = ASC_Collision_Intersect;
+	bSnapToGridWhileResizing = false;
 	bIgnoreKnotNodes = false;
 	bHideHeaderButton = false;
 	bHideCommentBoxControls = false;

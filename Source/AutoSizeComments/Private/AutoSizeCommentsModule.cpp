@@ -40,9 +40,9 @@ void FAutoSizeCommentsModule::StartupModule()
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		SettingsModule->RegisterSettings(
-			"Editor", "Plugins", "Auto Size Comments",
+			"Editor", "Plugins", "AutoSizeComments",
 			LOCTEXT("AutoSizeCommentsName", "Auto Size Comments"),
-			LOCTEXT("AutoSizeCommentsNameDesc", "Configure options for auto resizing comment boxes"),
+			LOCTEXT("AutoSizeCommentsNameDesc", "Configure the Auto Size Comments plugin"),
 			GetMutableDefault<UAutoSizeCommentsSettings>()
 		);
 	}
@@ -52,7 +52,9 @@ void FAutoSizeCommentsModule::ShutdownModule()
 {
 	// Remove custom settings
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
-		SettingsModule->UnregisterSettings("Editor", "Plugins", "Auto Size Comments");
+	{
+		SettingsModule->UnregisterSettings("Editor", "Plugins", "AutoSizeComments");
+	}
 
 	// Unregister the graph node factory
 	if (ASCNodeFactory.IsValid())
