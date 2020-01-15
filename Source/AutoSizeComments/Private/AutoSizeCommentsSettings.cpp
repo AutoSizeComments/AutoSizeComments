@@ -8,6 +8,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	: Super(ObjectInitializer)
 {
 	CommentNodePadding = FVector2D(30, 30);
+	MinimumVerticalPadding = 24.0f;
 	DefaultFontSize = 18;
 	bUseDefaultFontSize = false;
 	bUseRandomColor = true;

@@ -463,7 +463,9 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		{
 			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill).AttachWidget(CommentControls.ToSharedRef());
 		}
-		BottomHBox->AddSlot().FillWidth(1).HAlign(HAlign_Left).VAlign(VAlign_Fill).AttachWidget(SNew(SSpacer));
+		
+		BottomHBox->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
+
 		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
 	}
 
@@ -477,14 +479,15 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		];
 
 	// Create the main vertical box containing all the widgets
-	auto MainVBox = SNew(SVerticalBox).ToolTipText(this, &SGraphNode::GetNodeTooltip);	
+	auto MainVBox = SNew(SVerticalBox).ToolTipText(this, &SGraphNode::GetNodeTooltip);
 	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(TitleBar.ToSharedRef());
 	MainVBox->AddSlot().AutoHeight().Padding(1.0f).AttachWidget(ErrorReporting->AsWidget());
 	if (!IsHeaderComment() && (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets || !GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton))
 	{
-		MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(ColorControls.ToSharedRef());//ColorControlsWithBorder.ToSharedRef());
+		MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(ColorControls.ToSharedRef());
 	}
 	MainVBox->AddSlot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
+
 	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Bottom).AttachWidget(BottomHBox);
 	
 	ContentScale.Bind(this, &SGraphNode::GetContentScale);
@@ -989,7 +992,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 		// get bounds and apply padding
 		const FVector2D Padding = GetDefault<UAutoSizeCommentsSettings>()->CommentNodePadding;
 		
-		const float VerticalPadding = FMath::Max(30.f, Padding.Y + 16.f); // ensure we can always see the buttons
+		const float VerticalPadding = FMath::Max(GetDefault<UAutoSizeCommentsSettings>()->MinimumVerticalPadding, Padding.Y); // ensure we can always see the buttons
 
 		const float TopPadding = (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets || !GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton) ? VerticalPadding : Padding.Y;
 
@@ -1202,21 +1205,6 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 
 void SAutoSizeCommentsGraphNode::CreateColorControls()
 {
-	// Create the random color button
-	TSharedRef<SButton> RandomColorButton = SNew(SButton)
-		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
-		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked)
-		.ContentPadding(FMargin(2, 2))
-		.ToolTipText(FText::FromString("Randomize the color of the comment box"))
-		[
-			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString(FString("?")))
-				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
-			]
-		];
-
 	// Create the color controls
 	ColorControls = SNew(SHorizontalBox);
 
@@ -1225,6 +1213,11 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 
 	if (!IsHeaderComment()) // header comments don't need color presets
 	{
+		ColorControls->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
+
+		auto Buttons = SNew(SHorizontalBox);
+		ColorControls->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Fill).AttachWidget(Buttons);
+		
 		if (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets)
 		{
 			for (FPresetCommentStyle Preset : Presets)
@@ -1243,13 +1236,28 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 						SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
 					];
 
-				ColorControls->AddSlot().AttachWidget(Button);
+				Buttons->AddSlot().AttachWidget(Button);
 			}
 		}
 
 		if (!GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton)
 		{
-			ColorControls->AddSlot().AttachWidget(RandomColorButton);
+			// Create the random color button
+			TSharedRef<SButton> RandomColorButton = SNew(SButton)
+				.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+				.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked)
+				.ContentPadding(FMargin(2, 2))
+				.ToolTipText(FText::FromString("Randomize the color of the comment box"))
+				[
+					SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(FString("?")))
+				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+					]
+				];
+			
+			Buttons->AddSlot().AttachWidget(RandomColorButton);
 		}
 	}
 }
