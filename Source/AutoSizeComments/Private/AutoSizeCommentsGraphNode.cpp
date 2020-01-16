@@ -966,28 +966,31 @@ float SAutoSizeCommentsGraphNode::GetWrapAt() const
 void SAutoSizeCommentsGraphNode::ResizeToFit()
 {
 	// Resize the node
-	TArray<UObject*> UnderComment = CommentNode->GetNodesUnderComment();
+	TArray<UObject*> UnfilteredNodesUnderComment = CommentNode->GetNodesUnderComment();
 
-	// If a node gets deleted, it still stays inside the comment box?
-	// This filter checks if the node is still on the graph and filters if it is not
 	SGraphPanel* Panel = GetOwnerPanel().Get();
 	UEdGraph* Graph = Panel->GetGraphObj();
 	TArray<UObject*> Nodes;
 	Graph->GetNodesOfClass(Nodes);
-	UnderComment = UnderComment.FilterByPredicate([Nodes](UObject* Obj)
-	{
-		return Obj != nullptr && !Obj->IsPendingKillOrUnreachable() && Nodes.Contains(Obj);
-	});
-
+		
 	// Here we clear and add as there is no remove function
 	CommentNode->ClearNodesUnderComment();
-	for (UObject* Obj : UnderComment)
-	{
-		CommentNode->AddNodeUnderComment(Obj);
-	}
 
-	// get our currently selected nodes and resize to fit their bounds
-	if (UnderComment.Num() > 0)
+	for (UObject* Obj : UnfilteredNodesUnderComment)
+	{
+		// Make sure that we haven't somehow added ourselves
+		check(Obj != CommentNode);
+
+		// If a node gets deleted it can still stay inside the comment box
+		// So checks if the node is still on the graph
+		if (Obj != nullptr && !Obj->IsPendingKillOrUnreachable() && Nodes.Contains(Obj))
+		{
+			CommentNode->AddNodeUnderComment(Obj);
+		}
+	}
+	
+	// resize to fit the bounds of the nodes under the comment
+	if (CommentNode->GetNodesUnderComment().Num() > 0)
 	{
 		// get bounds and apply padding
 		const FVector2D Padding = GetDefault<UAutoSizeCommentsSettings>()->CommentNodePadding;
