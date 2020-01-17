@@ -518,6 +518,11 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 {
 	SGraphNode::SetOwner(OwnerPanel);
 
+	if (CommentNode->GetNodesUnderComment().Num() > 0)
+	{
+		return;
+	}
+
 	if (LoadCache())
 	{
 		return;
@@ -527,7 +532,7 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 	{
 		return;
 	}
-	
+
 	if (GetDefault<UAutoSizeCommentsSettings>()->bDetectNodesContainedForNewComments)
 	{
 		// Refresh the nodes under the comment
@@ -662,6 +667,9 @@ FReply SAutoSizeCommentsGraphNode::HandleClearButtonClicked()
 
 bool SAutoSizeCommentsGraphNode::AddInitialNodes()
 {
+	if (CommentNode->GetNodesUnderComment().Num() > 0)
+		return false;
+	
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 
 	bool bDidAddAnything = false;
