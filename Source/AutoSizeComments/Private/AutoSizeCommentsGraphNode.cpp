@@ -528,7 +528,7 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 		return;
 	}
 
-	if (AnySelectedNodes() && AddInitialNodes())
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bIgnoreSelectedNodesOnCreation && AnySelectedNodes() && AddInitialNodes())
 	{
 		return;
 	}

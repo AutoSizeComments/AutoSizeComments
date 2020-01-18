@@ -27,6 +27,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	AltCollisionMethod = ASC_Collision_Intersect;
 	bSnapToGridWhileResizing = false;
 	bIgnoreKnotNodes = false;
+	bIgnoreSelectedNodesOnCreation = false;
 	bHideHeaderButton = false;
 	bHideCommentBoxControls = false;
 	bHidePresets = false;

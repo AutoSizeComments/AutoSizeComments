@@ -121,6 +121,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bIgnoreKnotNodes;
 
+	/** Don't snap to selected nodes on creation */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bIgnoreSelectedNodesOnCreation;
+
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideHeaderButton;
