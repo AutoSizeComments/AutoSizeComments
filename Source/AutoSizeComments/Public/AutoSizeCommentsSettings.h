@@ -91,17 +91,21 @@ public:
 
 	/** Globally set "Color Bubble" for every comment box that is created or loaded */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bEnableGlobalSettings;
+	
+	/** Globally set "Color Bubble" for every comment box that is created or loaded */
+	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bEnableGlobalSettings"))
 	bool bGlobalColorBubble;
 
 	/** Globally set "Show Bubble When Zoomed" for every comment box that is created or loaded */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
+	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bEnableGlobalSettings"))
 	bool bGlobalShowBubbleWhenZoomed;
 
 	/** If enabled, nodes inside comments will be saved to a cache file */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bSaveCommentNodeDataToFile;
 
-	/** If enabled, nodes inside comments will be saved to a cache file */
+	/** Commments will detect and add nodes are underneath on creation */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bDetectNodesContainedForNewComments;
 

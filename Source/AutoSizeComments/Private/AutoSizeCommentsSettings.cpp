@@ -19,6 +19,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bAggressivelyUseDefaultColor = false;
 	bMoveEmptyCommentBoxes = false;
 	EmptyCommentBoxSpeed = 10;
+	bEnableGlobalSettings = true;
 	bGlobalColorBubble = false;
 	bGlobalShowBubbleWhenZoomed = true;
 	bSaveCommentNodeDataToFile = true;

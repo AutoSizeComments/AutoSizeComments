@@ -138,6 +138,8 @@ private:
 
 	class UEdGraphNode_Comment* CommentNode;
 
+	TSharedPtr<SCommentBubble> CommentBubble;
+
 	/** cached comment title */
 	FString CachedCommentTitle;
 
@@ -148,6 +150,9 @@ private:
 	int32 CachedFontSize;
 
 	int32 CachedNumPresets;
+
+	bool bCachedBubbleVisibility;
+	bool bCachedColorCommentBubble;
 
 	float OpacityValue;
 

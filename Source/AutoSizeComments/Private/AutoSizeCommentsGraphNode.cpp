@@ -70,10 +70,14 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 		CommentNode->FontSize = ASCSettings->DefaultFontSize;
 	}
 
-	// Set comment bubble color
-	CommentNode->bColorCommentBubble = ASCSettings->bGlobalColorBubble;
+	if (ASCSettings->bEnableGlobalSettings)
+	{
+		CommentNode->bColorCommentBubble = ASCSettings->bGlobalColorBubble;
+		CommentNode->bCommentBubbleVisible_InDetailsPanel = CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
+	}
 
-	CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings->bGlobalShowBubbleWhenZoomed;
+	bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible;
+	bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
 
 	// Set widget colors
 	OpacityValue = ASCSettings->MinimumControlOpacity;
@@ -281,6 +285,8 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDoubleClick(const FGeometry& InM
 
 void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
+	bool bRequireUpdate = false;
+	
 	UpdateRefreshDelay();
 
 	if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
@@ -309,7 +315,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 	}
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
-
+	
 	const auto ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 	
 	if (IsHeaderComment())
@@ -331,13 +337,50 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		CachedWidth = CurrentWidth;
 	}
 
+	CommentNode->bCommentBubbleVisible = true;
+	
+	// Update global color bubble and bubble visibility
+	if (ASCSettings->bEnableGlobalSettings)
+	{
+		if (CommentNode->bColorCommentBubble != ASCSettings->bGlobalColorBubble)
+		{
+			bRequireUpdate = true;
+			CommentNode->bColorCommentBubble = ASCSettings->bGlobalColorBubble;
+		}
+
+		if (CommentNode->bCommentBubbleVisible_InDetailsPanel != ASCSettings->bGlobalShowBubbleWhenZoomed)
+		{
+			CommentNode->bCommentBubbleVisible_InDetailsPanel = CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
+			CommentBubble->UpdateBubble();
+		}
+	}
+	else // Otherwise update when cached values have changed
+	{
+		if (bCachedBubbleVisibility != CommentNode->bCommentBubbleVisible_InDetailsPanel)
+		{
+			bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible_InDetailsPanel;
+			CommentBubble->UpdateBubble();
+		}
+
+		if (bCachedColorCommentBubble != CommentNode->bColorCommentBubble)
+		{
+			bRequireUpdate = true;
+			bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
+		}
+	}
+
 	// Update cached font size
 	if (CachedFontSize != CommentNode->FontSize)
 	{
-		UpdateGraphNode();
+		bRequireUpdate = true;
 	}
 
 	if (CachedNumPresets != ASCSettings->PresetStyles.Num())
+	{
+		bRequireUpdate = true;
+	}
+
+	if (bRequireUpdate)
 	{
 		UpdateGraphNode();
 	}
@@ -385,11 +428,10 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	// Create comment bubble
 	if (!GetDefault<UAutoSizeCommentsSettings>()->bHideCommentBubble)
 	{
-		TSharedRef<SCommentBubble> CommentBubble = SNew(SCommentBubble)
+		CommentBubble = SNew(SCommentBubble)
 			.GraphNode(GraphNode)
 			.Text(this, &SAutoSizeCommentsGraphNode::GetNodeComment)
 			.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
-			//.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentBubbleColor)
 			.ColorAndOpacity(CommentBubbleColor)
 			.AllowPinning(true)
 			.EnableTitleBarBubble(false)
@@ -399,12 +441,12 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
 		GetOrAddSlot(ENodeZone::TopCenter)
-			.SlotOffset(TAttribute<FVector2D>(CommentBubble, &SCommentBubble::GetOffset))
-			.SlotSize(TAttribute<FVector2D>(CommentBubble, &SCommentBubble::GetSize))
-			.AllowScaling(TAttribute<bool>(CommentBubble, &SCommentBubble::IsScalingAllowed))
+			.SlotOffset(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetOffset))
+			.SlotSize(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetSize))
+			.AllowScaling(TAttribute<bool>(CommentBubble.Get(), &SCommentBubble::IsScalingAllowed))
 			.VAlign(VAlign_Top)
 			[
-				CommentBubble
+				CommentBubble.ToSharedRef()
 			];
 	}
 	
@@ -1614,16 +1656,12 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 		Pos = LocalGraphNode.Pin()->GetPosition();
 		Size = LocalGraphNode.Pin()->GetDesiredSize();
 
-		if (SNodePanel::SNode::FNodeSlot* CommentSlot = LocalGraphNode.Pin()->GetSlot(ENodeZone::TopCenter))
+		if (CommentBubble.IsValid() && CommentBubble->IsBubbleVisible())
 		{
-			TSharedPtr<SCommentBubble> CommentBubble = StaticCastSharedRef<SCommentBubble>(CommentSlot->GetWidget());
-			if (CommentBubble.IsValid() && CommentBubble->IsBubbleVisible())
-			{
-				FVector2D CommentBubbleSize = CommentBubble->GetSize();
+			FVector2D CommentBubbleSize = CommentBubble->GetSize();
 
-				Pos.Y -= CommentBubbleSize.Y;
-				Size.Y += CommentBubbleSize.Y;
-			}
+			Pos.Y -= CommentBubbleSize.Y;
+			Size.Y += CommentBubbleSize.Y;
 		}
 	}
 
