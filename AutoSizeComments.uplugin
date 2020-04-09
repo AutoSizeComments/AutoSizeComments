@@ -22,6 +22,9 @@
 			"WhitelistPlatforms": [
 				"Win64",
 				"Mac"
+			],
+			"WhitelistTargets": [
+				"Editor"
 			]
 		}
 	]
