@@ -43,6 +43,20 @@ ProjectName
 
 ---
 
+## Building for your version of UE4 - Through the cmd prompt
+
+1. Clone the plugin
+2. Open the command prompt and run the command
+
+> "**%UNREAL_OLD%**\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin="**%PLUGIN_LOCATION%**\AutoSizeComments.uplugin" -Package="**%OUT_LOCATION%**" -CreateSubFolder
+
+An example of the command filled in (we want to build for version 4.24):
+> "**C:\Epic Games\UE_4.24\Engine\Build\BatchFiles\RunUAT.bat**" BuildPlugin -Plugin="**C:\Downloads\AutoSizeComments\AutoSizeComments.uplugin**" -Package="**C:\AutoSizeComments-424**" -CreateSubFolder
+
+**Note:** *All files in the %OUT_LOCATION% folder will be deleted! So make you are packaging to an empty folder. In the example we use C:\AutoSizeComments-424*
+
+---
+
 ## Build failed
 
 1. Open the project in Visual Studio
