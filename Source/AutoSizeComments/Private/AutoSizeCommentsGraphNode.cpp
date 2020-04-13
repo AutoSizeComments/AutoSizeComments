@@ -337,8 +337,6 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		CachedWidth = CurrentWidth;
 	}
 
-	CommentNode->bCommentBubbleVisible = true;
-	
 	// Update global color bubble and bubble visibility
 	if (ASCSettings->bEnableGlobalSettings)
 	{
@@ -423,8 +421,6 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	CommentStyle.TextStyle.Font.Size = CommentNode->FontSize;
 	CachedFontSize = CommentNode->FontSize;
 
-	FSlateColor CommentBubbleColor = GetCommentBubbleColor();
-	
 	// Create comment bubble
 	if (!GetDefault<UAutoSizeCommentsSettings>()->bHideCommentBubble)
 	{
@@ -432,7 +428,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			.GraphNode(GraphNode)
 			.Text(this, &SAutoSizeCommentsGraphNode::GetNodeComment)
 			.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
-			.ColorAndOpacity(CommentBubbleColor)
+			.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentBubbleColor)
 			.AllowPinning(true)
 			.EnableTitleBarBubble(false)
 			.EnableBubbleCtrls(false)
@@ -1277,8 +1273,6 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 			{
 				FLinearColor ColorWithoutOpacity = Preset.Color;
 				ColorWithoutOpacity.A = 1;
-
-				const auto OpacityValueCapture = OpacityValue;
 
 				TSharedRef<SButton> Button = SNew(SButton)
 					.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetPresetColor, ColorWithoutOpacity)

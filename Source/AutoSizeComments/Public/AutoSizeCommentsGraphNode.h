@@ -105,7 +105,6 @@ private:
 	FSlateColor GetCommentBodyColor() const;
 
 	/** @return the color to tint the title bar */
-	//FLinearColor TitleBarColor;
 	FSlateColor GetCommentTitleBarColor() const;
 
 	/** @return the color to tint the comment bubble */
