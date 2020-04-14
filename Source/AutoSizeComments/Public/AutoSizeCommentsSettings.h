@@ -129,6 +129,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bIgnoreSelectedNodesOnCreation;
 
+	/** Refresh the nodes inside the comment when you start moving the comment */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bRefreshContainingNodesOnMove;
+
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideHeaderButton;

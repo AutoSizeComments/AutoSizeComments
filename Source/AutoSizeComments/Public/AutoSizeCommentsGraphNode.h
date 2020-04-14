@@ -26,6 +26,8 @@ public:
 
 	bool bIsDragging = false;
 
+	bool bIsMoving = false;
+
 	bool bPreviousAltDown = false;
 
 	/** Variables related to resizing the comment box by dragging anchor corner points */

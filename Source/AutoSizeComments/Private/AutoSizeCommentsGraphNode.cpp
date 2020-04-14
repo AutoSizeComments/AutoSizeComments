@@ -93,6 +93,15 @@ SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
 {
 	/** Copied from SGraphNodeComment::MoveTo */
+	if (!bIsMoving)
+	{
+		if (GetDefault<UAutoSizeCommentsSettings>()->bRefreshContainingNodesOnMove)
+		{
+			RefreshNodesInsideComment(ECommentCollisionMethod::ASC_Collision_Contained);
+			bIsMoving = true;
+		}
+	}
+	
 	FVector2D PositionDelta = NewPosition - GetPosition();
 	
 	FVector2D NewPos = GetPosition() + PositionDelta;
@@ -127,8 +136,6 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 
 FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
-	const FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
-
 	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsEditable.Get())
 	{
 		CachedAnchorPoint = GetAnchorPoint(MyGeometry, MouseEvent);
@@ -136,9 +143,19 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 		{
 			DragSize = UserSize;
 			bUserIsDragging = true;
+			
 			// ResizeTransaction = MakeShareable(new FScopedTransaction(NSLOCTEXT("UnrealEd", "Resize Comment Node", "Resize Comment Node")));
 			// CommentNode->Modify();
 			return FReply::Handled().CaptureMouse(SharedThis(this));
+		}
+
+		const FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+		if (CanBeSelected(MousePositionInNode))
+		{
+			if (GetDefault<UAutoSizeCommentsSettings>()->bRefreshContainingNodesOnMove)
+			{
+				bIsMoving = false;
+			}
 		}
 	}
 
