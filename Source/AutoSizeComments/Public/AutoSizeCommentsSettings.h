@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Engine/EngineTypes.h"
+#include "Layout/Margin.h"
+#include "Framework/Text/TextLayout.h"
 #include "AutoSizeCommentsSettings.generated.h"
 
 UENUM()
@@ -76,6 +78,10 @@ public:
 	/** Amount of padding for around the contents of a comment node */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	FVector2D CommentNodePadding;
+
+	/** Amount of padding around the comment title text */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	FMargin CommentTextPadding;
 
 	/** Minimum vertical padding above and below the node */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
