@@ -81,6 +81,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	float MinimumVerticalPadding;
 
+	/** Comment text alignment */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	TEnumAsByte<ETextJustify::Type> CommentTextAlignment;
+	
 	/** If enabled, empty comment boxes will move out of the way of other comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bMoveEmptyCommentBoxes;

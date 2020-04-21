@@ -499,6 +499,8 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	CreateColorControls();
 
+	ETextJustify::Type CommentTextAlignment = ASCSettings->CommentTextAlignment;
+	
 	TSharedRef<SInlineEditableTextBlock> CommentTextBlock = SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 		.Style(&CommentStyle)
 		.Text(this, &SAutoSizeCommentsGraphNode::GetEditableNodeTitleAsText)
@@ -508,7 +510,8 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		.IsSelected(this, &SAutoSizeCommentsGraphNode::IsSelectedExclusively)
 		.WrapTextAt(this, &SAutoSizeCommentsGraphNode::GetWrapAt)
 		.MultiLine(true)
-		.ModiferKeyForNewLine(EModifierKey::Shift);
+		.ModiferKeyForNewLine(EModifierKey::Shift)
+		.Justification(CommentTextAlignment);
 	
 	// Create the top horizontal box containing anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> TopHBox = SNew(SHorizontalBox);
