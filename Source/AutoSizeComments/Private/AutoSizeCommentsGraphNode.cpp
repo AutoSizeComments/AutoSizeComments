@@ -1090,22 +1090,26 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 	// resize to fit the bounds of the nodes under the comment
 	if (CommentNode->GetNodesUnderComment().Num() > 0)
 	{
-		// get bounds and apply padding
-		const FVector2D Padding = GetDefault<UAutoSizeCommentsSettings>()->CommentNodePadding;
+		const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 		
-		const float VerticalPadding = FMath::Max(GetDefault<UAutoSizeCommentsSettings>()->MinimumVerticalPadding, Padding.Y); // ensure we can always see the buttons
+		// get bounds and apply padding
+		const FVector2D Padding = ASCSettings->CommentNodePadding;
+		
+		const float VerticalPadding = FMath::Max(ASCSettings->MinimumVerticalPadding, Padding.Y); // ensure we can always see the buttons
 
-		const float TopPadding = (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets || !GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton) ? VerticalPadding : Padding.Y;
+		const float TopPadding = (!ASCSettings->bHidePresets || !ASCSettings->bHideRandomizeButton) ? VerticalPadding : Padding.Y;
 
-		const float BottomPadding = !GetDefault<UAutoSizeCommentsSettings>()->bHideCommentBoxControls ? VerticalPadding : Padding.Y;
+		const float BottomPadding = !ASCSettings->bHideCommentBoxControls ? VerticalPadding : Padding.Y;
 		
 		const FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, TopPadding, Padding.X, BottomPadding));
 
 		const float TitleBarHeight = GetTitleBarHeight();
+		const float CommentBubbleHeight = CommentBubble.IsValid() && CommentBubble->IsBubbleVisible() ? CommentBubble->GetDesiredSize().Y : 0;
 
 		// check if size has changed
 		FVector2D CurrSize = Bounds.GetSize();
 		CurrSize.Y += TitleBarHeight;
+		CurrSize.Y -= CommentBubbleHeight;
 
 		if (!UserSize.Equals(CurrSize, .1f))
 		{
@@ -1115,7 +1119,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 
 		// check if location has changed
 		FVector2D DesiredPos = Bounds.GetTopLeft();
-		DesiredPos.Y -= TitleBarHeight;
+		DesiredPos.Y -= TitleBarHeight - CommentBubbleHeight;
 
 		// move to desired pos
 		if (!GetPosition().Equals(DesiredPos, .1f))
