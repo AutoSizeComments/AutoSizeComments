@@ -152,4 +152,8 @@ public:
 	/** Hide the comment bubble */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideCommentBubble;
+
+	/** Hide the corner points (resize still enabled) */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	bool bHideCornerPoints;
 };

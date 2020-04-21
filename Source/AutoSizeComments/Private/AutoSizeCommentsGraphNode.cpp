@@ -412,6 +412,8 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 {
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	
 	// No pins in a comment box
 	InputPins.Empty();
 	OutputPins.Empty();
@@ -446,7 +448,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	CachedFontSize = CommentNode->FontSize;
 
 	// Create comment bubble
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bHideCommentBubble)
+	if (!ASCSettings->bHideCommentBubble)
 	{
 		CommentBubble = SNew(SCommentBubble)
 			.GraphNode(GraphNode)
@@ -490,6 +492,8 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		[
 			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
 		];
+
+	const bool bHideCornerPoints = ASCSettings->bHideCornerPoints;
 	
 	CreateCommentControls();
 
@@ -508,27 +512,45 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	
 	// Create the top horizontal box containing anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> TopHBox = SNew(SHorizontalBox);
-	TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(AnchorBox);
-	TopHBox->AddSlot().Padding(2, 0, 2, 0).FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(CommentTextBlock);
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bHideHeaderButton)
+
+	if (!bHideCornerPoints)
+	{
+		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(AnchorBox);
+	}
+
+	FMargin CommentTextPadding = ASCSettings->CommentTextPadding;
+	TopHBox->AddSlot().Padding(CommentTextPadding).FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(CommentTextBlock);
+	
+	if (!ASCSettings->bHideHeaderButton)
 	{
 		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(ToggleHeaderButton.ToSharedRef());
 	}
-	TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(AnchorBox);
+	
+	if (!bHideCornerPoints)
+	{
+		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(AnchorBox);
+	}
 
 	// Create the bottom horizontal box containing comment controls and anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> BottomHBox = SNew(SHorizontalBox);
 	if (!IsHeaderComment())
 	{
-		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
-		if (!GetDefault<UAutoSizeCommentsSettings>()->bHideCommentBoxControls)
+		if (!bHideCornerPoints)
+		{
+			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+		}
+
+		if (!ASCSettings->bHideCommentBoxControls)
 		{
 			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill).AttachWidget(CommentControls.ToSharedRef());
 		}
 		
 		BottomHBox->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
 
-		BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+		if (!bHideCornerPoints)
+		{
+			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+		}
 	}
 
 	// Create the title bar
@@ -544,7 +566,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	auto MainVBox = SNew(SVerticalBox).ToolTipText(this, &SGraphNode::GetNodeTooltip);
 	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(TitleBar.ToSharedRef());
 	MainVBox->AddSlot().AutoHeight().Padding(1.0f).AttachWidget(ErrorReporting->AsWidget());
-	if (!IsHeaderComment() && (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets || !GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton))
+	if (!IsHeaderComment() && (!ASCSettings->bHidePresets || !GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton))
 	{
 		MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(ColorControls.ToSharedRef());
 	}
