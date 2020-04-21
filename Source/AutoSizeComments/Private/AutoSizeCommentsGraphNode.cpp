@@ -258,7 +258,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 		for (auto& Node : AllNodes)
 		{
 			Node->SetNodeUnrelated(true);
-		}
+		}	
 
 		GetNodeObj()->SetNodeUnrelated(false);
 		
@@ -912,7 +912,10 @@ void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(ECommentCollisionMeth
 	QueryNodesUnderComment(OutNodes, OverrideCollisionMethod);
 	for (TSharedPtr<SGraphNode> Node : OutNodes)
 	{
-		CommentNode->AddNodeUnderComment(Node->GetNodeObj());
+		if (CanAddNode(Node))
+		{
+			CommentNode->AddNodeUnderComment(Node->GetNodeObj());
+		}
 	}
 
 	UpdateExistingCommentNodes();
@@ -1579,8 +1582,9 @@ void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraph
 	for (int32 NodeIndex = 0; NodeIndex < NumChildren; ++NodeIndex)
 	{
 		const TSharedRef<SGraphNode> SomeNodeWidget = StaticCastSharedRef<SGraphNode>(PanelChildren->GetChildAt(NodeIndex));
-		
-		if (!CanAddNode(SomeNodeWidget))
+
+		UObject* GraphObject = SomeNodeWidget->GetObjectBeingDisplayed();
+		if (GraphObject == nullptr || GraphObject == CommentNode)
 		{
 			continue;
 		}
