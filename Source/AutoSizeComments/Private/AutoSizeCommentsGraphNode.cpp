@@ -1054,8 +1054,11 @@ FSlateColor SAutoSizeCommentsGraphNode::GetPresetColor(FLinearColor Color) const
 
 float SAutoSizeCommentsGraphNode::GetWrapAt() const
 {
-	const float HeaderSize = GetDefault<UAutoSizeCommentsSettings>()->bHideHeaderButton ? 0 : 20;
-	return FMath::Max(0.f, CachedWidth - 50.0f - HeaderSize);
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const float HeaderSize = ASCSettings->bHideHeaderButton ? 0 : 20;
+	const float AnchorPointWidth = ASCSettings->bHideCornerPoints ? 0 : 32;
+	const float TextPadding = ASCSettings->CommentTextPadding.Left + ASCSettings->CommentTextPadding.Right;
+	return FMath::Max(0.f, CachedWidth - AnchorPointWidth - HeaderSize - TextPadding - 12);
 }
 
 void SAutoSizeCommentsGraphNode::ResizeToFit()
