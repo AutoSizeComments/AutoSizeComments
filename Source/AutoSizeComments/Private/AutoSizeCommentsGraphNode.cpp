@@ -366,7 +366,11 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		if (CommentNode->bCommentBubbleVisible_InDetailsPanel != ASCSettings->bGlobalShowBubbleWhenZoomed)
 		{
 			CommentNode->bCommentBubbleVisible_InDetailsPanel = CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
-			CommentBubble->UpdateBubble();
+
+			if (CommentBubble.IsValid())
+			{
+				CommentBubble->UpdateBubble();
+			}
 		}
 	}
 	else // Otherwise update when cached values have changed
@@ -374,7 +378,10 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		if (bCachedBubbleVisibility != CommentNode->bCommentBubbleVisible_InDetailsPanel)
 		{
 			bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible_InDetailsPanel;
-			CommentBubble->UpdateBubble();
+			if (CommentBubble.IsValid())
+			{
+				CommentBubble->UpdateBubble();
+			}
 		}
 
 		if (bCachedColorCommentBubble != CommentNode->bColorCommentBubble)
