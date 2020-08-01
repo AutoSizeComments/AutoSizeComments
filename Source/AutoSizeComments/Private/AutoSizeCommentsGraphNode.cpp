@@ -42,30 +42,14 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
-	bool bIsPreset = IsPresetStyle();
+	const bool bIsPresetStyle = IsPresetStyle();
+	const bool bIsHeaderComment = IsHeaderComment();
 
-	// Set comment color
-	FLinearColor DefaultColor = ASCSettings->DefaultCommentColor;
-	if (ASCSettings->bUseRandomColor)
-	{
-		if (CommentNode->CommentColor == DefaultColor || CommentNode->CommentColor == FLinearColor::White) // only randomize if the node has the default color
-		{
-			RandomizeColor();
-		}
-	}
-	else if (!IsHeaderComment())
-	{
-		if (ASCSettings->bAggressivelyUseDefaultColor)
-		{
-			CommentNode->CommentColor = DefaultColor;
-		}
-		else if (CommentNode->CommentColor == FLinearColor::White)
-		{
-			CommentNode->CommentColor = DefaultColor;
-		}
-	}
+	// init color
+	InitializeColor(ASCSettings, bIsPresetStyle, bIsHeaderComment);
 
-	if (ASCSettings->bUseDefaultFontSize && !IsHeaderComment() && !bIsPreset)
+	// use default font
+	if (ASCSettings->bUseDefaultFontSize && !bIsHeaderComment && !bIsPresetStyle)
 	{
 		CommentNode->FontSize = ASCSettings->DefaultFontSize;
 	}
@@ -75,7 +59,7 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 		CommentNode->bColorCommentBubble = ASCSettings->bGlobalColorBubble;
 		CommentNode->bCommentBubbleVisible_InDetailsPanel = CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
 	}
-
+	
 	bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible;
 	bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
 
@@ -88,6 +72,32 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 {
 	SaveToCache();
+}
+
+void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
+{
+	// don't need to initialize if our color is a preset style or is a header comment 
+	if (bIsPresetStyle || bIsHeaderComment)
+		return;
+
+    // Set comment color
+    FLinearColor DefaultColor = ASCSettings->DefaultCommentColor;
+
+    if (ASCSettings->bUseRandomColor)
+    {
+    	if (CommentNode->CommentColor == DefaultColor || CommentNode->CommentColor == FLinearColor::White) // only randomize if the node has the default color
+    	{
+    		RandomizeColor();
+    	}
+    }
+    else if (ASCSettings->bAggressivelyUseDefaultColor)
+    {
+    	CommentNode->CommentColor = DefaultColor;
+    }
+    else if (CommentNode->CommentColor == FLinearColor::White)
+    {
+    	CommentNode->CommentColor = DefaultColor;
+    }
 }
 
 void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
@@ -1188,8 +1198,6 @@ void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 
 			if (FSlateRect::DoRectanglesIntersect(OtherBounds, MyBounds))
 			{
-				FVector2D MyCenter = MyBounds.GetCenter();
-
 				float DeltaLeft = OtherBounds.Left - MyBounds.Right;
 				float DeltaRight = OtherBounds.Right - MyBounds.Left;
 
@@ -1673,7 +1681,6 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(UObject* Node) const
 		return false;
 	
 	FChildren* PanelChildren = OwnerPanel->GetAllChildren();
-	int32 NumChildren = PanelChildren->Num();
 
 	UEdGraphNode* EdGraphNode = Cast<UEdGraphNode>(Node);
 	if (!EdGraphNode)

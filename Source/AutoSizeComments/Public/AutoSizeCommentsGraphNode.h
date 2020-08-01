@@ -78,7 +78,7 @@ public:
 	virtual FSlateRect GetTitleRect() const override;
 
 	class UEdGraphNode_Comment* GetCommentNodeObj() { return CommentNode; }
-
+	
 protected:
 	//~ Begin SGraphNode Interface
 	virtual void UpdateGraphNode() override;
@@ -129,6 +129,8 @@ private:
 
 	void CreateCommentControls();
 	void CreateColorControls();
+
+	void InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, bool bIsPresetStyle, bool bIsHeaderComment);
 
 	FVector2D UserSize;
 
