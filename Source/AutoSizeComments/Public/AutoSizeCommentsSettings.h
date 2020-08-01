@@ -142,6 +142,10 @@ public:
 	/** Refresh the nodes inside the comment when you start moving the comment */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bRefreshContainingNodesOnMove;
+	
+	/** Disable the tooltip when hovering the titlebar */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bDisableTooltip;
 
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)

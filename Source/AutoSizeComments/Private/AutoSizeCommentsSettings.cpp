@@ -32,6 +32,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bIgnoreKnotNodes = false;
 	bIgnoreSelectedNodesOnCreation = false;
 	bRefreshContainingNodesOnMove = false;
+	bDisableTooltip = false;
 	bHideHeaderButton = false;
 	bHideCommentBoxControls = false;
 	bHidePresets = false;

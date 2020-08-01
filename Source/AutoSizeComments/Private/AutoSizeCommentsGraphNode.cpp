@@ -565,8 +565,13 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			TopHBox
 		];
 
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bDisableTooltip)
+	{
+		TitleBar->SetToolTipText(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip));
+	}
+
 	// Create the main vertical box containing all the widgets
-	auto MainVBox = SNew(SVerticalBox).ToolTipText(this, &SGraphNode::GetNodeTooltip);
+	auto MainVBox = SNew(SVerticalBox);
 	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(TitleBar.ToSharedRef());
 	MainVBox->AddSlot().AutoHeight().Padding(1.0f).AttachWidget(ErrorReporting->AsWidget());
 	if (!IsHeaderComment() && (!ASCSettings->bHidePresets || !GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton))
