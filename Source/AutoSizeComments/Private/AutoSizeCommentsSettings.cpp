@@ -1,8 +1,6 @@
-// Copyright 2018 fpwong, Inc. All Rights Reserved.
+// Copyright 2020 fpwong, Inc. All Rights Reserved.
 
 #include "AutoSizeCommentsSettings.h"
-#include "AutoSizeCommentsModule.h"
-#include "AutoSizeCommentsCacheFile.h"
 
 UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

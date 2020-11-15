@@ -1,10 +1,9 @@
-// Copyright 2018 fpwong, Inc. All Rights Reserved.
+// Copyright 2020 fpwong, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Engine/EngineTypes.h"
 #include "Layout/Margin.h"
 #include "Framework/Text/TextLayout.h"
 #include "AutoSizeCommentsSettings.generated.h"
@@ -98,7 +97,7 @@ public:
 	/** Comment text alignment */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	TEnumAsByte<ETextJustify::Type> CommentTextAlignment;
-	
+
 	/** If enabled, empty comment boxes will move out of the way of other comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bMoveEmptyCommentBoxes;
@@ -110,7 +109,7 @@ public:
 	/** Globally set "Color Bubble" for every comment box that is created or loaded */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bEnableGlobalSettings;
-	
+
 	/** Globally set "Color Bubble" for every comment box that is created or loaded */
 	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bEnableGlobalSettings"))
 	bool bGlobalColorBubble;
@@ -150,7 +149,7 @@ public:
 	/** Refresh the nodes inside the comment when you start moving the comment */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bRefreshContainingNodesOnMove;
-	
+
 	/** Disable the tooltip when hovering the titlebar */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bDisableTooltip;

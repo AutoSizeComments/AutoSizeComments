@@ -1,4 +1,4 @@
-// Copyright 2018 fpwong, Inc. All Rights Reserved.
+// Copyright 2020 fpwong, Inc. All Rights Reserved.
 
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
 #include "AutoSizeCommentsGraphNode.h"

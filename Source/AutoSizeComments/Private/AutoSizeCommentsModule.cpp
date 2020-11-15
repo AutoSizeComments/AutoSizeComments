@@ -1,4 +1,4 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+// Copyright 2020 fpwong, Inc. All Rights Reserved.
 
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"

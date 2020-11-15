@@ -1,4 +1,4 @@
-// Copyright 2018 fpwong, Inc. All Rights Reserved.
+// Copyright 2020 fpwong, Inc. All Rights Reserved.
 
 #include "AutoSizeCommentsGraphNode.h"
 
@@ -15,16 +15,12 @@
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Images/SImage.h"
-#include "Widgets/Input/SCheckBox.h"
-#include "Widgets/Layout/SSpacer.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "Widgets/Text/STextBlock.h"
 
-#include "Editor/GraphEditor/Public/SGraphPanel.h"
 #include "Runtime/Engine/Classes/EdGraph/EdGraph.h"
 #include "Framework/Application/SlateApplication.h"
-#include "Modules/ModuleManager.h"
 #include "GraphEditorSettings.h"
 //#include "ScopedTransaction.h"
 
