@@ -15,6 +15,14 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bUseDefaultFontSize = false;
 	bUseRandomColor = true;
 	RandomColorOpacity = 1.f;
+	bUseRandomColorFromList = false;
+	PredefinedRandomColorList.Add(FLinearColor(1, 0, 0));
+	PredefinedRandomColorList.Add(FLinearColor(0, 1, 0));
+	PredefinedRandomColorList.Add(FLinearColor(0, 0, 1));
+	PredefinedRandomColorList.Add(FLinearColor(0, 1, 1));
+	PredefinedRandomColorList.Add(FLinearColor(1, 1, 0));
+	PredefinedRandomColorList.Add(FLinearColor(0, 1, 1));
+	PredefinedRandomColorList.Add(FLinearColor(1, 0, 1));
 	MinimumControlOpacity = 0.f;
 	DefaultCommentColor = FLinearColor::White;
 	HeaderStyle.Color = FLinearColor::Gray;

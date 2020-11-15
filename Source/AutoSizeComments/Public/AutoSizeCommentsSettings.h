@@ -59,10 +59,18 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Color)
 	float RandomColorOpacity;
 
+	/** If enabled, select a random color from predefined list */
+	UPROPERTY(EditAnywhere, config, Category = Color)
+	bool bUseRandomColorFromList;
+
+	/** If UseRandomColorFromList is enabled, new comments will select a color from one of these */
+	UPROPERTY(EditAnywhere, config, Category = Color, meta = (EditCondition = "bUseRandomColorFromList"))
+	TArray<FLinearColor> PredefinedRandomColorList;
+
 	/** Minimum opacity for comment box controls when not hovered */
 	UPROPERTY(EditAnywhere, config, Category = Color)
 	float MinimumControlOpacity;
-	
+
 	/** Set all nodes in the graph to the default color */
 	UPROPERTY(EditAnywhere, config, Category = Color)
 	bool bAggressivelyUseDefaultColor;

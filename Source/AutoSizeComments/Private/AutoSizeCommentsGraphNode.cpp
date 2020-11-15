@@ -989,8 +989,11 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 		}
 		else
 		{
+			const auto FilterComments = [](UObject* Node) { return Cast<UEdGraphNode_Comment>(Node) == nullptr; };
+			const auto OtherNodesWithoutComments = OtherComment->GetNodesUnderComment().FilterByPredicate(FilterComments);
+
 			// check if all nodes in the other comment box are within our comment box
-			bool bAllNodesContainedUnderSelf = !OtherComment->GetNodesUnderComment().ContainsByPredicate([this](UObject* NodeUnderOther)
+			bool bAllNodesContainedUnderSelf = !OtherNodesWithoutComments.ContainsByPredicate([this](UObject* NodeUnderOther)
 			{
 				return !CommentNode->GetNodesUnderComment().Contains(NodeUnderOther);
 			});
@@ -1549,7 +1552,7 @@ void SAutoSizeCommentsGraphNode::SaveToCache()
 		NodesInside.NodeGuids.Empty();
 		
 		// update cache file
-		const auto Nodes = GetEdGraphNodesUnderComment();
+		const auto Nodes = GetEdGraphNodesUnderComment(CommentNode);
 		for (auto Node : Nodes)
 		{
 			if (!HasNodeBeenDeleted(Node))
@@ -1624,8 +1627,21 @@ void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraph
 
 void SAutoSizeCommentsGraphNode::RandomizeColor()
 {
-	CommentNode->CommentColor = FLinearColor::MakeRandomColor();
-	CommentNode->CommentColor.A = GetMutableDefault<UAutoSizeCommentsSettings>()->RandomColorOpacity;
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+
+	if (ASCSettings->bUseRandomColorFromList)
+	{
+		const int RandIndex = FMath::Rand() % ASCSettings->PredefinedRandomColorList.Num();
+		if (ASCSettings->PredefinedRandomColorList.IsValidIndex(RandIndex))
+		{
+			CommentNode->CommentColor = ASCSettings->PredefinedRandomColorList[RandIndex];
+		}
+	}
+	else
+	{
+		CommentNode->CommentColor = FLinearColor::MakeRandomColor();
+		CommentNode->CommentColor.A = ASCSettings->RandomColorOpacity;
+	}
 }
 
 void SAutoSizeCommentsGraphNode::AdjustMinSize(FVector2D& InSize)
@@ -1680,8 +1696,6 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(UObject* Node) const
 	if (!OwnerPanel.IsValid())
 		return false;
 	
-	FChildren* PanelChildren = OwnerPanel->GetAllChildren();
-
 	UEdGraphNode* EdGraphNode = Cast<UEdGraphNode>(Node);
 	if (!EdGraphNode)
 		return false;
@@ -1764,7 +1778,7 @@ FSlateRect SAutoSizeCommentsGraphNode::GetBoundsForNodesInside()
 	return Bounds;
 }
 
-TArray<UEdGraphNode*> SAutoSizeCommentsGraphNode::GetEdGraphNodesUnderComment() const
+TArray<UEdGraphNode*> SAutoSizeCommentsGraphNode::GetEdGraphNodesUnderComment(UEdGraphNode_Comment* InCommentNode) const
 {
 	TArray<UEdGraphNode*> OutNodes;
 	for (UObject* Obj : CommentNode->GetNodesUnderComment())

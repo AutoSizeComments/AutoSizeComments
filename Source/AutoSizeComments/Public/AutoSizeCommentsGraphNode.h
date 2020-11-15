@@ -187,7 +187,7 @@ public:
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
 	void SnapVectorToGrid(FVector2D& Vector);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
-	TArray<UEdGraphNode*> GetEdGraphNodesUnderComment() const;
+	TArray<UEdGraphNode*> GetEdGraphNodesUnderComment(UEdGraphNode_Comment* InCommentNode) const;
 
 	ASC_AnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
 
