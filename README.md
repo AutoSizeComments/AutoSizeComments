@@ -9,7 +9,7 @@ UE4 forum page: https://forums.unrealengine.com/community/released-projects/1540
 
 Marketplace link: https://www.unrealengine.com/marketplace/auto-size-comments
 
-This was originally a feature from the [Blueprint Assist Plugin](https://forums.unrealengine.com/unreal-engine/marketplace/120671), a plugin that provides automatic formatting and mouse-free node editing when working with blueprints (coming soon!).
+This was originally a feature from the [Blueprint Assist Plugin](https://forums.unrealengine.com/unreal-engine/marketplace/120671), a plugin that provides automatic formatting and mouse-free node editing when working with blueprints.
 
 ---
 
