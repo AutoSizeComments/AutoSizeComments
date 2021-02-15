@@ -154,6 +154,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bDisableTooltip;
 
+	/** Do not use ASC node for these graphs, turn on DebugClass_ASC and open graph to find graph class name */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	TArray<FString> IgnoredGraphs;
+
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideHeaderButton;
@@ -177,4 +181,8 @@ public:
 	/** Hide the corner points (resize still enabled) */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideCornerPoints;
+
+	/** Print info about the graph when opening a graph */
+	UPROPERTY(EditAnywhere, config, Category = Debug)
+	bool bDebugGraph_ASC;
 };

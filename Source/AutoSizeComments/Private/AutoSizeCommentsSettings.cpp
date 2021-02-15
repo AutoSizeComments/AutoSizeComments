@@ -45,4 +45,5 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bHideRandomizeButton = false;
 	bHideCommentBubble = false;
 	bHideCornerPoints = false;
+	bDebugGraph_ASC = false;
 }
