@@ -30,7 +30,7 @@ struct FPresetCommentStyle
 	int FontSize = 18;
 };
 
-UCLASS(config = EditorSettings)
+UCLASS(config = EditorPerProjectUserSettings)
 class AUTOSIZECOMMENTS_API UAutoSizeCommentsSettings : public UObject
 {
 	GENERATED_BODY()
