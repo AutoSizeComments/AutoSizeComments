@@ -309,32 +309,35 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDoubleClick(const FGeometry& InM
 void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	bool bRequireUpdate = false;
-	
-	UpdateRefreshDelay();
 
-	if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bDisableResizing)
 	{
-		FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
+		UpdateRefreshDelay();
 
-		bool bIsAltDown = KeysState.IsAltDown();
-		if (!bIsAltDown)
+		if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
 		{
-			if (bPreviousAltDown) // refresh when the alt key is released
+			const FModifierKeysState& KeysState = FSlateApplication::Get().GetModifierKeys();
+
+			const bool bIsAltDown = KeysState.IsAltDown();
+			if (!bIsAltDown)
 			{
-				RefreshNodesInsideComment(GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod);
+				if (bPreviousAltDown) // refresh when the alt key is released
+				{
+					RefreshNodesInsideComment(GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod);
+				}
+
+				ResizeToFit();
+
+				MoveEmptyCommentBoxes();
+
+				// if (ResizeTransaction.IsValid())
+				// {
+				// 	ResizeTransaction.Reset();
+				// }
 			}
 
-			ResizeToFit();
-
-			MoveEmptyCommentBoxes();
-
-			// if (ResizeTransaction.IsValid())
-			// {
-			// 	ResizeTransaction.Reset();
-			// }
+			bPreviousAltDown = bIsAltDown;
 		}
-
-		bPreviousAltDown = bIsAltDown;
 	}
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -885,8 +888,8 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 	if (GetDesiredSize().IsZero())
 		return;
 
-	FVector2D NodePosition = GetPosition();
-	FVector2D BottomRight = NodePosition + FVector2D(1, 1);
+	const FVector2D NodePosition = GetPosition();
+	const FVector2D BottomRight = NodePosition + FVector2D(1, 1);
 	if (!OwnerGraphPanelPtr.Pin().Get()->IsRectVisible(NodePosition, BottomRight))
 		return;
 

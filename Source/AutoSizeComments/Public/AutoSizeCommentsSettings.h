@@ -82,6 +82,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Styles)
 	TArray<FPresetCommentStyle> PresetStyles;
 
+	/** Disable the auto resizing behavior for comments */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bDisableResizing;
+
 	/** Amount of padding for around the contents of a comment node */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	FVector2D CommentNodePadding;
