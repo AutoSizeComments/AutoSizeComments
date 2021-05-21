@@ -1,4 +1,4 @@
-// Copyright 2020 fpwong, Inc. All Rights Reserved.
+// Copyright 2021 fpwong. All Rights Reserved.
 
 #pragma once
 
