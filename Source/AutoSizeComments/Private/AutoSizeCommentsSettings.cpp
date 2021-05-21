@@ -2,8 +2,8 @@
 
 #include "AutoSizeCommentsSettings.h"
 
-UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer) :
+	Super(ObjectInitializer)
 {
 	bDisableResizing = false;
 	CommentNodePadding = FVector2D(30, 30);

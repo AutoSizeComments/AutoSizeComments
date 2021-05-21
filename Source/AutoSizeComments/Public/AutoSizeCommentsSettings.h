@@ -17,7 +17,6 @@ enum ECommentCollisionMethod
 	ASC_Collision_Default UMETA(DisplayName = "Default (Don't use this!)"),
 };
 
-
 USTRUCT()
 struct FPresetCommentStyle
 {

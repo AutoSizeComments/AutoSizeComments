@@ -12,10 +12,8 @@
 #include "Core/Public/Misc/CoreDelegates.h"
 #include "JsonUtilities/Public/JsonObjectConverter.h"
 #include "EngineSettings/Classes/GeneralProjectSettings.h"
-#include "AssetRegistry/Public/IAssetRegistry.h"
 #include "AssetRegistry/Public/AssetRegistryModule.h"
 #include "AssetRegistry/Public/AssetRegistryState.h"
-#include "Engine/Blueprint.h"
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsModule.h"
@@ -125,7 +123,7 @@ FASCCommentData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 }
 
 FString FAutoSizeCommentsCacheFile::GetCachePath()
-{	
+{
 	const FString PluginDir = IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir();
 
 	const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>();
@@ -182,19 +180,16 @@ void FASCCommentData::CleanupGraph(UEdGraph* Graph)
 			NodesToRemove.Add(CommentNode);
 			break;
 		}
-		else
+		auto ContainingNodes = Elem.Value.NodeGuids;
+		for (auto Node : ContainingNodes)
 		{
-			auto ContainingNodes = Elem.Value.NodeGuids;			
-			for (auto Node : ContainingNodes)
+			if (!CurrentNodes.Contains(Node))
 			{
-				if (!CurrentNodes.Contains(Node))
-				{
-					Elem.Value.NodeGuids.Remove(Node);
-				}
+				Elem.Value.NodeGuids.Remove(Node);
 			}
 		}
 	}
-	
+
 	for (FGuid NodeGuid : NodesToRemove)
 	{
 		CommentData.Remove(NodeGuid);
