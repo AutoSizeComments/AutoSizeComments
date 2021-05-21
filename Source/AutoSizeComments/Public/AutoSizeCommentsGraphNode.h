@@ -1,4 +1,4 @@
-// Copyright 2020 fpwong, Inc. All Rights Reserved.
+// Copyright 2021 fpwong. All Rights Reserved.
 
 #pragma once
 
@@ -15,7 +15,15 @@ struct FPresetCommentStyle;
  */
 enum ASC_AnchorPoint
 {
-	LEFT, RIGHT, TOP, BOTTOM, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, NONE
+	LEFT,
+	RIGHT,
+	TOP,
+	BOTTOM,
+	TOP_LEFT,
+	TOP_RIGHT,
+	BOTTOM_LEFT,
+	BOTTOM_RIGHT,
+	NONE
 };
 
 class SAutoSizeCommentsGraphNode : public SGraphNode
@@ -40,11 +48,13 @@ public:
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
 
 public:
+	// @formatter:off
 	SLATE_BEGIN_ARGS(SAutoSizeCommentsGraphNode) {}
 	SLATE_END_ARGS()
+	// @formatter:on
 
 	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
-	~SAutoSizeCommentsGraphNode();
+	virtual ~SAutoSizeCommentsGraphNode() override;
 
 	//~ Begin SWidget Interface
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
@@ -78,7 +88,7 @@ public:
 	virtual FSlateRect GetTitleRect() const override;
 
 	class UEdGraphNode_Comment* GetCommentNodeObj() { return CommentNode; }
-	
+
 protected:
 	//~ Begin SGraphNode Interface
 	virtual void UpdateGraphNode() override;

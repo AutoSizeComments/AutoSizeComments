@@ -1,4 +1,4 @@
-// Copyright 2020 fpwong, Inc. All Rights Reserved.
+// Copyright 2021 fpwong. All Rights Reserved.
 
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
@@ -14,13 +14,12 @@ DEFINE_LOG_CATEGORY(LogAutoSizeComments)
 class FAutoSizeCommentsModule : public IAutoSizeCommentsModule
 {
 public:
-
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 
 	virtual void ShutdownModule() override;
 
-	FAutoSizeCommentsCacheFile& GetSizeCache() override { return Cache; }
+	virtual FAutoSizeCommentsCacheFile& GetSizeCache() override { return Cache; }
 
 private:
 	TSharedPtr<FAutoSizeCommentsGraphPanelNodeFactory> ASCNodeFactory;
@@ -44,7 +43,7 @@ void FAutoSizeCommentsModule::StartupModule()
 			LOCTEXT("AutoSizeCommentsName", "Auto Size Comments"),
 			LOCTEXT("AutoSizeCommentsNameDesc", "Configure the Auto Size Comments plugin"),
 			GetMutableDefault<UAutoSizeCommentsSettings>()
-		);
+			);
 	}
 }
 

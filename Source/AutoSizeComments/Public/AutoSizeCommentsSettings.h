@@ -1,4 +1,4 @@
-// Copyright 2020 fpwong, Inc. All Rights Reserved.
+// Copyright 2021 fpwong. All Rights Reserved.
 
 #pragma once
 
@@ -17,7 +17,6 @@ enum ECommentCollisionMethod
 	ASC_Collision_Default UMETA(DisplayName = "Default (Don't use this!)"),
 };
 
-
 USTRUCT()
 struct FPresetCommentStyle
 {
@@ -30,7 +29,7 @@ struct FPresetCommentStyle
 	int FontSize = 18;
 };
 
-UCLASS(config = EditorSettings)
+UCLASS(config = EditorPerProjectUserSettings)
 class AUTOSIZECOMMENTS_API UAutoSizeCommentsSettings : public UObject
 {
 	GENERATED_BODY()
@@ -81,6 +80,10 @@ public:
 	/** Preset styles (each style will have its own button on the comment box) */
 	UPROPERTY(EditAnywhere, config, Category = Styles)
 	TArray<FPresetCommentStyle> PresetStyles;
+
+	/** Disable the auto resizing behavior for comments */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bDisableResizing;
 
 	/** Amount of padding for around the contents of a comment node */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
