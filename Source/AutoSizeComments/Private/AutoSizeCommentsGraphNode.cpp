@@ -2,26 +2,23 @@
 
 #include "AutoSizeCommentsGraphNode.h"
 
+#include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
-#include "AutoSizeCommentsCacheFile.h"
-
-#include "K2Node_Knot.h"
 #include "EdGraphNode_Comment.h"
-#include "SGraphPanel.h"
+#include "GraphEditorSettings.h"
+#include "K2Node_Knot.h"
 #include "SCommentBubble.h"
+#include "SGraphPanel.h"
 #include "TutorialMetaData.h"
-
+#include "Framework/Application/SlateApplication.h"
+#include "Runtime/Engine/Classes/EdGraph/EdGraph.h"
 #include "Widgets/SBoxPanel.h"
-#include "Widgets/Input/SButton.h"
 #include "Widgets/Images/SImage.h"
+#include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "Widgets/Text/STextBlock.h"
-
-#include "Runtime/Engine/Classes/EdGraph/EdGraph.h"
-#include "Framework/Application/SlateApplication.h"
-#include "GraphEditorSettings.h"
 //#include "ScopedTransaction.h"
 
 void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGraphNode* InNode)
@@ -105,7 +102,7 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 	{
 		if (GetDefault<UAutoSizeCommentsSettings>()->bRefreshContainingNodesOnMove)
 		{
-			RefreshNodesInsideComment(ASC_Collision_Contained);
+			RefreshNodesInsideComment(ECommentCollisionMethod::Contained);
 			bIsMoving = true;
 		}
 	}
@@ -147,7 +144,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsEditable.Get())
 	{
 		CachedAnchorPoint = GetAnchorPoint(MyGeometry, MouseEvent);
-		if (CachedAnchorPoint != NONE)
+		if (CachedAnchorPoint != ASC_AnchorPoint::NONE)
 		{
 			DragSize = UserSize;
 			bUserIsDragging = true;
@@ -175,8 +172,8 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, 
 	if ((MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) && bUserIsDragging)
 	{
 		bUserIsDragging = false;
-		CachedAnchorPoint = NONE;
-		RefreshNodesInsideComment();
+		CachedAnchorPoint = ASC_AnchorPoint::NONE;
+		RefreshNodesInsideComment(GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenResizing);
 
 #if ENGINE_MINOR_VERSION >= 23
 		TArray<UEdGraphNode*> AllNodes = GetNodeObj()->GetGraph()->Nodes;
@@ -210,27 +207,27 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 		bool bAnchorTop = false;
 
 		// LEFT
-		if (CachedAnchorPoint == LEFT || CachedAnchorPoint == TOP_LEFT || CachedAnchorPoint == BOTTOM_LEFT)
+		if (CachedAnchorPoint == ASC_AnchorPoint::LEFT || CachedAnchorPoint == ASC_AnchorPoint::TOP_LEFT || CachedAnchorPoint == ASC_AnchorPoint::BOTTOM_LEFT)
 		{
 			bAnchorLeft = true;
 			NewSize.X -= MousePositionInNode.X - Padding.X;
 		}
 
 		// RIGHT
-		if (CachedAnchorPoint == RIGHT || CachedAnchorPoint == TOP_RIGHT || CachedAnchorPoint == BOTTOM_RIGHT)
+		if (CachedAnchorPoint == ASC_AnchorPoint::RIGHT || CachedAnchorPoint == ASC_AnchorPoint::TOP_RIGHT || CachedAnchorPoint == ASC_AnchorPoint::BOTTOM_RIGHT)
 		{
 			NewSize.X = MousePositionInNode.X + Padding.X;
 		}
 
 		// TOP
-		if (CachedAnchorPoint == TOP || CachedAnchorPoint == TOP_LEFT || CachedAnchorPoint == TOP_RIGHT)
+		if (CachedAnchorPoint == ASC_AnchorPoint::TOP || CachedAnchorPoint == ASC_AnchorPoint::TOP_LEFT || CachedAnchorPoint == ASC_AnchorPoint::TOP_RIGHT)
 		{
 			bAnchorTop = true;
 			NewSize.Y -= MousePositionInNode.Y - Padding.Y;
 		}
 
 		// BOTTOM
-		if (CachedAnchorPoint == BOTTOM || CachedAnchorPoint == BOTTOM_LEFT || CachedAnchorPoint == BOTTOM_RIGHT)
+		if (CachedAnchorPoint == ASC_AnchorPoint::BOTTOM || CachedAnchorPoint == ASC_AnchorPoint::BOTTOM_LEFT || CachedAnchorPoint == ASC_AnchorPoint::BOTTOM_RIGHT)
 		{
 			NewSize.Y = MousePositionInNode.Y + Padding.Y;
 		}
@@ -271,7 +268,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 		GetNodeObj()->SetNodeUnrelated(false);
 
 		TArray<TSharedPtr<SGraphNode>> Nodes;
-		QueryNodesUnderComment(Nodes);
+		QueryNodesUnderComment(Nodes, GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod);
 		for (TSharedPtr<SGraphNode> Node : Nodes)
 		{
 			Node->GetNodeObj()->SetNodeUnrelated(false);
@@ -320,9 +317,15 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 			const bool bIsAltDown = KeysState.IsAltDown();
 			if (!bIsAltDown)
 			{
-				if (bPreviousAltDown) // refresh when the alt key is released
+				const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
+
+				// still update collision when we alt-control drag
+				const bool bUseAltCollision = AltCollisionMethod != ECommentCollisionMethod::Disabled;
+
+				// refresh when the alt key is released
+				if (bPreviousAltDown && bUseAltCollision)
 				{
-					RefreshNodesInsideComment(GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod);
+					RefreshNodesInsideComment(AltCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenPressingAlt);
 				}
 
 				ResizeToFit();
@@ -646,22 +649,22 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 
 	auto AnchorPoint = GetAnchorPoint(MyGeometry, CursorEvent);
 
-	if (AnchorPoint == TOP_LEFT || AnchorPoint == BOTTOM_RIGHT)
+	if (AnchorPoint == ASC_AnchorPoint::TOP_LEFT || AnchorPoint == ASC_AnchorPoint::BOTTOM_RIGHT)
 	{
 		return FCursorReply::Cursor(EMouseCursor::ResizeSouthEast);
 	}
 
-	if (AnchorPoint == TOP_RIGHT || AnchorPoint == BOTTOM_LEFT)
+	if (AnchorPoint == ASC_AnchorPoint::TOP_RIGHT || AnchorPoint == ASC_AnchorPoint::BOTTOM_LEFT)
 	{
 		return FCursorReply::Cursor(EMouseCursor::ResizeSouthWest);
 	}
 
-	if (AnchorPoint == TOP || AnchorPoint == BOTTOM)
+	if (AnchorPoint == ASC_AnchorPoint::TOP || AnchorPoint == ASC_AnchorPoint::BOTTOM)
 	{
 		return FCursorReply::Cursor(EMouseCursor::ResizeUpDown);
 	}
 
-	if (AnchorPoint == LEFT || AnchorPoint == RIGHT)
+	if (AnchorPoint == ASC_AnchorPoint::LEFT || AnchorPoint == ASC_AnchorPoint::RIGHT)
 	{
 		return FCursorReply::Cursor(EMouseCursor::ResizeLeftRight);
 	}
@@ -729,7 +732,7 @@ FReply SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked()
 	return FReply::Handled();
 }
 
-FReply SAutoSizeCommentsGraphNode::HandlePresetButtonClicked(FPresetCommentStyle Style)
+FReply SAutoSizeCommentsGraphNode::HandlePresetButtonClicked(const FPresetCommentStyle Style)
 {
 	CommentNode->CommentColor = Style.Color;
 	CommentNode->FontSize = Style.FontSize;
@@ -856,7 +859,7 @@ bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes()
 	return bDidRemoveAnything;
 }
 
-void SAutoSizeCommentsGraphNode::UpdateColors(float InDeltaTime)
+void SAutoSizeCommentsGraphNode::UpdateColors(const float InDeltaTime)
 {
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
@@ -910,20 +913,25 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 
 		if (RefreshNodesDelay == 0)
 		{
-			RefreshNodesInsideComment(ASC_Collision_Point);
+			RefreshNodesInsideComment(ECommentCollisionMethod::Point);
 		}
 	}
 }
 
-void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(ECommentCollisionMethod OverrideCollisionMethod)
+void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots)
 {
+	if (OverrideCollisionMethod == ECommentCollisionMethod::Disabled)
+	{
+		return;
+	}
+
 	CommentNode->ClearNodesUnderComment();
 
 	TArray<TSharedPtr<SGraphNode>> OutNodes;
-	QueryNodesUnderComment(OutNodes, OverrideCollisionMethod);
+	QueryNodesUnderComment(OutNodes, OverrideCollisionMethod, bIgnoreKnots);
 	for (TSharedPtr<SGraphNode> Node : OutNodes)
 	{
-		if (CanAddNode(Node))
+		if (CanAddNode(Node, bIgnoreKnots))
 		{
 			CommentNode->AddNodeUnderComment(Node->GetNodeObj());
 		}
@@ -1060,7 +1068,7 @@ FSlateColor SAutoSizeCommentsGraphNode::GetCommentControlsTextColor() const
 	return CommentControlsTextColor;
 }
 
-FSlateColor SAutoSizeCommentsGraphNode::GetPresetColor(FLinearColor Color) const
+FSlateColor SAutoSizeCommentsGraphNode::GetPresetColor(const FLinearColor Color) const
 {
 	FLinearColor MyColor = Color;
 	MyColor.A = OpacityValue;
@@ -1466,7 +1474,7 @@ ASC_AnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 	if (MousePositionInNode.X < 0 || MousePositionInNode.X > Size.X ||
 		MousePositionInNode.Y < 0 || MousePositionInNode.Y > Size.Y)
 	{
-		return NONE;
+		return ASC_AnchorPoint::NONE;
 	}
 
 	const float SidePadding = 10.f;
@@ -1479,39 +1487,39 @@ ASC_AnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 	{
 		if (MousePositionInNode.X > Right && MousePositionInNode.Y > Bottom)
 		{
-			return BOTTOM_RIGHT;
+			return ASC_AnchorPoint::BOTTOM_RIGHT;
 		}
 		if (MousePositionInNode.X < Left && MousePositionInNode.Y < Top)
 		{
-			return TOP_LEFT;
+			return ASC_AnchorPoint::TOP_LEFT;
 		}
 		if (MousePositionInNode.X < Left && MousePositionInNode.Y > Bottom)
 		{
-			return BOTTOM_LEFT;
+			return ASC_AnchorPoint::BOTTOM_LEFT;
 		}
 		if (MousePositionInNode.X > Right && MousePositionInNode.Y < Top)
 		{
-			return TOP_RIGHT;
+			return ASC_AnchorPoint::TOP_RIGHT;
 		}
 		if (MousePositionInNode.Y < SidePadding)
 		{
-			return TOP;
+			return ASC_AnchorPoint::TOP;
 		}
 		if (MousePositionInNode.Y > Size.Y - SidePadding)
 		{
-			return BOTTOM;
+			return ASC_AnchorPoint::BOTTOM;
 		}
 	}
 	if (MousePositionInNode.X < SidePadding)
 	{
-		return LEFT;
+		return ASC_AnchorPoint::LEFT;
 	}
 	if (MousePositionInNode.X > Size.X - SidePadding)
 	{
-		return RIGHT;
+		return ASC_AnchorPoint::RIGHT;
 	}
 
-	return NONE;
+	return ASC_AnchorPoint::NONE;
 }
 
 bool SAutoSizeCommentsGraphNode::IsHeaderComment() const
@@ -1578,8 +1586,13 @@ void SAutoSizeCommentsGraphNode::SaveToCache()
 	}
 }
 
-void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, ECommentCollisionMethod OverrideCollisionMethod)
+void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots)
 {
+	if (OverrideCollisionMethod == ECommentCollisionMethod::Disabled)
+	{
+		return;
+	}
+
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 
 	float TitleBarHeight = GetTitleBarHeight();
@@ -1612,22 +1625,17 @@ void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraph
 		const FSlateRect NodeGeometryGraphSpace = FSlateRect::FromPointAndExtent(SomeNodePosition, SomeNodeSize);
 
 		bool bIsOverlapping = false;
-		ECommentCollisionMethod CollisionMethod = OverrideCollisionMethod == ASC_Collision_Default
-													? GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod.GetValue()
-													: OverrideCollisionMethod;
+		ECommentCollisionMethod CollisionMethod = OverrideCollisionMethod;
 
 		switch (CollisionMethod)
 		{
-			case ASC_Collision_Point:
+			case ECommentCollisionMethod::Point:
 				bIsOverlapping = CommentRect.ContainsPoint(SomeNodePosition);
 				break;
-			case ASC_Collision_Intersect:
+			case ECommentCollisionMethod::Intersect:
 				CommentRect.IntersectionWith(NodeGeometryGraphSpace, bIsOverlapping);
 				break;
-			case ASC_Collision_Contained:
-				bIsOverlapping = FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace);
-				break;
-			case ASC_Collision_Default:
+			case ECommentCollisionMethod::Contained:
 				bIsOverlapping = FSlateRect::IsRectangleContained(CommentRect, NodeGeometryGraphSpace);
 				break;
 			default: ;
@@ -1675,7 +1683,7 @@ bool SAutoSizeCommentsGraphNode::HasNodeBeenDeleted(UEdGraphNode* Node)
 	return !CommentNode->GetGraph()->Nodes.Contains(Node);
 }
 
-bool SAutoSizeCommentsGraphNode::CanAddNode(TSharedPtr<SGraphNode> OtherGraphNode) const
+bool SAutoSizeCommentsGraphNode::CanAddNode(const TSharedPtr<SGraphNode> OtherGraphNode, const bool bIgnoreKnots) const
 {
 	UObject* GraphObject = OtherGraphNode->GetObjectBeingDisplayed();
 	if (GraphObject == nullptr || GraphObject == CommentNode)
@@ -1688,7 +1696,7 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(TSharedPtr<SGraphNode> OtherGraphNod
 		return false;
 	}
 
-	if (GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodes && Cast<UK2Node_Knot>(GraphObject) != nullptr)
+	if ((bIgnoreKnots || GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodes) && Cast<UK2Node_Knot>(GraphObject) != nullptr)
 	{
 		return false;
 	}
@@ -1705,7 +1713,7 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(TSharedPtr<SGraphNode> OtherGraphNod
 	return true;
 }
 
-bool SAutoSizeCommentsGraphNode::CanAddNode(UObject* Node) const
+bool SAutoSizeCommentsGraphNode::CanAddNode(const UObject* Node, const bool bIgnoreKnots) const
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 	if (!OwnerPanel.IsValid())
@@ -1713,7 +1721,7 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(UObject* Node) const
 		return false;
 	}
 
-	UEdGraphNode* EdGraphNode = Cast<UEdGraphNode>(Node);
+	const UEdGraphNode* EdGraphNode = Cast<UEdGraphNode>(Node);
 	if (!EdGraphNode)
 	{
 		return false;
@@ -1725,7 +1733,7 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(UObject* Node) const
 		return false;
 	}
 
-	return CanAddNode(NodeAsGraphNode);
+	return CanAddNode(NodeAsGraphNode, bIgnoreKnots);
 }
 
 FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)

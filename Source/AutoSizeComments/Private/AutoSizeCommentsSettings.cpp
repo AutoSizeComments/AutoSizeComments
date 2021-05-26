@@ -33,10 +33,12 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bGlobalShowBubbleWhenZoomed = true;
 	bSaveCommentNodeDataToFile = true;
 	bDetectNodesContainedForNewComments = true;
-	ResizeCollisionMethod = ASC_Collision_Contained;
-	AltCollisionMethod = ASC_Collision_Intersect;
+	ResizeCollisionMethod = ECommentCollisionMethod::Contained;
+	AltCollisionMethod = ECommentCollisionMethod::Intersect;
 	bSnapToGridWhileResizing = false;
 	bIgnoreKnotNodes = false;
+	bIgnoreKnotNodesWhenPressingAlt = false;
+	bIgnoreKnotNodesWhenResizing = false;
 	bIgnoreSelectedNodesOnCreation = false;
 	bRefreshContainingNodesOnMove = false;
 	bDisableTooltip = false;

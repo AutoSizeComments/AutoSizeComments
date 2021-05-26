@@ -3,18 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
-#include "Layout/Margin.h"
+
 #include "Framework/Text/TextLayout.h"
+#include "Layout/Margin.h"
+
 #include "AutoSizeCommentsSettings.generated.h"
 
 UENUM()
-enum ECommentCollisionMethod
+enum class ECommentCollisionMethod : uint8
 {
-	ASC_Collision_Point UMETA(DisplayName = "Point"),
-	ASC_Collision_Intersect UMETA(DisplayName = "Overlap"),
-	ASC_Collision_Contained UMETA(DisplayName = "Contained"),
-	ASC_Collision_Default UMETA(DisplayName = "Default (Don't use this!)"),
+	Point UMETA(DisplayName = "Point"),
+	Intersect UMETA(DisplayName = "Overlap"),
+	Contained UMETA(DisplayName = "Contained"),
+	Disabled UMETA(DisplayName = "Disabled"),
 };
 
 USTRUCT()
@@ -30,7 +31,7 @@ struct FPresetCommentStyle
 };
 
 UCLASS(config = EditorPerProjectUserSettings)
-class AUTOSIZECOMMENTS_API UAutoSizeCommentsSettings : public UObject
+class AUTOSIZECOMMENTS_API UAutoSizeCommentsSettings final : public UObject
 {
 	GENERATED_BODY()
 
@@ -131,11 +132,13 @@ public:
 
 	/** Collision method to use when resizing comment nodes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
-	TEnumAsByte<ECommentCollisionMethod> ResizeCollisionMethod;
+	ECommentCollisionMethod ResizeCollisionMethod;
+	// TEnumAsByte<ECommentCollisionMethod> ResizeCollisionMethod;
 
 	/** Collision method to use when releasing alt */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
-	TEnumAsByte<ECommentCollisionMethod> AltCollisionMethod;
+	ECommentCollisionMethod AltCollisionMethod;
+	// TEnumAsByte<ECommentCollisionMethod> AltCollisionMethod;
 
 	/** Snap to the grid when resizing the node */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
@@ -144,6 +147,14 @@ public:
 	/** Don't add knot nodes to comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bIgnoreKnotNodes;
+
+	/** Don't add knot nodes to comment boxes */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bIgnoreKnotNodesWhenPressingAlt;
+
+	/** Don't add knot nodes to comment boxes */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bIgnoreKnotNodesWhenResizing;
 
 	/** Don't snap to selected nodes on creation */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
