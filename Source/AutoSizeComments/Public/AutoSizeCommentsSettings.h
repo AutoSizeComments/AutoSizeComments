@@ -172,6 +172,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	TArray<FString> IgnoredGraphs;
 
+	/** Show prompt for suggested settings with Blueprint Assist plugin */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bShowPromptForBlueprintAssist;
+
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideHeaderButton;

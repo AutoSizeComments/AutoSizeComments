@@ -1,17 +1,17 @@
 // Copyright 2021 fpwong. All Rights Reserved.
 
 #include "AutoSizeCommentsModule.h"
+
+#include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
 #include "AutoSizeCommentsSettings.h"
-#include "AutoSizeCommentsCacheFile.h"
-
 #include "ISettingsModule.h"
 
 #define LOCTEXT_NAMESPACE "FAutoSizeCommentsModule"
 
 DEFINE_LOG_CATEGORY(LogAutoSizeComments)
 
-class FAutoSizeCommentsModule : public IAutoSizeCommentsModule
+class FAutoSizeCommentsModule final : public IAutoSizeCommentsModule
 {
 public:
 	/** IModuleInterface implementation */
@@ -25,6 +25,8 @@ private:
 	TSharedPtr<FAutoSizeCommentsGraphPanelNodeFactory> ASCNodeFactory;
 
 	FAutoSizeCommentsCacheFile Cache;
+
+	void SuggestBlueprintAssistSettings();
 };
 
 IMPLEMENT_MODULE(FAutoSizeCommentsModule, AutoSizeComments)
@@ -45,6 +47,8 @@ void FAutoSizeCommentsModule::StartupModule()
 			GetMutableDefault<UAutoSizeCommentsSettings>()
 			);
 	}
+
+	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FAutoSizeCommentsModule::SuggestBlueprintAssistSettings);
 }
 
 void FAutoSizeCommentsModule::ShutdownModule()
@@ -60,6 +64,34 @@ void FAutoSizeCommentsModule::ShutdownModule()
 	{
 		FEdGraphUtilities::UnregisterVisualNodeFactory(ASCNodeFactory);
 		ASCNodeFactory.Reset();
+	}
+
+	FCoreDelegates::OnPostEngineInit.RemoveAll(this);
+}
+
+void FAutoSizeCommentsModule::SuggestBlueprintAssistSettings()
+{
+	if (FModuleManager::Get().IsModuleLoaded("BlueprintAssist"))
+	{
+		if (GetDefault<UAutoSizeCommentsSettings>()->bShowPromptForBlueprintAssist)
+		{
+			UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
+			MutableSettings->bShowPromptForBlueprintAssist = false;
+			MutableSettings->SaveConfig();
+
+			const FText Message = FText::FromString("The Blueprint Assist module is loaded, would you like to apply suggested settings?");
+			const FText Title = FText::FromString("Auto Size Comments");
+			if (FMessageDialog::Open(EAppMsgType::OkCancel, Message, &Title) == EAppReturnType::Ok)
+			{
+				MutableSettings->bIgnoreKnotNodes = true;
+				MutableSettings->bIgnoreKnotNodesWhenResizing = true;
+				MutableSettings->bIgnoreKnotNodesWhenPressingAlt = true;
+				UE_LOG(LogAutoSizeComments, Warning, TEXT("Applied suggested settings for Blueprint Assist Module"));
+				UE_LOG(LogAutoSizeComments, Warning, TEXT("Ignore Knot Nodes: True"));
+				UE_LOG(LogAutoSizeComments, Warning, TEXT("Ignore Knot Nodes When Resizing: True"));
+				UE_LOG(LogAutoSizeComments, Warning, TEXT("Ignore Knot Nodes When Pressing Alt: True"));
+			}
+		}
 	}
 }
 
