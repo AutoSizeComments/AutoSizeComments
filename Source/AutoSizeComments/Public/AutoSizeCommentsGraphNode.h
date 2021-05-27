@@ -3,17 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Widgets/DeclarativeSyntaxSupport.h"
+
+#include "AutoSizeCommentsSettings.h"
 #include "Editor/GraphEditor/Public/SGraphNodeComment.h"
 #include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
-#include "AutoSizeCommentsSettings.h"
+#include "Widgets/DeclarativeSyntaxSupport.h"
 
 struct FPresetCommentStyle;
+class UEdGraphNode_Comment;
 
 /**
  * Auto resizing comment node
  */
-enum ASC_AnchorPoint
+enum class ASC_AnchorPoint : uint8
 {
 	LEFT,
 	RIGHT,
@@ -26,7 +28,7 @@ enum ASC_AnchorPoint
 	NONE
 };
 
-class SAutoSizeCommentsGraphNode : public SGraphNode
+class SAutoSizeCommentsGraphNode final : public SGraphNode
 {
 public:
 	/** This delay is to ensure that all nodes exist on the graph and have their bounds properly set */
@@ -42,7 +44,7 @@ public:
 	FVector2D DragSize;
 	bool bUserIsDragging = false;
 
-	ASC_AnchorPoint CachedAnchorPoint = NONE;
+	ASC_AnchorPoint CachedAnchorPoint = ASC_AnchorPoint::NONE;
 	float AnchorSize = 40.f;
 
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
@@ -98,19 +100,19 @@ protected:
 	virtual FCursorReply OnCursorQuery(const FGeometry& MyGeometry, const FPointerEvent& CursorEvent) const override;
 	//~ End SNodePanel::SNode Interface
 
-	virtual FReply HandleRandomizeColorButtonClicked();
-	virtual FReply HandleHeaderButtonClicked();
-	virtual FReply HandleRefreshButtonClicked();
-	virtual FReply HandlePresetButtonClicked(FPresetCommentStyle Color);
-	virtual FReply HandleAddButtonClicked();
-	virtual FReply HandleSubtractButtonClicked();
-	virtual FReply HandleClearButtonClicked();
+	FReply HandleRandomizeColorButtonClicked();
+	FReply HandleHeaderButtonClicked();
+	FReply HandleRefreshButtonClicked();
+	FReply HandlePresetButtonClicked(const FPresetCommentStyle Style);
+	FReply HandleAddButtonClicked();
+	FReply HandleSubtractButtonClicked();
+	FReply HandleClearButtonClicked();
 
-	virtual bool AddInitialNodes();
-	virtual bool AddAllSelectedNodes();
-	virtual bool RemoveAllSelectedNodes();
+	bool AddInitialNodes();
+	bool AddAllSelectedNodes();
+	bool RemoveAllSelectedNodes();
 
-	void UpdateColors(float InDeltaTime);
+	void UpdateColors(const float InDeltaTime);
 
 private:
 	/** @return the color to tint the comment body */
@@ -128,7 +130,7 @@ private:
 	FLinearColor CommentControlsTextColor;
 	FSlateColor GetCommentControlsTextColor() const;
 
-	FSlateColor GetPresetColor(FLinearColor Color) const;
+	FSlateColor GetPresetColor(const FLinearColor Color) const;
 
 	/** Returns the width to wrap the text of the comment at */
 	float GetWrapAt() const;
@@ -144,12 +146,12 @@ private:
 
 	FVector2D UserSize;
 
-	bool bHasSetNodesUnderComment;
+	bool bHasSetNodesUnderComment = false;
 
 	/** the title bar, needed to obtain it's height */
 	TSharedPtr<SBorder> TitleBar;
 
-	class UEdGraphNode_Comment* CommentNode;
+	UEdGraphNode_Comment* CommentNode = nullptr;
 
 	TSharedPtr<SCommentBubble> CommentBubble;
 
@@ -157,17 +159,17 @@ private:
 	FString CachedCommentTitle;
 
 	/** cached comment title */
-	int32 CachedWidth;
+	int32 CachedWidth = 0;
 
 	/** cached font size */
-	int32 CachedFontSize;
+	int32 CachedFontSize = 0;
 
-	int32 CachedNumPresets;
+	int32 CachedNumPresets = 0;
 
-	bool bCachedBubbleVisibility;
-	bool bCachedColorCommentBubble;
+	bool bCachedBubbleVisibility = false;
+	bool bCachedColorCommentBubble = false;
 
-	float OpacityValue;
+	float OpacityValue = 0;
 
 	// TODO: Look into resize transaction perhaps requires the EdGraphNode_Comment to have UPROPERTY() for NodesUnderComment
 	// TSharedPtr<FScopedTransaction> ResizeTransaction;
@@ -183,7 +185,7 @@ public:
 	/** Update the nodes */
 	void UpdateRefreshDelay();
 
-	void RefreshNodesInsideComment(ECommentCollisionMethod OverrideCollisionMethod = ASC_Collision_Default);
+	void RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
 
 	float GetTitleBarHeight() const;
 
@@ -207,7 +209,7 @@ public:
 	bool LoadCache();
 	void SaveToCache();
 
-	void QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, ECommentCollisionMethod OverrideCollisionMethod = ASC_Collision_Default);
+	void QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
 
 	void RandomizeColor();
 
@@ -215,6 +217,6 @@ public:
 
 	bool HasNodeBeenDeleted(UEdGraphNode* Node);
 
-	bool CanAddNode(TSharedPtr<SGraphNode> OtherGraphNode) const;
-	bool CanAddNode(UObject* Node) const;
+	bool CanAddNode(const TSharedPtr<SGraphNode> OtherGraphNode, const bool bIgnoreKnots = false) const;
+	bool CanAddNode(const UObject* Node, const bool bIgnoreKnots = false) const;
 };
