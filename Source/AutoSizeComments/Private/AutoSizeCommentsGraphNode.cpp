@@ -175,7 +175,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, 
 		CachedAnchorPoint = ASC_AnchorPoint::NONE;
 		RefreshNodesInsideComment(GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenResizing);
 
-#if ENGINE_MINOR_VERSION >= 23
+#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
 		TArray<UEdGraphNode*> AllNodes = GetNodeObj()->GetGraph()->Nodes;
 		for (auto& Node : AllNodes)
 		{
@@ -258,7 +258,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 			}
 		}
 
-#if ENGINE_MINOR_VERSION >= 23
+#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
 		TArray<UEdGraphNode*> AllNodes = GetNodeObj()->GetGraph()->Nodes;
 		for (auto& Node : AllNodes)
 		{
@@ -448,16 +448,16 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	if (!ASCSettings->bHideCommentBubble)
 	{
 		CommentBubble = SNew(SCommentBubble)
-						.GraphNode(GraphNode)
-						.Text(this, &SAutoSizeCommentsGraphNode::GetNodeComment)
-						.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
-						.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentBubbleColor)
-						.AllowPinning(true)
-						.EnableTitleBarBubble(false)
-						.EnableBubbleCtrls(false)
-						.GraphLOD(this, &SGraphNode::GetCurrentLOD)
-						.InvertLODCulling(true)
-						.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
+			.GraphNode(GraphNode)
+			.Text(this, &SAutoSizeCommentsGraphNode::GetNodeComment)
+			.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
+			.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentBubbleColor)
+			.AllowPinning(true)
+			.EnableTitleBarBubble(false)
+			.EnableBubbleCtrls(false)
+			.GraphLOD(this, &SGraphNode::GetCurrentLOD)
+			.InvertLODCulling(true)
+			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
 		GetOrAddSlot(ENodeZone::TopCenter)
 			.SlotOffset(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetOffset))
@@ -471,18 +471,20 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	// Create the toggle header button
 	ToggleHeaderButton = SNew(SButton)
-						.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
-						.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked)
-						.ContentPadding(FMargin(2, 2))
-						.ToolTipText(FText::FromString("Toggle between a header node and a resizing node"))
-						[
-							SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-							[
-								SNew(STextBlock)
-								.Text(FText::FromString(FString("H")))
-								.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
-							]
-						];
+		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Toggle between a header node and a resizing node"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(FString("H")))
+				.Font(FEditorStyle::GetFontStyle("BoldFont"))
+				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+			]
+		];
 
 	TSharedRef<SBox> AnchorBox =
 		SNew(SBox).WidthOverride(16).HeightOverride(16)
@@ -499,16 +501,16 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	ETextJustify::Type CommentTextAlignment = ASCSettings->CommentTextAlignment;
 
 	TSharedRef<SInlineEditableTextBlock> CommentTextBlock = SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-															.Style(&CommentStyle)
-															.Text(this, &SAutoSizeCommentsGraphNode::GetEditableNodeTitleAsText)
-															.OnVerifyTextChanged(this, &SAutoSizeCommentsGraphNode::OnVerifyNameTextChanged)
-															.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
-															.IsReadOnly(this, &SAutoSizeCommentsGraphNode::IsNameReadOnly)
-															.IsSelected(this, &SAutoSizeCommentsGraphNode::IsSelectedExclusively)
-															.WrapTextAt(this, &SAutoSizeCommentsGraphNode::GetWrapAt)
-															.MultiLine(true)
-															.ModiferKeyForNewLine(EModifierKey::Shift)
-															.Justification(CommentTextAlignment);
+		.Style(&CommentStyle)
+		.Text(this, &SAutoSizeCommentsGraphNode::GetEditableNodeTitleAsText)
+		.OnVerifyTextChanged(this, &SAutoSizeCommentsGraphNode::OnVerifyNameTextChanged)
+		.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
+		.IsReadOnly(this, &SAutoSizeCommentsGraphNode::IsNameReadOnly)
+		.IsSelected(this, &SAutoSizeCommentsGraphNode::IsSelectedExclusively)
+		.WrapTextAt(this, &SAutoSizeCommentsGraphNode::GetWrapAt)
+		.MultiLine(true)
+		.ModiferKeyForNewLine(EModifierKey::Shift)
+		.Justification(CommentTextAlignment);
 
 	// Create the top horizontal box containing anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> TopHBox = SNew(SHorizontalBox);
@@ -1049,8 +1051,8 @@ FSlateColor SAutoSizeCommentsGraphNode::GetCommentBubbleColor() const
 	if (CommentNode)
 	{
 		const FLinearColor Color = CommentNode->bColorCommentBubble
-										? (CommentNode->CommentColor * 0.6f)
-										: GetDefault<UGraphEditorSettings>()->DefaultCommentNodeTitleColor;
+			? (CommentNode->CommentColor * 0.6f)
+			: GetDefault<UGraphEditorSettings>()->DefaultCommentNodeTitleColor;
 
 		return FLinearColor(Color.R, Color.G, Color.B);
 	}
@@ -1258,69 +1260,73 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 {
 	// Create the replace button
 	TSharedRef<SButton> ReplaceButton = SNew(SButton)
-										.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
-										.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked)
-										.ContentPadding(FMargin(2, 2))
-										.ToolTipText(FText::FromString("Replace with selected nodes"))
-										[
-											SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-											[
-												SNew(STextBlock)
-												.Text(FText::FromString(FString("R")))
-												.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
-											]
-										];
+		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Replace with selected nodes"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(FString("R")))
+				.Font(FEditorStyle::GetFontStyle("BoldFont"))
+				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+			]
+		];
 
 	// Create the add button
 	TSharedRef<SButton> AddButton = SNew(SButton)
-									.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
-									.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleAddButtonClicked)
-									.ContentPadding(FMargin(2, 2))
-									.ToolTipText(FText::FromString("Add selected nodes"))
-									[
-										SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-										[
-											TSharedRef<SWidget>(
-												SNew(SImage)
-												.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
-												.Image(FCoreStyle::Get().GetBrush("EditableComboBox.Add")
-													))
-										]
-									];
+		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleAddButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Add selected nodes"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				TSharedRef<SWidget>(
+					SNew(SImage)
+					.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+					.Image(FCoreStyle::Get().GetBrush("EditableComboBox.Add")
+					))
+			]
+		];
 
 	// Create the remove button
 	TSharedRef<SButton> RemoveButton = SNew(SButton)
-										.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
-										.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked)
-										.ContentPadding(FMargin(2, 2))
-										.ToolTipText(FText::FromString("Remove selected nodes"))
-										[
-											SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-											[
-												TSharedRef<SWidget>(
-													SNew(SImage)
-													.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
-													.Image(FCoreStyle::Get().GetBrush("EditableComboBox.Delete")
-														))
-											]
-										];
+		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Remove selected nodes"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				TSharedRef<SWidget>(
+					SNew(SImage)
+					.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+					.Image(FCoreStyle::Get().GetBrush("EditableComboBox.Delete")
+					))
+			]
+		];
 
 	// Create the clear button
 	TSharedRef<SButton> ClearButton = SNew(SButton)
-									.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
-									.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleClearButtonClicked)
-									.ContentPadding(FMargin(2, 2))
-									.ToolTipText(FText::FromString("Clear all nodes"))
-									[
-										SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-										[
-											TSharedRef<SWidget>(
-												SNew(SImage)
-												.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
-												.Image(FCoreStyle::Get().GetBrush("TrashCan_Small")
-													))
-										]
-									];
+		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleClearButtonClicked)
+		.ContentPadding(FMargin(2, 2))
+		.ToolTipText(FText::FromString("Clear all nodes"))
+		[
+			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(FString("C")))
+				.Font(FEditorStyle::GetFontStyle("BoldFont"))
+				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+			]
+		];
 
 	// Create the comment controls
 	CommentControls = SNew(SHorizontalBox);
@@ -1353,13 +1359,14 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 				ColorWithoutOpacity.A = 1;
 
 				TSharedRef<SButton> Button = SNew(SButton)
-											.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetPresetColor, ColorWithoutOpacity)
-											.OnClicked(this, &SAutoSizeCommentsGraphNode::HandlePresetButtonClicked, Preset)
-											.ContentPadding(FMargin(2, 2))
-											.ToolTipText(FText::FromString("Set preset color"))
-											[
-												SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-											];
+					.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+					.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetPresetColor, ColorWithoutOpacity)
+					.OnClicked(this, &SAutoSizeCommentsGraphNode::HandlePresetButtonClicked, Preset)
+					.ContentPadding(FMargin(2, 2))
+					.ToolTipText(FText::FromString("Set preset color"))
+					[
+						SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+					];
 
 				Buttons->AddSlot().AttachWidget(Button);
 			}
@@ -1369,18 +1376,20 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 		{
 			// Create the random color button
 			TSharedRef<SButton> RandomColorButton = SNew(SButton)
-													.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
-													.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked)
-													.ContentPadding(FMargin(2, 2))
-													.ToolTipText(FText::FromString("Randomize the color of the comment box"))
-													[
-														SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
-														[
-															SNew(STextBlock)
-															.Text(FText::FromString(FString("?")))
-															.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
-														]
-													];
+				.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+				.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+				.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked)
+				.ContentPadding(FMargin(2, 2))
+				.ToolTipText(FText::FromString("Randomize the color of the comment box"))
+				[
+					SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(FString("?")))
+						.Font(FEditorStyle::GetFontStyle("BoldFont"))
+						.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+					]
+				];
 
 			Buttons->AddSlot().AttachWidget(RandomColorButton);
 		}
