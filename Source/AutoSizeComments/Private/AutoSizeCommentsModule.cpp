@@ -6,6 +6,8 @@
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
 #include "AutoSizeCommentsSettings.h"
 #include "ISettingsModule.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "FAutoSizeCommentsModule"
 
@@ -24,12 +26,16 @@ public:
 private:
 	TSharedPtr<FAutoSizeCommentsGraphPanelNodeFactory> ASCNodeFactory;
 
+	TWeakPtr<SNotificationItem> SuggestedSettingsNotification;
+
 	FAutoSizeCommentsCacheFile Cache;
 
 	void SuggestBlueprintAssistSettings();
-};
 
-IMPLEMENT_MODULE(FAutoSizeCommentsModule, AutoSizeComments)
+	void OnCancelSuggestion();
+
+	void OnApplySuggestion();
+};
 
 void FAutoSizeCommentsModule::StartupModule()
 {
@@ -45,7 +51,7 @@ void FAutoSizeCommentsModule::StartupModule()
 			LOCTEXT("AutoSizeCommentsName", "Auto Size Comments"),
 			LOCTEXT("AutoSizeCommentsNameDesc", "Configure the Auto Size Comments plugin"),
 			GetMutableDefault<UAutoSizeCommentsSettings>()
-			);
+		);
 	}
 
 	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FAutoSizeCommentsModule::SuggestBlueprintAssistSettings);
@@ -66,33 +72,98 @@ void FAutoSizeCommentsModule::ShutdownModule()
 		ASCNodeFactory.Reset();
 	}
 
+	// Maybe we reloaded the plugin...
+	if (SuggestedSettingsNotification.IsValid())
+	{
+		SuggestedSettingsNotification.Pin()->ExpireAndFadeout();
+	}
+
 	FCoreDelegates::OnPostEngineInit.RemoveAll(this);
 }
 
 void FAutoSizeCommentsModule::SuggestBlueprintAssistSettings()
 {
-	if (FModuleManager::Get().IsModuleLoaded("BlueprintAssist"))
+	if (!FModuleManager::Get().IsModuleLoaded("BlueprintAssist"))
 	{
-		if (GetDefault<UAutoSizeCommentsSettings>()->bShowPromptForBlueprintAssist)
-		{
-			UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
-			MutableSettings->bShowPromptForBlueprintAssist = false;
-			MutableSettings->SaveConfig();
+		return;
+	}
 
-			const FText Message = FText::FromString("The Blueprint Assist module is loaded, would you like to apply suggested settings?");
-			const FText Title = FText::FromString("Auto Size Comments");
-			if (FMessageDialog::Open(EAppMsgType::OkCancel, Message, &Title) == EAppReturnType::Ok)
-			{
-				MutableSettings->bIgnoreKnotNodes = true;
-				MutableSettings->bIgnoreKnotNodesWhenResizing = true;
-				MutableSettings->bIgnoreKnotNodesWhenPressingAlt = true;
-				UE_LOG(LogAutoSizeComments, Warning, TEXT("Applied suggested settings for Blueprint Assist Module"));
-				UE_LOG(LogAutoSizeComments, Warning, TEXT("Ignore Knot Nodes: True"));
-				UE_LOG(LogAutoSizeComments, Warning, TEXT("Ignore Knot Nodes When Resizing: True"));
-				UE_LOG(LogAutoSizeComments, Warning, TEXT("Ignore Knot Nodes When Pressing Alt: True"));
-			}
-		}
+	UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
+	if (MutableSettings->bSuppressSuggestedSettings)
+	{
+		return;
+	}
+
+	const FText Message = FText::FromString("AutoSizeComments: The Blueprint Assist plugin is loaded, apply suggested settings?");
+	FNotificationInfo Info(Message);
+	Info.bUseSuccessFailIcons = false;
+	Info.ExpireDuration = 0.0f;
+	Info.FadeInDuration = 0.0f;
+	Info.FadeOutDuration = 0.5f;
+	Info.bUseThrobber = false;
+	Info.bFireAndForget = false;
+
+	Info.ButtonDetails.Add(FNotificationButtonInfo(
+		FText::FromString(TEXT("Cancel")),
+		FText(),
+		FSimpleDelegate::CreateRaw(this, &FAutoSizeCommentsModule::OnCancelSuggestion),
+		SNotificationItem::CS_Pending
+	));
+	
+	Info.ButtonDetails.Add(FNotificationButtonInfo(
+		FText::FromString(TEXT("Apply")),
+		FText(),
+		FSimpleDelegate::CreateRaw(this, &FAutoSizeCommentsModule::OnApplySuggestion),
+		SNotificationItem::CS_Pending
+	));
+
+	Info.CheckBoxState = ECheckBoxState::Checked;
+	MutableSettings->Modify();
+	MutableSettings->bSuppressSuggestedSettings = true;
+	MutableSettings->SaveConfig();
+
+	Info.CheckBoxStateChanged = FOnCheckStateChanged::CreateStatic([](ECheckBoxState NewState)
+	{
+		UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
+		MutableSettings->Modify();
+		MutableSettings->bSuppressSuggestedSettings = (NewState == ECheckBoxState::Checked);
+		MutableSettings->SaveConfig();
+	});
+
+	Info.CheckBoxText = FText::FromString(TEXT("Do not show again"));
+
+	SuggestedSettingsNotification = FSlateNotificationManager::Get().AddNotification(Info);
+	SuggestedSettingsNotification.Pin()->SetCompletionState(SNotificationItem::CS_Pending);
+}
+
+void FAutoSizeCommentsModule::OnCancelSuggestion()
+{
+	if (SuggestedSettingsNotification.IsValid())
+	{
+		SuggestedSettingsNotification.Pin()->ExpireAndFadeout();
+	}
+}
+
+void FAutoSizeCommentsModule::OnApplySuggestion()
+{
+	UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
+	MutableSettings->Modify();
+	MutableSettings->bIgnoreKnotNodes = true;
+	MutableSettings->bIgnoreKnotNodesWhenResizing = true;
+	MutableSettings->bIgnoreKnotNodesWhenPressingAlt = true;
+	MutableSettings->SaveConfig();
+
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Applied suggested settings for Blueprint Assist Module"));
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Ignore Knot Nodes: True"));
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Ignore Knot Nodes When Resizing: True"));
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Ignore Knot Nodes When Pressing Alt: True"));
+
+	if (SuggestedSettingsNotification.IsValid())
+	{
+		SuggestedSettingsNotification.Pin()->ExpireAndFadeout();
 	}
 }
 
 #undef LOCTEXT_NAMESPACE
+
+IMPLEMENT_MODULE(FAutoSizeCommentsModule, AutoSizeComments)

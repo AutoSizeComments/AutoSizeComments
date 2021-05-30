@@ -95,7 +95,7 @@ public:
 	FMargin CommentTextPadding;
 
 	/** Minimum vertical padding above and below the node */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
+	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	float MinimumVerticalPadding;
 
 	/** Comment text alignment */
@@ -133,12 +133,10 @@ public:
 	/** Collision method to use when resizing comment nodes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	ECommentCollisionMethod ResizeCollisionMethod;
-	// TEnumAsByte<ECommentCollisionMethod> ResizeCollisionMethod;
 
 	/** Collision method to use when releasing alt */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	ECommentCollisionMethod AltCollisionMethod;
-	// TEnumAsByte<ECommentCollisionMethod> AltCollisionMethod;
 
 	/** Snap to the grid when resizing the node */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
@@ -169,12 +167,12 @@ public:
 	bool bDisableTooltip;
 
 	/** Do not use ASC node for these graphs, turn on DebugClass_ASC and open graph to find graph class name */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
+	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	TArray<FString> IgnoredGraphs;
 
 	/** Show prompt for suggested settings with Blueprint Assist plugin */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
-	bool bShowPromptForBlueprintAssist;
+	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
+	bool bSuppressSuggestedSettings;
 
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
