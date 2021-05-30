@@ -95,7 +95,7 @@ public:
 	FMargin CommentTextPadding;
 
 	/** Minimum vertical padding above and below the node */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
+	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	float MinimumVerticalPadding;
 
 	/** Comment text alignment */
@@ -167,7 +167,7 @@ public:
 	bool bDisableTooltip;
 
 	/** Do not use ASC node for these graphs, turn on DebugClass_ASC and open graph to find graph class name */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
+	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	TArray<FString> IgnoredGraphs;
 
 	/** Show prompt for suggested settings with Blueprint Assist plugin */
