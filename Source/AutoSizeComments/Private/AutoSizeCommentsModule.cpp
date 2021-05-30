@@ -97,6 +97,9 @@ void FAutoSizeCommentsModule::SuggestBlueprintAssistSettings()
 	const FText Message = FText::FromString("AutoSizeComments: The Blueprint Assist plugin is loaded, apply suggested settings?");
 	FNotificationInfo Info(Message);
 	Info.bUseSuccessFailIcons = false;
+	Info.ExpireDuration = 0.0f;
+	Info.FadeInDuration = 0.0f;
+	Info.FadeOutDuration = 0.5f;
 	Info.bUseThrobber = false;
 	Info.bFireAndForget = false;
 
