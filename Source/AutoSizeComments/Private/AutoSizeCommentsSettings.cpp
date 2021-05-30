@@ -43,7 +43,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bRefreshContainingNodesOnMove = false;
 	bDisableTooltip = false;
 	IgnoredGraphs.Add("ControlRigGraph");
-	bShowPromptForBlueprintAssist = true;
+	bSuppressSuggestedSettings = false;
 	bHideHeaderButton = false;
 	bHideCommentBoxControls = false;
 	bHidePresets = false;

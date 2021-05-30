@@ -133,12 +133,10 @@ public:
 	/** Collision method to use when resizing comment nodes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	ECommentCollisionMethod ResizeCollisionMethod;
-	// TEnumAsByte<ECommentCollisionMethod> ResizeCollisionMethod;
 
 	/** Collision method to use when releasing alt */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	ECommentCollisionMethod AltCollisionMethod;
-	// TEnumAsByte<ECommentCollisionMethod> AltCollisionMethod;
 
 	/** Snap to the grid when resizing the node */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
@@ -173,8 +171,8 @@ public:
 	TArray<FString> IgnoredGraphs;
 
 	/** Show prompt for suggested settings with Blueprint Assist plugin */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
-	bool bShowPromptForBlueprintAssist;
+	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
+	bool bSuppressSuggestedSettings;
 
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
