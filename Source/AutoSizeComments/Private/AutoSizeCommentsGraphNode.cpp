@@ -486,11 +486,13 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			]
 		];
 
-	TSharedRef<SBox> AnchorBox =
-		SNew(SBox).WidthOverride(16).HeightOverride(16)
+	const auto MakeAnchorBox = []()
+	{
+		return SNew(SBox).WidthOverride(16).HeightOverride(16).Visibility(EVisibility::Visible)
 		[
 			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
 		];
+	};
 
 	const bool bHideCornerPoints = ASCSettings->bHideCornerPoints;
 
@@ -517,7 +519,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	if (!bHideCornerPoints)
 	{
-		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(AnchorBox);
+		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(MakeAnchorBox());
 	}
 
 	FMargin CommentTextPadding = ASCSettings->CommentTextPadding;
@@ -530,7 +532,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	if (!bHideCornerPoints)
 	{
-		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(AnchorBox);
+		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(MakeAnchorBox());
 	}
 
 	// Create the bottom horizontal box containing comment controls and anchor points (header comments don't need these)
@@ -539,7 +541,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	{
 		if (!bHideCornerPoints)
 		{
-			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(MakeAnchorBox());
 		}
 
 		if (!ASCSettings->bHideCommentBoxControls)
@@ -551,7 +553,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 		if (!bHideCornerPoints)
 		{
-			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(MakeAnchorBox());
 		}
 	}
 
@@ -889,7 +891,7 @@ void SAutoSizeCommentsGraphNode::UpdateColors(const float InDeltaTime)
 FSlateRect SAutoSizeCommentsGraphNode::GetTitleRect() const
 {
 	const FVector2D NodePosition = GetPosition();
-	FVector2D NodeSize = TitleBar.IsValid() ? TitleBar->GetDesiredSize() : GetDesiredSize();
+	const FVector2D NodeSize = TitleBar.IsValid() ? TitleBar->GetDesiredSize() : GetDesiredSize();
 	const FSlateRect TitleBarOffset(13, 8, -3, 0);
 
 	return FSlateRect(NodePosition.X, NodePosition.Y, NodePosition.X + NodeSize.X, NodePosition.Y + NodeSize.Y) + TitleBarOffset;

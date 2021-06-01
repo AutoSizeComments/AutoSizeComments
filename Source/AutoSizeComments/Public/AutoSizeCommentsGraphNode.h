@@ -89,7 +89,7 @@ public:
 	/** return rect of the title bar */
 	virtual FSlateRect GetTitleRect() const override;
 
-	class UEdGraphNode_Comment* GetCommentNodeObj() { return CommentNode; }
+	class UEdGraphNode_Comment* GetCommentNodeObj() const { return CommentNode; }
 
 protected:
 	//~ Begin SGraphNode Interface
