@@ -44,7 +44,7 @@ public:
 	FVector2D DragSize;
 	bool bUserIsDragging = false;
 
-	EASCAnchorPoint CachedAnchorPoint = EASCAnchorPoint::NONE;
+	EASCAnchorPoint CachedAnchorPoint = EASCAnchorPoint::None;
 	float AnchorSize = 40.f;
 
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
