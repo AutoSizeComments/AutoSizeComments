@@ -148,14 +148,10 @@ void FAutoSizeCommentsModule::OnApplySuggestion()
 {
 	UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
 	MutableSettings->Modify();
-	MutableSettings->bIgnoreKnotNodes = true;
-	MutableSettings->bIgnoreKnotNodesWhenResizing = true;
 	MutableSettings->bIgnoreKnotNodesWhenPressingAlt = true;
 	MutableSettings->SaveConfig();
 
 	UE_LOG(LogAutoSizeComments, Log, TEXT("Applied suggested settings for Blueprint Assist Module"));
-	UE_LOG(LogAutoSizeComments, Log, TEXT("Ignore Knot Nodes: True"));
-	UE_LOG(LogAutoSizeComments, Log, TEXT("Ignore Knot Nodes When Resizing: True"));
 	UE_LOG(LogAutoSizeComments, Log, TEXT("Ignore Knot Nodes When Pressing Alt: True"));
 
 	if (SuggestedSettingsNotification.IsValid())

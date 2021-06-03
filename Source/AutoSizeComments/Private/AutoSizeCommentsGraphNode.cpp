@@ -144,7 +144,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsEditable.Get())
 	{
 		CachedAnchorPoint = GetAnchorPoint(MyGeometry, MouseEvent);
-		if (CachedAnchorPoint != ASC_AnchorPoint::NONE)
+		if (CachedAnchorPoint != EASCAnchorPoint::None)
 		{
 			DragSize = UserSize;
 			bUserIsDragging = true;
@@ -172,7 +172,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, 
 	if ((MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) && bUserIsDragging)
 	{
 		bUserIsDragging = false;
-		CachedAnchorPoint = ASC_AnchorPoint::NONE;
+		CachedAnchorPoint = EASCAnchorPoint::None;
 		RefreshNodesInsideComment(GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenResizing);
 
 #if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
@@ -207,27 +207,27 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 		bool bAnchorTop = false;
 
 		// LEFT
-		if (CachedAnchorPoint == ASC_AnchorPoint::LEFT || CachedAnchorPoint == ASC_AnchorPoint::TOP_LEFT || CachedAnchorPoint == ASC_AnchorPoint::BOTTOM_LEFT)
+		if (CachedAnchorPoint == EASCAnchorPoint::Left || CachedAnchorPoint == EASCAnchorPoint::TopLeft || CachedAnchorPoint == EASCAnchorPoint::BottomLeft)
 		{
 			bAnchorLeft = true;
 			NewSize.X -= MousePositionInNode.X - Padding.X;
 		}
 
 		// RIGHT
-		if (CachedAnchorPoint == ASC_AnchorPoint::RIGHT || CachedAnchorPoint == ASC_AnchorPoint::TOP_RIGHT || CachedAnchorPoint == ASC_AnchorPoint::BOTTOM_RIGHT)
+		if (CachedAnchorPoint == EASCAnchorPoint::Right || CachedAnchorPoint == EASCAnchorPoint::TopRight || CachedAnchorPoint == EASCAnchorPoint::BottomRight)
 		{
 			NewSize.X = MousePositionInNode.X + Padding.X;
 		}
 
 		// TOP
-		if (CachedAnchorPoint == ASC_AnchorPoint::TOP || CachedAnchorPoint == ASC_AnchorPoint::TOP_LEFT || CachedAnchorPoint == ASC_AnchorPoint::TOP_RIGHT)
+		if (CachedAnchorPoint == EASCAnchorPoint::Top || CachedAnchorPoint == EASCAnchorPoint::TopLeft || CachedAnchorPoint == EASCAnchorPoint::TopRight)
 		{
 			bAnchorTop = true;
 			NewSize.Y -= MousePositionInNode.Y - Padding.Y;
 		}
 
 		// BOTTOM
-		if (CachedAnchorPoint == ASC_AnchorPoint::BOTTOM || CachedAnchorPoint == ASC_AnchorPoint::BOTTOM_LEFT || CachedAnchorPoint == ASC_AnchorPoint::BOTTOM_RIGHT)
+		if (CachedAnchorPoint == EASCAnchorPoint::Bottom || CachedAnchorPoint == EASCAnchorPoint::BottomLeft || CachedAnchorPoint == EASCAnchorPoint::BottomRight)
 		{
 			NewSize.Y = MousePositionInNode.Y + Padding.Y;
 		}
@@ -486,11 +486,13 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			]
 		];
 
-	TSharedRef<SBox> AnchorBox =
-		SNew(SBox).WidthOverride(16).HeightOverride(16)
+	const auto MakeAnchorBox = []()
+	{
+		return SNew(SBox).WidthOverride(16).HeightOverride(16).Visibility(EVisibility::Visible)
 		[
 			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
 		];
+	};
 
 	const bool bHideCornerPoints = ASCSettings->bHideCornerPoints;
 
@@ -517,7 +519,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	if (!bHideCornerPoints)
 	{
-		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(AnchorBox);
+		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(MakeAnchorBox());
 	}
 
 	FMargin CommentTextPadding = ASCSettings->CommentTextPadding;
@@ -530,7 +532,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	if (!bHideCornerPoints)
 	{
-		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(AnchorBox);
+		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(MakeAnchorBox());
 	}
 
 	// Create the bottom horizontal box containing comment controls and anchor points (header comments don't need these)
@@ -539,7 +541,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	{
 		if (!bHideCornerPoints)
 		{
-			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(MakeAnchorBox());
 		}
 
 		if (!ASCSettings->bHideCommentBoxControls)
@@ -551,7 +553,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 		if (!bHideCornerPoints)
 		{
-			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(AnchorBox);
+			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Bottom).AttachWidget(MakeAnchorBox());
 		}
 	}
 
@@ -651,22 +653,22 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 
 	auto AnchorPoint = GetAnchorPoint(MyGeometry, CursorEvent);
 
-	if (AnchorPoint == ASC_AnchorPoint::TOP_LEFT || AnchorPoint == ASC_AnchorPoint::BOTTOM_RIGHT)
+	if (AnchorPoint == EASCAnchorPoint::TopLeft || AnchorPoint == EASCAnchorPoint::BottomRight)
 	{
 		return FCursorReply::Cursor(EMouseCursor::ResizeSouthEast);
 	}
 
-	if (AnchorPoint == ASC_AnchorPoint::TOP_RIGHT || AnchorPoint == ASC_AnchorPoint::BOTTOM_LEFT)
+	if (AnchorPoint == EASCAnchorPoint::TopRight || AnchorPoint == EASCAnchorPoint::BottomLeft)
 	{
 		return FCursorReply::Cursor(EMouseCursor::ResizeSouthWest);
 	}
 
-	if (AnchorPoint == ASC_AnchorPoint::TOP || AnchorPoint == ASC_AnchorPoint::BOTTOM)
+	if (AnchorPoint == EASCAnchorPoint::Top || AnchorPoint == EASCAnchorPoint::Bottom)
 	{
 		return FCursorReply::Cursor(EMouseCursor::ResizeUpDown);
 	}
 
-	if (AnchorPoint == ASC_AnchorPoint::LEFT || AnchorPoint == ASC_AnchorPoint::RIGHT)
+	if (AnchorPoint == EASCAnchorPoint::Left || AnchorPoint == EASCAnchorPoint::Right)
 	{
 		return FCursorReply::Cursor(EMouseCursor::ResizeLeftRight);
 	}
@@ -889,7 +891,7 @@ void SAutoSizeCommentsGraphNode::UpdateColors(const float InDeltaTime)
 FSlateRect SAutoSizeCommentsGraphNode::GetTitleRect() const
 {
 	const FVector2D NodePosition = GetPosition();
-	FVector2D NodeSize = TitleBar.IsValid() ? TitleBar->GetDesiredSize() : GetDesiredSize();
+	const FVector2D NodeSize = TitleBar.IsValid() ? TitleBar->GetDesiredSize() : GetDesiredSize();
 	const FSlateRect TitleBarOffset(13, 8, -3, 0);
 
 	return FSlateRect(NodePosition.X, NodePosition.Y, NodePosition.X + NodeSize.X, NodePosition.Y + NodeSize.Y) + TitleBarOffset;
@@ -1473,7 +1475,7 @@ bool SAutoSizeCommentsGraphNode::IsLocalPositionInCorner(const FVector2D& MouseP
 	return MousePositionInNode.Y >= CornerBounds.Y && MousePositionInNode.X >= CornerBounds.X;
 }
 
-ASC_AnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const
+EASCAnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const
 {
 	const FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
 
@@ -1483,7 +1485,7 @@ ASC_AnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 	if (MousePositionInNode.X < 0 || MousePositionInNode.X > Size.X ||
 		MousePositionInNode.Y < 0 || MousePositionInNode.Y > Size.Y)
 	{
-		return ASC_AnchorPoint::NONE;
+		return EASCAnchorPoint::None;
 	}
 
 	const float SidePadding = 10.f;
@@ -1496,39 +1498,39 @@ ASC_AnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 	{
 		if (MousePositionInNode.X > Right && MousePositionInNode.Y > Bottom)
 		{
-			return ASC_AnchorPoint::BOTTOM_RIGHT;
+			return EASCAnchorPoint::BottomRight;
 		}
 		if (MousePositionInNode.X < Left && MousePositionInNode.Y < Top)
 		{
-			return ASC_AnchorPoint::TOP_LEFT;
+			return EASCAnchorPoint::TopLeft;
 		}
 		if (MousePositionInNode.X < Left && MousePositionInNode.Y > Bottom)
 		{
-			return ASC_AnchorPoint::BOTTOM_LEFT;
+			return EASCAnchorPoint::BottomLeft;
 		}
 		if (MousePositionInNode.X > Right && MousePositionInNode.Y < Top)
 		{
-			return ASC_AnchorPoint::TOP_RIGHT;
+			return EASCAnchorPoint::TopRight;
 		}
 		if (MousePositionInNode.Y < SidePadding)
 		{
-			return ASC_AnchorPoint::TOP;
+			return EASCAnchorPoint::Top;
 		}
 		if (MousePositionInNode.Y > Size.Y - SidePadding)
 		{
-			return ASC_AnchorPoint::BOTTOM;
+			return EASCAnchorPoint::Bottom;
 		}
 	}
 	if (MousePositionInNode.X < SidePadding)
 	{
-		return ASC_AnchorPoint::LEFT;
+		return EASCAnchorPoint::Left;
 	}
 	if (MousePositionInNode.X > Size.X - SidePadding)
 	{
-		return ASC_AnchorPoint::RIGHT;
+		return EASCAnchorPoint::Right;
 	}
 
-	return ASC_AnchorPoint::NONE;
+	return EASCAnchorPoint::None;
 }
 
 bool SAutoSizeCommentsGraphNode::IsHeaderComment() const

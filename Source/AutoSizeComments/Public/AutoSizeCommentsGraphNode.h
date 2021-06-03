@@ -15,17 +15,17 @@ class UEdGraphNode_Comment;
 /**
  * Auto resizing comment node
  */
-enum class ASC_AnchorPoint : uint8
+enum class EASCAnchorPoint : uint8
 {
-	LEFT,
-	RIGHT,
-	TOP,
-	BOTTOM,
-	TOP_LEFT,
-	TOP_RIGHT,
-	BOTTOM_LEFT,
-	BOTTOM_RIGHT,
-	NONE
+	Left,
+	Right,
+	Top,
+	Bottom,
+	TopLeft,
+	TopRight,
+	BottomLeft,
+	BottomRight,
+	None
 };
 
 class SAutoSizeCommentsGraphNode final : public SGraphNode
@@ -44,7 +44,7 @@ public:
 	FVector2D DragSize;
 	bool bUserIsDragging = false;
 
-	ASC_AnchorPoint CachedAnchorPoint = ASC_AnchorPoint::NONE;
+	EASCAnchorPoint CachedAnchorPoint = EASCAnchorPoint::None;
 	float AnchorSize = 40.f;
 
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
@@ -89,7 +89,7 @@ public:
 	/** return rect of the title bar */
 	virtual FSlateRect GetTitleRect() const override;
 
-	class UEdGraphNode_Comment* GetCommentNodeObj() { return CommentNode; }
+	class UEdGraphNode_Comment* GetCommentNodeObj() const { return CommentNode; }
 
 protected:
 	//~ Begin SGraphNode Interface
@@ -201,7 +201,7 @@ public:
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 	TArray<UEdGraphNode*> GetEdGraphNodesUnderComment(UEdGraphNode_Comment* InCommentNode) const;
 
-	ASC_AnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
+	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
 
 	bool IsHeaderComment() const;
 	bool IsPresetStyle();
