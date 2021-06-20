@@ -18,7 +18,7 @@
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsModule.h"
 
-FAutoSizeCommentsCacheFile::FAutoSizeCommentsCacheFile()
+void FAutoSizeCommentsCacheFile::Init()
 {
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
 	AssetRegistry.OnFilesLoaded().AddLambda([&]()
