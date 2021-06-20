@@ -11,6 +11,8 @@
 
 #define LOCTEXT_NAMESPACE "FAutoSizeCommentsModule"
 
+#define ASC_ENABLED (!IS_MONOLITHIC && !UE_BUILD_SHIPPING && !UE_BUILD_TEST && !UE_GAME && !UE_SERVER)
+
 DEFINE_LOG_CATEGORY(LogAutoSizeComments)
 
 class FAutoSizeCommentsModule final : public IAutoSizeCommentsModule
@@ -39,6 +41,9 @@ private:
 
 void FAutoSizeCommentsModule::StartupModule()
 {
+#if ASC_ENABLED
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Startup AutoSizeComments"));
+
 	// Register the graph node factory
 	ASCNodeFactory = MakeShareable(new FAutoSizeCommentsGraphPanelNodeFactory());
 	FEdGraphUtilities::RegisterVisualNodeFactory(ASCNodeFactory);
@@ -55,10 +60,14 @@ void FAutoSizeCommentsModule::StartupModule()
 	}
 
 	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FAutoSizeCommentsModule::SuggestBlueprintAssistSettings);
+#endif
 }
 
 void FAutoSizeCommentsModule::ShutdownModule()
 {
+#if ASC_ENABLED
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Shutdown AutoSizeComments"));
+
 	// Remove custom settings
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
@@ -79,6 +88,7 @@ void FAutoSizeCommentsModule::ShutdownModule()
 	}
 
 	FCoreDelegates::OnPostEngineInit.RemoveAll(this);
+#endif
 }
 
 void FAutoSizeCommentsModule::SuggestBlueprintAssistSettings()
