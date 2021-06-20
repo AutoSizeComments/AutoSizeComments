@@ -44,6 +44,8 @@ void FAutoSizeCommentsModule::StartupModule()
 #if ASC_ENABLED
 	UE_LOG(LogAutoSizeComments, Log, TEXT("Startup AutoSizeComments"));
 
+	Cache.Init();
+
 	// Register the graph node factory
 	ASCNodeFactory = MakeShareable(new FAutoSizeCommentsGraphPanelNodeFactory());
 	FEdGraphUtilities::RegisterVisualNodeFactory(ASCNodeFactory);
