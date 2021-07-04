@@ -13,52 +13,22 @@ This was originally a feature from the [Blueprint Assist Plugin](https://forums.
 
 ---
 
-## Building for your version of UE4 (tested with >4.18)
+## Building for your version of UE4
 
-Prerequisites: Setup your environment so that you can build a C++ UE4 project
+1. Download the plugin
+2. Open `AutoSizeComments.uplugin` in a text editor and set `EngineVersion` to your desired version, by default it is set to UE5 (5.0.0). For example if you wanted to build for  4.22 it would be `"EngineVersion": "4.22.0",`
+4. Open the command prompt and run this command to build the plugin
 
-1. Create a new C++ project
-2. Create a folder named `Plugins` in the root of your new project (see below)
-3. Clone the repo into the plugins folder, so that you get `Plugins/AutoSizeComments`
+> "`%UNREAL_DESIRED%`/Engine/Build/BatchFiles/RunUAT.bat" BuildPlugin -Plugin="`%DOWNLOAD_LOCATION%`/AutoSizeComments/AutoSizeComments.uplugin" -Package="`%OUT_LOCATION%`" -CreateSubFolder
 
-Your project folder should look like:
+Example: Building for desired version `UE_5.0EA`:
 
-```
-ProjectName
-    \.vs
-    \Binaries
-    \Config
-    \Content
-    \Intermediate
-    \Source
-    \Plugins
-        \AutoSizeComments
-    \ProjectName.sln
-    \ProjectName.uproject
-```
-  
-4. Open the .uproject and it should prompt you to rebuild the plugin
-5. Hopefully the build succeeded!
-6. (Extra) Install the plugin to the engine by moving the `AutoSizeComments` folder to the plugins folder (`Epic Games\UE_4.20\Engine\Plugins`) under your installation of UE4.
+* `%UNREAL_DESIRED%`: C:/Program Files/Epic Games/UE_5.0EA
+* `%DOWNLOAD_LOCATION%`: C:/Temp
+* `%OUT_LOCATION%`: C:TempBlueprintAssist
 
----
+> "**C:/Program Files/Epic Games/UE_5.0EA/Engine/Build/BatchFiles/RunUAT.bat**" BuildPlugin -Plugin="**C:Temp/AutoSizeComments/AutoSizeComments.uplugin**" -Package="**C:/TempAutoSizeComments**" -CreateSubFolder
 
-## Building for your version of UE4 - Through the cmd prompt
-
-1. Clone the plugin
-2. Open the command prompt and run the command
-
-> "**%UNREAL_OLD%**\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin="**%PLUGIN_LOCATION%**\AutoSizeComments.uplugin" -Package="**%OUT_LOCATION%**" -CreateSubFolder
-
-An example of the command filled in (we want to build for version 4.24):
-> "**C:\Epic Games\UE_4.24\Engine\Build\BatchFiles\RunUAT.bat**" BuildPlugin -Plugin="**C:\Downloads\AutoSizeComments\AutoSizeComments.uplugin**" -Package="**C:\AutoSizeComments-424**" -CreateSubFolder
-
-**Note:** *All files in the %OUT_LOCATION% folder will be deleted! So make you are packaging to an empty folder. In the example we use C:\AutoSizeComments-424*
-
----
-
-## Build failed
-
-1. Open the project in Visual Studio
-2. Try to build the project and there should be an error
-3. Tell me the version of your UE4 and what the error is over at the forum page
+4. Copy the built plugin folder from your package location (`C:/TempAutoSizeComments/AutoSizeComments`) into either your:
+    * Project plugin location `%PROJECT_DIR%/Plugins`
+    * Engine plugin marketplace folder `C:/Epic Games/UE_5.0EA/Engine/Plugins/Marketplace`
