@@ -21,7 +21,8 @@
       "LoadingPhase": "Default",
       "WhitelistPlatforms": [
         "Win64",
-        "Mac"
+        "Mac",
+        "Linux"
       ],
       "WhitelistTargets": [
         "Editor"
