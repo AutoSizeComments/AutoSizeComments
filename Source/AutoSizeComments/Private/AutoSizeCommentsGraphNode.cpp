@@ -325,7 +325,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 				// refresh when the alt key is released
 				if (bPreviousAltDown && bUseAltCollision)
 				{
-					RefreshNodesInsideComment(AltCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenPressingAlt);
+					OnAltReleased();
 				}
 
 				ResizeToFit();
@@ -1455,6 +1455,24 @@ TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> SAutoSizeCommentsGraphNode::GetOthe
 	return OtherCommentNodes;
 }
 
+TArray<UEdGraphNode_Comment*> SAutoSizeCommentsGraphNode::GetParentComments() const
+{
+	TArray<UEdGraphNode_Comment*> ParentComments;
+	TArray<UEdGraphNode_Comment*> CommentNodes;
+	UEdGraphNode_Comment* Comment = GetCommentNodeObj();
+	Comment->GetGraph()->GetNodesOfClass(CommentNodes);
+
+	for (auto OtherComment : CommentNodes)
+	{
+		if (OtherComment != Comment && OtherComment->GetNodesUnderComment().Contains(Comment))
+		{
+			ParentComments.Add(OtherComment);
+		}
+	}
+
+	return ParentComments;
+}
+
 FSlateRect SAutoSizeCommentsGraphNode::GetCommentBounds(UEdGraphNode_Comment* InCommentNode)
 {
 	FVector2D Point(InCommentNode->NodePosX, InCommentNode->NodePosY);
@@ -1745,6 +1763,55 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(const UObject* Node, const bool bIgn
 	}
 
 	return CanAddNode(NodeAsGraphNode, bIgnoreKnots);
+}
+
+void SAutoSizeCommentsGraphNode::OnAltReleased()
+{
+	const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
+
+	TSet<UObject*> SelectedNodes;
+	for (auto Node : GetOwnerPanel()->SelectionManager.GetSelectedNodes())
+	{
+		SelectedNodes.Add(Node);
+		if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(Node))
+		{
+			SelectedNodes.Append(SelectedComment->GetNodesUnderComment());
+		}
+	}
+
+	if (SelectedNodes.Contains(CommentNode))
+	{
+		RefreshNodesInsideComment(AltCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenPressingAlt);
+	}
+	else
+	{
+		TArray<UEdGraphNode*> OutNodes;
+		QueryNodesUnderComment(OutNodes, AltCollisionMethod);
+
+		TSet<UObject*> NewSelection;
+		for (UObject* Node : CommentNode->GetNodesUnderComment())
+		{
+			NewSelection.Add(Node);
+		}
+
+		for (UObject* Node : SelectedNodes)
+		{
+			if (OutNodes.Contains(Node))
+			{
+				NewSelection.Add(Node);
+			}
+			else
+			{
+				NewSelection.Remove(Node);
+			}
+		}
+
+		CommentNode->ClearNodesUnderComment();
+		for (UObject* Node : NewSelection)
+		{
+			CommentNode->AddNodeUnderComment(Node);
+		}
+	}
 }
 
 FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)

@@ -193,6 +193,7 @@ public:
 	FSlateRect GetBoundsForNodesInside();
 	FSlateRect GetNodeBounds(UEdGraphNode* Node);
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> GetOtherCommentNodes();
+	TArray<UEdGraphNode_Comment*> GetParentComments() const;
 	void UpdateExistingCommentNodes();
 	bool AnySelectedNodes();
 	static bool RemoveNodesFromUnderComment(UEdGraphNode_Comment* InCommentNode, TSet<UObject*>& NodesToRemove);
@@ -219,4 +220,5 @@ public:
 
 	bool CanAddNode(const TSharedPtr<SGraphNode> OtherGraphNode, const bool bIgnoreKnots = false) const;
 	bool CanAddNode(const UObject* Node, const bool bIgnoreKnots = false) const;
+	void OnAltReleased();
 };
