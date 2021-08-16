@@ -1361,7 +1361,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 				ColorWithoutOpacity.A = 1;
 
 				TSharedRef<SButton> Button = SNew(SButton)
-					.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+					.ButtonStyle(FEditorStyle::Get(), "RoundButton")
 					.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetPresetColor, ColorWithoutOpacity)
 					.OnClicked(this, &SAutoSizeCommentsGraphNode::HandlePresetButtonClicked, Preset)
 					.ContentPadding(FMargin(2, 2))
