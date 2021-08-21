@@ -969,39 +969,17 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 	// Get list of all other comment nodes
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> OtherCommentNodes = GetOtherCommentNodes();
 
+	// Remove ourselves from our parent comments, as we will be adding ourselves later if required
+	for (UEdGraphNode_Comment* ParentComment : GetParentComments())
+	{
+		TSet<UObject*> NodesToRemove = { CommentNode };
+		RemoveNodesFromUnderComment(ParentComment, NodesToRemove);
+	}
+
 	// Do nothing if we have no nodes under ourselves
 	if (CommentNode->GetNodesUnderComment().Num() == 0)
 	{
-		if (GetDefault<UAutoSizeCommentsSettings>()->bMoveEmptyCommentBoxes)
-		{
-			for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : OtherCommentNodes)
-			{
-				UEdGraphNode_Comment* OtherComment = OtherCommentNode->GetCommentNodeObj();
-
-				// if the other comment node contains us, remove ourselves
-				if (OtherComment->GetNodesUnderComment().Contains(CommentNode))
-				{
-					TSet<UObject*> NodesToRemove;
-					NodesToRemove.Emplace(CommentNode);
-					RemoveNodesFromUnderComment(OtherComment, NodesToRemove);
-				}
-			}
-		}
-
 		return;
-	}
-
-	for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : OtherCommentNodes)
-	{
-		UEdGraphNode_Comment* OtherComment = OtherCommentNode->GetCommentNodeObj();
-
-		// if the other comment node contains us, remove ourselves
-		if (OtherComment->GetNodesUnderComment().Contains(CommentNode))
-		{
-			TSet<UObject*> NodesToRemove;
-			NodesToRemove.Emplace(CommentNode);
-			RemoveNodesFromUnderComment(OtherComment, NodesToRemove);
-		}
 	}
 
 	for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : OtherCommentNodes)
