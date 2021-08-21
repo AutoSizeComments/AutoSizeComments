@@ -95,7 +95,11 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 	}
 }
 
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 27
+void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
+#else
 void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
+#endif
 {
 	/** Copied from SGraphNodeComment::MoveTo */
 	if (!bIsMoving)
@@ -110,7 +114,12 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 	FVector2D PositionDelta = NewPosition - GetPosition();
 
 	FVector2D NewPos = GetPosition() + PositionDelta;
+
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 27
+	SGraphNode::MoveTo(NewPos, NodeFilter, bMarkDirty);
+#else
 	SGraphNode::MoveTo(NewPos, NodeFilter);
+#endif
 
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 

@@ -47,7 +47,11 @@ public:
 	EASCAnchorPoint CachedAnchorPoint = EASCAnchorPoint::None;
 	float AnchorSize = 40.f;
 
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 27
+	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
+#else
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
+#endif
 
 public:
 	// @formatter:off
