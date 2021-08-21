@@ -215,6 +215,7 @@ public:
 	bool LoadCache();
 	void SaveToCache();
 
+	void QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
 	void QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
 
 	void RandomizeColor();
@@ -226,4 +227,9 @@ public:
 	bool CanAddNode(const TSharedPtr<SGraphNode> OtherGraphNode, const bool bIgnoreKnots = false) const;
 	bool CanAddNode(const UObject* Node, const bool bIgnoreKnots = false) const;
 	void OnAltReleased();
+
+	static bool IsCommentNode(UObject* Object);
+	static bool IsNotCommentNode(UObject* Object) { return !IsCommentNode(Object); }
+	static bool IsMajorNode(UObject* Object);
+	static bool IsHeaderComment(UEdGraphNode_Comment* InCommentNode);
 };

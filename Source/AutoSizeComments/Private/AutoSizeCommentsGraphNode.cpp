@@ -788,11 +788,6 @@ bool SAutoSizeCommentsGraphNode::AddInitialNodes()
 	}
 
 	auto SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
-	const auto IsCommentNode = [](UObject* Obj)
-	{
-		return Cast<UEdGraphNode_Comment>(Obj) != nullptr;
-	};
-
 	const auto SelectedCommentNodes = SelectedNodes.Array().FilterByPredicate(IsCommentNode);
 	if (SelectedCommentNodes.Num() > 0)
 	{
@@ -938,15 +933,26 @@ void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisi
 		return;
 	}
 
-	CommentNode->ClearNodesUnderComment();
-
-	TArray<TSharedPtr<SGraphNode>> OutNodes;
+	TArray<UEdGraphNode*> OutNodes;
 	QueryNodesUnderComment(OutNodes, OverrideCollisionMethod, bIgnoreKnots);
-	for (TSharedPtr<SGraphNode> Node : OutNodes)
+	OutNodes = OutNodes.FilterByPredicate(IsMajorNode);
+
+	const TSet<UEdGraphNode*> NodesUnderComment(GetEdGraphNodesUnderComment(CommentNode).FilterByPredicate(IsMajorNode));
+	const TSet<UEdGraphNode*> NewNodeSet(OutNodes);
+
+
+	// nodes inside did not change, do nothing
+	if (NodesUnderComment.Num() == NewNodeSet.Num() && NodesUnderComment.Includes(NewNodeSet))
+	{
+		return;
+	}
+
+	CommentNode->ClearNodesUnderComment();
+	for (UEdGraphNode* Node : OutNodes)
 	{
 		if (CanAddNode(Node, bIgnoreKnots))
 		{
-			CommentNode->AddNodeUnderComment(Node->GetNodeObj());
+			CommentNode->AddNodeUnderComment(Node);
 		}
 	}
 
@@ -1024,8 +1030,7 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 		}
 		else
 		{
-			const auto FilterComments = [](UObject* Node) { return Cast<UEdGraphNode_Comment>(Node) == nullptr; };
-			const auto OtherNodesWithoutComments = OtherComment->GetNodesUnderComment().FilterByPredicate(FilterComments);
+			const auto OtherNodesWithoutComments = OtherComment->GetNodesUnderComment().FilterByPredicate(IsMajorNode);
 
 			// check if all nodes in the other comment box are within our comment box
 			bool bAllNodesContainedUnderSelf = !OtherNodesWithoutComments.ContainsByPredicate([this](UObject* NodeUnderOther)
@@ -1565,6 +1570,11 @@ bool SAutoSizeCommentsGraphNode::IsHeaderComment() const
 	return CommentNode->CommentColor == GetMutableDefault<UAutoSizeCommentsSettings>()->HeaderStyle.Color;
 }
 
+bool SAutoSizeCommentsGraphNode::IsHeaderComment(UEdGraphNode_Comment* InCommentNode)
+{
+	return InCommentNode->CommentColor == GetMutableDefault<UAutoSizeCommentsSettings>()->HeaderStyle.Color;
+}
+
 bool SAutoSizeCommentsGraphNode::IsPresetStyle()
 {
 	for (FPresetCommentStyle Style : GetMutableDefault<UAutoSizeCommentsSettings>()->PresetStyles)
@@ -1621,6 +1631,16 @@ void SAutoSizeCommentsGraphNode::SaveToCache()
 				NodesInside.NodeGuids.Add(Node->NodeGuid);
 			}
 		}
+	}
+}
+
+void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots)
+{
+	TArray<TSharedPtr<SGraphNode>> OutGraphNodes;
+	QueryNodesUnderComment(OutGraphNodes, OverrideCollisionMethod, bIgnoreKnots);
+	for (TSharedPtr<SGraphNode>& Node : OutGraphNodes)
+	{
+		OutNodesUnderComment.Add(Node->GetNodeObj());
 	}
 }
 
@@ -1776,6 +1796,11 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(const UObject* Node, const bool bIgn
 
 void SAutoSizeCommentsGraphNode::OnAltReleased()
 {
+	if (IsHeaderComment())
+	{
+		return;
+	}
+
 	const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
 
 	TSet<UObject*> SelectedNodes;
@@ -1796,31 +1821,42 @@ void SAutoSizeCommentsGraphNode::OnAltReleased()
 	{
 		TArray<UEdGraphNode*> OutNodes;
 		QueryNodesUnderComment(OutNodes, AltCollisionMethod);
+		OutNodes = OutNodes.FilterByPredicate(IsMajorNode);
 
-		TSet<UObject*> NewSelection;
-		for (UObject* Node : CommentNode->GetNodesUnderComment())
-		{
-			NewSelection.Add(Node);
-		}
-
+		TSet<UObject*> NewSelection(CommentNode->GetNodesUnderComment());
+		bool bChanged = false;
 		for (UObject* Node : SelectedNodes)
 		{
 			if (OutNodes.Contains(Node))
 			{
-				NewSelection.Add(Node);
+				bool bAlreadyInSet = false;
+				NewSelection.Add(Node, &bAlreadyInSet);
+				bChanged = !bAlreadyInSet;
 			}
 			else
 			{
-				NewSelection.Remove(Node);
+				if (NewSelection.Remove(Node) > 0)
+				{
+					bChanged = true;
+				}
 			}
 		}
 
-		CommentNode->ClearNodesUnderComment();
-		for (UObject* Node : NewSelection)
+		if (bChanged)
 		{
-			CommentNode->AddNodeUnderComment(Node);
+			CommentNode->ClearNodesUnderComment();
+			for (UObject* Node : NewSelection)
+			{
+				CommentNode->AddNodeUnderComment(Node);
+			}
+			UpdateExistingCommentNodes();
 		}
 	}
+}
+
+bool SAutoSizeCommentsGraphNode::IsCommentNode(UObject* Object)
+{
+	return Object->IsA(UEdGraphNode_Comment::StaticClass());
 }
 
 FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
@@ -1917,4 +1953,21 @@ TArray<UEdGraphNode*> SAutoSizeCommentsGraphNode::GetEdGraphNodesUnderComment(UE
 	}
 
 	return OutNodes;
+}
+
+bool SAutoSizeCommentsGraphNode::IsMajorNode(UObject* Object)
+{
+	if (UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(Object))
+	{
+		if (IsHeaderComment(CommentNode))
+		{
+			return true;
+		}
+	}
+	else if (UEdGraphNode* EdGraphNode = Cast<UEdGraphNode>(Object))
+	{
+		return true;
+	}
+
+	return false;
 }
