@@ -150,7 +150,12 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 
 FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
-	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsEditable.Get())
+	if (!IsEditable.Get())
+	{
+		return FReply::Unhandled();
+	}
+
+	if (MouseEvent.GetEffectingButton() == GetResizeKey() && AreResizeModifiersDown())
 	{
 		CachedAnchorPoint = GetAnchorPoint(MyGeometry, MouseEvent);
 		if (CachedAnchorPoint != EASCAnchorPoint::None)
@@ -162,7 +167,10 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 			// CommentNode->Modify();
 			return FReply::Handled().CaptureMouse(SharedThis(this));
 		}
-
+	}
+	
+	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
 		const FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
 		if (CanBeSelected(MousePositionInNode))
 		{
@@ -178,7 +186,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 
 FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
-	if ((MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) && bUserIsDragging)
+	if ((MouseEvent.GetEffectingButton() == GetResizeKey()) && bUserIsDragging)
 	{
 		bUserIsDragging = false;
 		CachedAnchorPoint = EASCAnchorPoint::None;
@@ -660,26 +668,29 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 		return FCursorReply::Unhandled();
 	}
 
-	auto AnchorPoint = GetAnchorPoint(MyGeometry, CursorEvent);
-
-	if (AnchorPoint == EASCAnchorPoint::TopLeft || AnchorPoint == EASCAnchorPoint::BottomRight)
+	if (AreResizeModifiersDown())
 	{
-		return FCursorReply::Cursor(EMouseCursor::ResizeSouthEast);
-	}
+		auto AnchorPoint = GetAnchorPoint(MyGeometry, CursorEvent);
 
-	if (AnchorPoint == EASCAnchorPoint::TopRight || AnchorPoint == EASCAnchorPoint::BottomLeft)
-	{
-		return FCursorReply::Cursor(EMouseCursor::ResizeSouthWest);
-	}
+		if (AnchorPoint == EASCAnchorPoint::TopLeft || AnchorPoint == EASCAnchorPoint::BottomRight)
+		{
+			return FCursorReply::Cursor(EMouseCursor::ResizeSouthEast);
+		}
 
-	if (AnchorPoint == EASCAnchorPoint::Top || AnchorPoint == EASCAnchorPoint::Bottom)
-	{
-		return FCursorReply::Cursor(EMouseCursor::ResizeUpDown);
-	}
+		if (AnchorPoint == EASCAnchorPoint::TopRight || AnchorPoint == EASCAnchorPoint::BottomLeft)
+		{
+			return FCursorReply::Cursor(EMouseCursor::ResizeSouthWest);
+		}
 
-	if (AnchorPoint == EASCAnchorPoint::Left || AnchorPoint == EASCAnchorPoint::Right)
-	{
-		return FCursorReply::Cursor(EMouseCursor::ResizeLeftRight);
+		if (AnchorPoint == EASCAnchorPoint::Top || AnchorPoint == EASCAnchorPoint::Bottom)
+		{
+			return FCursorReply::Cursor(EMouseCursor::ResizeUpDown);
+		}
+
+		if (AnchorPoint == EASCAnchorPoint::Left || AnchorPoint == EASCAnchorPoint::Right)
+		{
+			return FCursorReply::Cursor(EMouseCursor::ResizeLeftRight);
+		}
 	}
 
 	const FVector2D LocalMouseCoordinates = MyGeometry.AbsoluteToLocal(CursorEvent.GetScreenSpacePosition());
@@ -1551,6 +1562,19 @@ bool SAutoSizeCommentsGraphNode::IsHeaderComment() const
 bool SAutoSizeCommentsGraphNode::IsHeaderComment(UEdGraphNode_Comment* InCommentNode)
 {
 	return InCommentNode->CommentColor == GetMutableDefault<UAutoSizeCommentsSettings>()->HeaderStyle.Color;
+}
+
+FKey SAutoSizeCommentsGraphNode::GetResizeKey() const
+{
+	const FInputChord ResizeChord = GetDefault<UAutoSizeCommentsSettings>()->ResizeChord;
+	return ResizeChord.Key;
+}
+
+bool SAutoSizeCommentsGraphNode::AreResizeModifiersDown() const
+{
+	const FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
+	const FInputChord ResizeChord = GetDefault<UAutoSizeCommentsSettings>()->ResizeChord;
+	return KeysState.AreModifersDown(EModifierKey::FromBools(ResizeChord.bCtrl, ResizeChord.bAlt, ResizeChord.bShift, ResizeChord.bCmd));
 }
 
 bool SAutoSizeCommentsGraphNode::IsPresetStyle()

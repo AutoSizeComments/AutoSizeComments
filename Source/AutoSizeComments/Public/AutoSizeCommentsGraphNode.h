@@ -232,4 +232,7 @@ public:
 	static bool IsNotCommentNode(UObject* Object) { return !IsCommentNode(Object); }
 	static bool IsMajorNode(UObject* Object);
 	static bool IsHeaderComment(UEdGraphNode_Comment* InCommentNode);
+
+	FKey GetResizeKey() const;
+	bool AreResizeModifiersDown() const;
 };

@@ -33,6 +33,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bGlobalShowBubbleWhenZoomed = true;
 	bSaveCommentNodeDataToFile = true;
 	bDetectNodesContainedForNewComments = true;
+	ResizeChord = FInputChord(EKeys::LeftMouseButton, EModifierKey::Shift);
 	ResizeCollisionMethod = ECommentCollisionMethod::Contained;
 	AltCollisionMethod = ECommentCollisionMethod::Intersect;
 	bSnapToGridWhileResizing = false;

@@ -130,6 +130,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bDetectNodesContainedForNewComments;
 
+	/** Mouse input chord to resize a node */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	FInputChord ResizeChord;
+
 	/** Collision method to use when resizing comment nodes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	ECommentCollisionMethod ResizeCollisionMethod;
