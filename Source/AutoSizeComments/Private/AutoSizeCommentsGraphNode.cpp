@@ -163,6 +163,9 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 			DragSize = UserSize;
 			bUserIsDragging = true;
 
+			// deselect all nodes when we are trying to resize
+			GetOwnerPanel()->SelectionManager.ClearSelectionSet();
+
 			// ResizeTransaction = MakeShareable(new FScopedTransaction(NSLOCTEXT("UnrealEd", "Resize Comment Node", "Resize Comment Node")));
 			// CommentNode->Modify();
 			return FReply::Handled().CaptureMouse(SharedThis(this));
