@@ -155,18 +155,7 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 
 	if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
 	{
-		TArray<UEdGraphNode_Comment*> Comments;
-		Node->GetGraph()->GetNodesOfClass<UEdGraphNode_Comment>(Comments);
-		for (UEdGraphNode_Comment* Comment : Comments)
-		{
-			if (Comment->GetNodesUnderComment().Contains(Node))
-			{
-				if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = State.GetASCComment(Comment))
-				{
-					ASCComment->ResizeToFit();
-				}
-			}
-		}
+		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, Node));
 	}
 }
 
@@ -174,4 +163,35 @@ void FAutoSizeCommentGraphHandler::SaveSizeCache()
 {
 	IAutoSizeCommentsModule::Get().GetSizeCache().SaveCache();
 	bPendingSave = false;
+}
+
+void FAutoSizeCommentGraphHandler::UpdateContainingComments(UEdGraphNode* Node)
+{
+	FASCState& State = IAutoSizeCommentsModule::Get().GetState();
+
+	if (!IsValid(Node))
+	{
+		return;
+	}
+
+	UEdGraph* Graph = Node->GetGraph();
+	if (!IsValid(Graph))
+	{
+		return;
+	}
+
+	TArray<UEdGraphNode_Comment*> Comments;
+
+	// check if any node on the graph contains the new node
+	Graph->GetNodesOfClass<UEdGraphNode_Comment>(Comments);
+	for (UEdGraphNode_Comment* Comment : Comments)
+	{
+		if (Comment->GetNodesUnderComment().Contains(Node))
+		{
+			if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = State.GetASCComment(Comment))
+			{
+				ASCComment->ResizeToFit();
+			}
+		}
+	}
 }

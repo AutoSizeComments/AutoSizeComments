@@ -21,5 +21,7 @@ private:
 
 	void SaveSizeCache();
 
+	void UpdateContainingComments(UEdGraphNode* Node);
+
 	bool bPendingSave = false;
 };
