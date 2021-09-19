@@ -60,10 +60,14 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	OpacityValue = ASCSettings->MinimumControlOpacity;
 	CommentControlsTextColor = FLinearColor(1, 1, 1, OpacityValue);
 	CommentControlsColor = FLinearColor(CommentNode->CommentColor.R, CommentNode->CommentColor.G, CommentNode->CommentColor.B, OpacityValue);
+
+	// register to ASCModule
+	IAutoSizeCommentsModule::Get().RegisterComment(SharedThis(this));
 }
 
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 {
+	IAutoSizeCommentsModule::Get().RemoveComment(GetCommentNodeObj());
 	SaveToCache();
 }
 

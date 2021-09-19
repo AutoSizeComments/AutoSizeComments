@@ -6,9 +6,13 @@
 
 #include "Modules/ModuleManager.h"
 
+class UEdGraphNode_Comment;
+class SAutoSizeCommentsGraphNode;
+struct FASCState;
+class FAutoSizeCommentsCacheFile;
+
 DECLARE_LOG_CATEGORY_EXTERN(LogAutoSizeComments, Log, All)
 
-class FAutoSizeCommentsCacheFile;
 
 /**
 * The public interface to this module
@@ -38,4 +42,9 @@ public:
 	}
 
 	virtual FAutoSizeCommentsCacheFile& GetSizeCache() = 0;
+
+	virtual FASCState& GetState() = 0;
+
+	virtual void RegisterComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment) = 0;
+	virtual void RemoveComment(UEdGraphNode_Comment* Comment) = 0;
 };
