@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "SGraphPin.h"
-
 #include "AutoSizeCommentsCacheFile.generated.h"
 
+class UEdGraphNode_Comment;
 class SAutoSizeCommentsGraphNode;
 
 USTRUCT()
@@ -63,6 +63,8 @@ public:
 	void DeleteCache();
 
 	void CleanupFiles();
+
+	void UpdateComment(UEdGraphNode_Comment* Comment);
 
 	FASCCommentData& GetGraphData(UEdGraph* Graph);
 

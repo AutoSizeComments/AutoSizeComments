@@ -1616,27 +1616,7 @@ bool SAutoSizeCommentsGraphNode::LoadCache()
 
 void SAutoSizeCommentsGraphNode::SaveToCache()
 {
-	FASCCommentData& GraphData = IAutoSizeCommentsModule::Get().GetSizeCache().GetGraphData(CommentNode->GetGraph());
-
-	if (HasNodeBeenDeleted(CommentNode))
-	{
-		GraphData.CommentData.Remove(CommentNode->NodeGuid);
-	}
-	else
-	{
-		FASCNodesInside& NodesInside = GraphData.CommentData.FindOrAdd(CommentNode->NodeGuid);
-		NodesInside.NodeGuids.Empty();
-
-		// update cache file
-		const auto Nodes = GetEdGraphNodesUnderComment(CommentNode);
-		for (auto Node : Nodes)
-		{
-			if (!HasNodeBeenDeleted(Node))
-			{
-				NodesInside.NodeGuids.Add(Node->NodeGuid);
-			}
-		}
-	}
+	IAutoSizeCommentsModule::Get().GetSizeCache().UpdateComment(GetCommentNodeObj());
 }
 
 void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots)

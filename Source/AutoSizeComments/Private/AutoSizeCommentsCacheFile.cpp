@@ -2,21 +2,22 @@
 
 #include "AutoSizeCommentsCacheFile.h"
 
+#include "AutoSizeCommentsGraphNode.h"
+#include "AutoSizeCommentsModule.h"
+#include "AutoSizeCommentsSettings.h"
+#include "AutoSizeCommentsUtils.h"
+#include "EdGraphNode_Comment.h"
+#include "AssetRegistry/Public/AssetRegistryModule.h"
+#include "AssetRegistry/Public/AssetRegistryState.h"
+#include "Core/Public/HAL/PlatformFilemanager.h"
+#include "Core/Public/Misc/CoreDelegates.h"
+#include "Core/Public/Misc/FileHelper.h"
 #include "EdGraph/EdGraph.h"
 #include "EdGraph/EdGraphNode.h"
 #include "Editor/GraphEditor/Public/SGraphPanel.h"
-
-#include "Projects/Public/Interfaces/IPluginManager.h"
-#include "Core/Public/Misc/FileHelper.h"
-#include "Core/Public/HAL/PlatformFilemanager.h"
-#include "Core/Public/Misc/CoreDelegates.h"
-#include "JsonUtilities/Public/JsonObjectConverter.h"
 #include "EngineSettings/Classes/GeneralProjectSettings.h"
-#include "AssetRegistry/Public/AssetRegistryModule.h"
-#include "AssetRegistry/Public/AssetRegistryState.h"
-#include "AutoSizeCommentsGraphNode.h"
-#include "AutoSizeCommentsSettings.h"
-#include "AutoSizeCommentsModule.h"
+#include "JsonUtilities/Public/JsonObjectConverter.h"
+#include "Projects/Public/Interfaces/IPluginManager.h"
 
 void FAutoSizeCommentsCacheFile::Init()
 {
@@ -109,6 +110,38 @@ void FAutoSizeCommentsCacheFile::CleanupFiles()
 		if (!CurrentPackageNames.Contains(PackageGuid))
 		{
 			PackageData.PackageData.Remove(PackageGuid);
+		}
+	}
+}
+
+void FAutoSizeCommentsCacheFile::UpdateComment(UEdGraphNode_Comment* Comment)
+{
+	if (!Comment)
+	{
+		UE_LOG(LogAutoSizeComments, Log, TEXT("Tried to update null comment"));
+		return;
+	}
+
+	UEdGraph* Graph = Comment->GetGraph();
+	FASCCommentData& GraphData = GetGraphData(Graph);
+
+	if (FASCUtils::HasNodeBeenDeleted(Comment))
+	{
+		GraphData.CommentData.Remove(Comment->NodeGuid);
+	}
+	else
+	{
+		FASCNodesInside& NodesInside = GraphData.CommentData.FindOrAdd(Comment->NodeGuid);
+		NodesInside.NodeGuids.Empty();
+
+		// update cache file
+		const TArray<UEdGraphNode*> Nodes = FASCUtils::GetNodesUnderComment(Comment);
+		for (UEdGraphNode* Node : Nodes)
+		{
+			if (!FASCUtils::HasNodeBeenDeleted(Node))
+			{
+				NodesInside.NodeGuids.Add(Node->NodeGuid);
+			}
 		}
 	}
 }
