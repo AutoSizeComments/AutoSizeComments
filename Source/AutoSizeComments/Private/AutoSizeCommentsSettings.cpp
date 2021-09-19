@@ -5,6 +5,7 @@
 UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
 {
+	AutoInsertComment = EASCAutoInsertComment::Always;
 	bDisableResizing = false;
 	CommentNodePadding = FVector2D(30, 30);
 	MinimumVerticalPadding = 24.0f;

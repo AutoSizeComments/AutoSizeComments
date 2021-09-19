@@ -3,6 +3,7 @@
 #include "AutoSizeCommentsModule.h"
 
 #include "AutoSizeCommentsCacheFile.h"
+#include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
 #include "AutoSizeCommentsSettings.h"
@@ -31,6 +32,7 @@ public:
 
 	virtual void RegisterComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment) override;
 	virtual void RemoveComment(UEdGraphNode_Comment* Comment) override;
+
 private:
 	TSharedPtr<FAutoSizeCommentsGraphPanelNodeFactory> ASCNodeFactory;
 
@@ -39,6 +41,8 @@ private:
 	FAutoSizeCommentsCacheFile Cache;
 
 	FASCState State;
+
+	FAutoSizeCommentGraphHandler GraphHandler;
 
 	void OnPostEngineInit();
 
@@ -78,6 +82,8 @@ void FAutoSizeCommentsModule::OnPostEngineInit()
 	}
 
 	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FAutoSizeCommentsModule::SuggestBlueprintAssistSettings);
+
+	GraphHandler.BindDelegates();
 }
 
 void FAutoSizeCommentsModule::ShutdownModule()
@@ -107,6 +113,8 @@ void FAutoSizeCommentsModule::ShutdownModule()
 	}
 
 	FCoreDelegates::OnPostEngineInit.RemoveAll(this);
+
+	GraphHandler.UnbindDelegates();
 #endif
 }
 

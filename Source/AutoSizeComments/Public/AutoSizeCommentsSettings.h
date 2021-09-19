@@ -18,6 +18,14 @@ enum class ECommentCollisionMethod : uint8
 	Disabled UMETA(DisplayName = "Disabled"),
 };
 
+UENUM()
+enum class EASCAutoInsertComment : uint8
+{
+	Never UMETA(DisplayName = "Never"),
+	Always UMETA(DisplayName = "Always"),
+	Surrounded UMETA(DisplayName = "Surrounded"),
+};
+
 USTRUCT()
 struct FPresetCommentStyle
 {
@@ -81,6 +89,10 @@ public:
 	/** Preset styles (each style will have its own button on the comment box) */
 	UPROPERTY(EditAnywhere, config, Category = Styles)
 	TArray<FPresetCommentStyle> PresetStyles;
+
+	/** Determines when to insert newly created nodes into existing comments */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	EASCAutoInsertComment AutoInsertComment;
 
 	/** Disable the auto resizing behavior for comments */
 	UPROPERTY(EditAnywhere, config, Category = Misc)

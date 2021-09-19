@@ -96,6 +96,8 @@ public:
 
 	class UEdGraphNode_Comment* GetCommentNodeObj() const { return CommentNode; }
 
+	void ResizeToFit();
+
 protected:
 	//~ Begin SGraphNode Interface
 	virtual void UpdateGraphNode() override;
@@ -139,8 +141,6 @@ private:
 
 	/** Returns the width to wrap the text of the comment at */
 	float GetWrapAt() const;
-
-	void ResizeToFit();
 
 	void MoveEmptyCommentBoxes();
 
