@@ -64,13 +64,16 @@ void FAutoSizeCommentsCacheFile::SaveCache()
 		return;
 	}
 
+	const double StartTime = FPlatformTime::Seconds();
+
 	const auto CachePath = GetCachePath();
 
 	// Write data to file
 	FString JsonAsString;
 	FJsonObjectConverter::UStructToJsonObjectString(PackageData, JsonAsString);
 	FFileHelper::SaveStringToFile(JsonAsString, *CachePath);
-	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved node cache to %s"), *CachePath);
+	const double TimeTaken = (FPlatformTime::Seconds() - StartTime) * 1000.0f;
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved node cache to %s took %6.2fms"), *CachePath, TimeTaken);
 }
 
 void FAutoSizeCommentsCacheFile::DeleteCache()
