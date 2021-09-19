@@ -8,6 +8,7 @@
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "GraphEditAction.h"
+#include "SGraphPanel.h"
 
 void FAutoSizeCommentGraphHandler::BindDelegates()
 {
@@ -63,14 +64,38 @@ void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Acti
 
 	// we don't want a const prt
 	UEdGraphNode* NewNode = ConstNewNode->Pins[0]->GetOwningNode();
-	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes, NewNode));
+
+	TArray<UEdGraphNode_Comment*> Comments;
+	NewNode->GetGraph()->GetNodesOfClassEx<UEdGraphNode_Comment>(Comments);
+	if (Comments.Num() == 0)
+	{
+		return;
+	}
+
+	FASCState& State = IAutoSizeCommentsModule::Get().GetState();
+	TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = State.GetASCComment(Comments[0]);
+	if (!ASCComment.IsValid())
+	{
+		return;
+	}
+
+	TSharedPtr<SGraphPanel> OwnerPanel = ASCComment->GetOwnerPanel();
+	if (!OwnerPanel || !OwnerPanel->SelectionManager.SelectedNodes.Num() == 1)
+	{
+		return;
+	}
+
+	UEdGraphNode* SelectedNode = Cast<UEdGraphNode>(OwnerPanel->SelectionManager.SelectedNodes.Array()[0]);
+
+	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes, NewNode, SelectedNode));
 }
 
-void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(UEdGraphNode* NewNode)
+void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(UEdGraphNode* NewNode, UEdGraphNode* LastSelectedNode)
 {
 	UEdGraph* Graph = NewNode->GetGraph();
-	TArray<UEdGraphNode*> LinkedInput = FASCUtils::GetLinkedNodes(NewNode, EGPD_Input);
-	TArray<UEdGraphNode*> LinkedOutput = FASCUtils::GetLinkedNodes(NewNode, EGPD_Output);
+	const auto IsSelectedNode = [&LastSelectedNode](UEdGraphNode* LinkedNode) { return LinkedNode == LastSelectedNode; };
+	TArray<UEdGraphNode*> LinkedInput = FASCUtils::GetLinkedNodes(NewNode, EGPD_Input).FilterByPredicate(IsSelectedNode);
+	TArray<UEdGraphNode*> LinkedOutput = FASCUtils::GetLinkedNodes(NewNode, EGPD_Output).FilterByPredicate(IsSelectedNode);
 
 	struct FLocal
 	{
@@ -150,8 +175,6 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 	{
 		return;
 	}
-
-	FASCState& State = IAutoSizeCommentsModule::Get().GetState();
 
 	if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
 	{

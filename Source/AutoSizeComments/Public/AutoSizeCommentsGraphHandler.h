@@ -10,7 +10,7 @@ public:
 
 	void OnGraphChanged(const FEdGraphEditAction& Action);
 
-	void AutoInsertIntoCommentNodes(UEdGraphNode* Node);
+	void AutoInsertIntoCommentNodes(UEdGraphNode* Node, UEdGraphNode* LastSelectedNode);
 
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FDelegateHandle> GraphHandles;
