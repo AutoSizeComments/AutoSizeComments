@@ -635,6 +635,16 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 {
 	SGraphNode::SetOwner(OwnerPanel);
 
+	if (!CommentNode)
+	{
+		return;
+	}
+	
+	if (IsHeaderComment())
+	{
+		return;
+	}
+
 	if (CommentNode->GetNodesUnderComment().Num() > 0)
 	{
 		return;
