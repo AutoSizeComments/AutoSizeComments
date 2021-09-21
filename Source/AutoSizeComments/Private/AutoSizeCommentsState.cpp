@@ -19,3 +19,8 @@ TSharedPtr<SAutoSizeCommentsGraphNode> FASCState::GetASCComment(UEdGraphNode_Com
 	TWeakPtr<SAutoSizeCommentsGraphNode> WeakPtr = CommentToASCMapping.FindRef(Comment);
 	return WeakPtr.Pin();
 }
+
+bool FASCState::HasRegisteredComment(UEdGraphNode_Comment* Comment)
+{
+	return CommentToASCMapping.Contains(Comment);
+}

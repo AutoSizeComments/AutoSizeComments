@@ -5,6 +5,7 @@
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
+#include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "AssetRegistry/Public/AssetRegistryModule.h"
@@ -124,6 +125,11 @@ void FAutoSizeCommentsCacheFile::UpdateComment(UEdGraphNode_Comment* Comment)
 	if (!Comment)
 	{
 		UE_LOG(LogAutoSizeComments, Warning, TEXT("Tried to update null comment"));
+		return;
+	}
+
+	if (!IAutoSizeCommentsModule::Get().GetState().HasRegisteredComment(Comment))
+	{
 		return;
 	}
 
