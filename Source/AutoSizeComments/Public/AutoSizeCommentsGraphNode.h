@@ -213,7 +213,7 @@ public:
 	bool IsPresetStyle();
 
 	bool LoadCache();
-	void SaveToCache();
+	void UpdateCache();
 
 	void QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
 	void QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);

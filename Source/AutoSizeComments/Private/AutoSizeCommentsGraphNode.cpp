@@ -68,7 +68,7 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 {
 	IAutoSizeCommentsModule::Get().RemoveComment(GetCommentNodeObj());
-	SaveToCache();
+	UpdateCache();
 }
 
 void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
@@ -1633,7 +1633,7 @@ bool SAutoSizeCommentsGraphNode::LoadCache()
 	return false;
 }
 
-void SAutoSizeCommentsGraphNode::SaveToCache()
+void SAutoSizeCommentsGraphNode::UpdateCache()
 {
 	IAutoSizeCommentsModule::Get().GetSizeCache().UpdateComment(GetCommentNodeObj());
 }
