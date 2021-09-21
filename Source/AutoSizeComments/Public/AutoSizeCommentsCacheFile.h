@@ -72,6 +72,8 @@ public:
 
 	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 
+	void PrintCache();
+
 private:
 	FASCPackageData PackageData;
 

@@ -55,6 +55,8 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 	}
 
 	CleanupFiles();
+
+	PrintCache();
 }
 
 void FAutoSizeCommentsCacheFile::SaveCache()
@@ -198,6 +200,25 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 	}
 
 	return false;
+}
+
+void FAutoSizeCommentsCacheFile::PrintCache()
+{
+	for (auto& Package : PackageData.PackageData)
+	{
+		for (auto& GraphData : Package.Value.GraphData)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Graph %s"), *GraphData.Key.ToString());
+			for (auto& CommentData : GraphData.Value.CommentData)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("\tComment %s"), *CommentData.Key.ToString());
+				for (auto NodeGuid : CommentData.Value.NodeGuids)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("\t\tNode %s"), *NodeGuid.ToString());
+				}
+			}
+		}
+	}
 }
 
 void FAutoSizeCommentsCacheFile::OnPreExit()
