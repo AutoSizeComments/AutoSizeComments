@@ -80,7 +80,7 @@ void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Acti
 	}
 
 	TSharedPtr<SGraphPanel> OwnerPanel = ASCComment->GetOwnerPanel();
-	if (!OwnerPanel || !OwnerPanel->SelectionManager.SelectedNodes.Num() == 1)
+	if (!OwnerPanel || OwnerPanel->SelectionManager.SelectedNodes.Num() != 1)
 	{
 		return;
 	}
