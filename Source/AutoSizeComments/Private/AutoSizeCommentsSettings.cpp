@@ -33,6 +33,8 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bGlobalColorBubble = false;
 	bGlobalShowBubbleWhenZoomed = true;
 	bSaveCommentNodeDataToFile = true;
+	bSaveCommentDataOnSavingGraph = false;
+	bSaveCommentDataOnExit = true;
 	bDetectNodesContainedForNewComments = true;
 	ResizeChord = FInputChord(EKeys::LeftMouseButton, EModifierKey::Shift);
 	ResizeCollisionMethod = ECommentCollisionMethod::Contained;

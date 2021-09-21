@@ -138,6 +138,14 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bSaveCommentNodeDataToFile;
 
+	/** If enabled, nodes will be saved to file when the graph is saved */
+	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
+	bool bSaveCommentDataOnSavingGraph;
+
+	/** If enabled, nodes will be saved to file when the program is exited */
+	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
+	bool bSaveCommentDataOnExit;
+
 	/** Commments will detect and add nodes are underneath on creation */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bDetectNodesContainedForNewComments;

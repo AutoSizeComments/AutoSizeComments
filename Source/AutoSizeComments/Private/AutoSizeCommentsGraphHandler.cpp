@@ -148,6 +148,11 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(UEdGraphNode* NewN
 
 void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 {
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentDataOnSavingGraph)
+	{
+		return;
+	}
+
 	FAutoSizeCommentsCacheFile& SizeCache = IAutoSizeCommentsModule::Get().GetSizeCache();
 
 	// upon saving a graph, save all comments to cache

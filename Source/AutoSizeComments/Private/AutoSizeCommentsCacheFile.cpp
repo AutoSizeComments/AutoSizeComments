@@ -121,11 +121,17 @@ void FAutoSizeCommentsCacheFile::UpdateComment(UEdGraphNode_Comment* Comment)
 {
 	if (!Comment)
 	{
-		UE_LOG(LogAutoSizeComments, Log, TEXT("Tried to update null comment"));
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Tried to update null comment"));
 		return;
 	}
 
 	UEdGraph* Graph = Comment->GetGraph();
+	if (!Graph)
+	{
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Tried to update comment with null graph"));
+		return;
+	}
+
 	FASCCommentData& GraphData = GetGraphData(Graph);
 
 	if (FASCUtils::HasNodeBeenDeleted(Comment))
@@ -192,6 +198,14 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 	}
 
 	return false;
+}
+
+void FAutoSizeCommentsCacheFile::OnPreExit()
+{
+	if (GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentDataOnExit)
+	{
+		SaveCache();
+	}
 }
 
 void FASCCommentData::CleanupGraph(UEdGraph* Graph)

@@ -74,4 +74,6 @@ public:
 
 private:
 	FASCPackageData PackageData;
+
+	void OnPreExit();
 };
