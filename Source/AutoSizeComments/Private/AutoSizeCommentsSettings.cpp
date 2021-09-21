@@ -33,7 +33,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bGlobalColorBubble = false;
 	bGlobalShowBubbleWhenZoomed = true;
 	bSaveCommentNodeDataToFile = true;
-	bSaveCommentDataOnSavingGraph = false;
+	bSaveCommentDataOnSavingGraph = true;
 	bSaveCommentDataOnExit = true;
 	bDetectNodesContainedForNewComments = true;
 	ResizeChord = FInputChord(EKeys::LeftMouseButton, EModifierKey::Shift);
