@@ -711,6 +711,11 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 
 int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 {
+	if (!CommentNode)
+	{
+		return -1;
+	}
+
 	if (IsHeaderComment())
 	{
 		return 1;
@@ -721,7 +726,7 @@ int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 		return 0;
 	}
 
-	return CommentNode ? CommentNode->CommentDepth : -1;
+	return CommentNode->CommentDepth;
 }
 
 FReply SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked()
