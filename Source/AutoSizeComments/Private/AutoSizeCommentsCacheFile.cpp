@@ -56,8 +56,6 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 	}
 
 	CleanupFiles();
-
-	PrintCache();
 }
 
 void FAutoSizeCommentsCacheFile::SaveCache()
@@ -214,13 +212,13 @@ void FAutoSizeCommentsCacheFile::PrintCache()
 	{
 		for (auto& GraphData : Package.Value.GraphData)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Graph %s"), *GraphData.Key.ToString());
+			UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("Graph %s"), *GraphData.Key.ToString());
 			for (auto& CommentData : GraphData.Value.CommentData)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("\tComment %s"), *CommentData.Key.ToString());
+				UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("\tComment %s"), *CommentData.Key.ToString());
 				for (auto NodeGuid : CommentData.Value.NodeGuids)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("\t\tNode %s"), *NodeGuid.ToString());
+					UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("\t\tNode %s"), *NodeGuid.ToString());
 				}
 			}
 		}
