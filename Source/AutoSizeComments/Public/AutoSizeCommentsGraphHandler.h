@@ -10,7 +10,7 @@ public:
 
 	void OnGraphChanged(const FEdGraphEditAction& Action);
 
-	void AutoInsertIntoCommentNodes(UEdGraphNode* Node, UEdGraphNode* LastSelectedNode);
+	void AutoInsertIntoCommentNodes(TWeakObjectPtr<UEdGraphNode> Node, TWeakObjectPtr<UEdGraphNode> LastSelectedNode);
 
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FDelegateHandle> GraphHandles;
@@ -21,7 +21,7 @@ private:
 
 	void SaveSizeCache();
 
-	void UpdateContainingComments(UEdGraphNode* Node);
+	void UpdateContainingComments(TWeakObjectPtr<UEdGraphNode> Node);
 
 	bool bPendingSave = false;
 };

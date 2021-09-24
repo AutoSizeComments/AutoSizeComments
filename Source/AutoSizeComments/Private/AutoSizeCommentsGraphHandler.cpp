@@ -87,15 +87,25 @@ void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Acti
 
 	UEdGraphNode* SelectedNode = Cast<UEdGraphNode>(OwnerPanel->SelectionManager.SelectedNodes.Array()[0]);
 
-	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes, NewNode, SelectedNode));
+	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes, TWeakObjectPtr<UEdGraphNode>(NewNode), TWeakObjectPtr<UEdGraphNode>(SelectedNode)));
 }
 
-void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(UEdGraphNode* NewNode, UEdGraphNode* LastSelectedNode)
+void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEdGraphNode> NewNode, TWeakObjectPtr<UEdGraphNode> LastSelectedNode)
 {
+	if (!NewNode.IsValid() || !IsValid(NewNode.Get()))
+	{
+		return;
+	}
+
+	if (!LastSelectedNode.IsValid() || !IsValid(LastSelectedNode.Get()))
+	{
+		return;
+	}
+	
 	UEdGraph* Graph = NewNode->GetGraph();
 	const auto IsSelectedNode = [&LastSelectedNode](UEdGraphNode* LinkedNode) { return LinkedNode == LastSelectedNode; };
-	TArray<UEdGraphNode*> LinkedInput = FASCUtils::GetLinkedNodes(NewNode, EGPD_Input).FilterByPredicate(IsSelectedNode);
-	TArray<UEdGraphNode*> LinkedOutput = FASCUtils::GetLinkedNodes(NewNode, EGPD_Output).FilterByPredicate(IsSelectedNode);
+	TArray<UEdGraphNode*> LinkedInput = FASCUtils::GetLinkedNodes(NewNode.Get(), EGPD_Input).FilterByPredicate(IsSelectedNode);
+	TArray<UEdGraphNode*> LinkedOutput = FASCUtils::GetLinkedNodes(NewNode.Get(), EGPD_Output).FilterByPredicate(IsSelectedNode);
 
 	struct FLocal
 	{
@@ -128,7 +138,7 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(UEdGraphNode* NewN
 	
 			if (ContainingCommentsA.Num() > 0)
 			{
-				FLocal::TakeCommentNode(Graph, NewNode, ContainingCommentsA[0]);
+				FLocal::TakeCommentNode(Graph, NewNode.Get(), ContainingCommentsA[0]);
 			}
 		}
 	}
@@ -136,12 +146,12 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(UEdGraphNode* NewN
 	{
 		if (LinkedOutput.Num() == 1)
 		{
-			FLocal::TakeCommentNode(Graph, NewNode, LinkedOutput[0]);
+			FLocal::TakeCommentNode(Graph, NewNode.Get(), LinkedOutput[0]);
 		}
 	
 		if (LinkedInput.Num() == 1)
 		{
-			FLocal::TakeCommentNode(Graph, NewNode, LinkedInput[0]);
+			FLocal::TakeCommentNode(Graph, NewNode.Get(), LinkedInput[0]);
 		}
 	}
 }
@@ -183,7 +193,7 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 
 	if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
 	{
-		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, Node));
+		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
 	}
 }
 
@@ -193,11 +203,11 @@ void FAutoSizeCommentGraphHandler::SaveSizeCache()
 	bPendingSave = false;
 }
 
-void FAutoSizeCommentGraphHandler::UpdateContainingComments(UEdGraphNode* Node)
+void FAutoSizeCommentGraphHandler::UpdateContainingComments(TWeakObjectPtr<UEdGraphNode> Node)
 {
 	FASCState& State = IAutoSizeCommentsModule::Get().GetState();
 
-	if (!IsValid(Node))
+	if (!Node.IsValid() || !IsValid(Node.Get()))
 	{
 		return;
 	}
