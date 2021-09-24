@@ -191,6 +191,15 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 		return;
 	}
 
+	if (Event.GetEventType() == ETransactionObjectEventType::Finalized)
+	{
+		// we are probably currently dragging a node around so don't update now
+		if (FSlateApplication::Get().GetModifierKeys().IsAltDown())
+		{
+			return;
+		}
+	}
+
 	if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
 	{
 		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
