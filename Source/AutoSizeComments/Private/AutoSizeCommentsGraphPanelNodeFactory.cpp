@@ -19,7 +19,7 @@ TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class 
 
 				if (ASCSettings->bDebugGraph_ASC)
 				{
-					UE_LOG(LogAutoSizeComments, Warning, TEXT("GraphClassName: <%s>"), *GraphClassName);
+					UE_LOG(LogAutoSizeComments, Log, TEXT("GraphClassName: <%s>"), *GraphClassName);
 				}
 
 				TArray<FString> IgnoredClasses = ASCSettings->IgnoredGraphs;
