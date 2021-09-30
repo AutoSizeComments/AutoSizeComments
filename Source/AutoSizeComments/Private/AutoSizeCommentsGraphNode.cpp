@@ -71,6 +71,11 @@ SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 	IAutoSizeCommentsModule::Get().RemoveComment(GetCommentNodeObj());
 }
 
+void SAutoSizeCommentsGraphNode::OnDeleted()
+{
+	ResetNodesUnrelated();
+}
+
 void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
 {
 	// don't need to initialize if our color is a preset style or is a header comment 
@@ -126,6 +131,20 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 #endif
 
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
+
+	const ECommentCollisionMethod AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
+	if (KeysState.IsAltDown() && AltCollisionMethod != ECommentCollisionMethod::Disabled)
+	{
+		// still update collision when we alt-control drag
+		TArray<UEdGraphNode*> NodesUnderComment;
+		QueryNodesUnderComment(NodesUnderComment, AltCollisionMethod);
+		SetNodesRelated(NodesUnderComment);
+	}
+	else
+	{
+		TArray<UEdGraphNode*> NodesUnderComment = GetEdGraphNodesUnderComment(GetCommentNodeObj());
+		SetNodesRelated(NodesUnderComment);
+	}
 
 	if (!(KeysState.IsAltDown() && KeysState.IsControlDown()) && !IsHeaderComment())
 	{
@@ -199,13 +218,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, 
 		CachedAnchorPoint = EASCAnchorPoint::None;
 		RefreshNodesInsideComment(GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenResizing);
 
-#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
-		TArray<UEdGraphNode*> AllNodes = GetNodeObj()->GetGraph()->Nodes;
-		for (auto& Node : AllNodes)
-		{
-			Node->SetNodeUnrelated(false);
-		}
-#endif
+		ResetNodesUnrelated();
 
 		return FReply::Handled().ReleaseMouseCapture();
 	}
@@ -283,20 +296,9 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 		}
 
 #if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
-		TArray<UEdGraphNode*> AllNodes = GetNodeObj()->GetGraph()->Nodes;
-		for (auto& Node : AllNodes)
-		{
-			Node->SetNodeUnrelated(true);
-		}
-
-		GetNodeObj()->SetNodeUnrelated(false);
-
-		TArray<TSharedPtr<SGraphNode>> Nodes;
+		TArray<UEdGraphNode*> Nodes;
 		QueryNodesUnderComment(Nodes, GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod);
-		for (TSharedPtr<SGraphNode> Node : Nodes)
-		{
-			Node->GetNodeObj()->SetNodeUnrelated(false);
-		}
+		SetNodesRelated(Nodes);
 #endif
 	}
 
@@ -329,6 +331,22 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDoubleClick(const FGeometry& InM
 void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	bool bRequireUpdate = false;
+
+	// lost selection
+	const bool bNewIsSelected = IsSingleSelectedNode();
+	if (bLastSelected && !bNewIsSelected)
+	{
+		ResetNodesUnrelated();
+	}
+
+	// gained selection
+	if (!bLastSelected && bNewIsSelected)
+	{
+		SetNodesRelated(GetEdGraphNodesUnderComment(CommentNode));
+	}
+
+	bLastSelected = bNewIsSelected;
+
 
 	if (!GetDefault<UAutoSizeCommentsSettings>()->bDisableResizing)
 	{
@@ -528,6 +546,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	TSharedRef<SInlineEditableTextBlock> CommentTextBlock = SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 		.Style(&CommentStyle)
+		.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentTextColor)
 		.Text(this, &SAutoSizeCommentsGraphNode::GetEditableNodeTitleAsText)
 		.OnVerifyTextChanged(this, &SAutoSizeCommentsGraphNode::OnVerifyNameTextChanged)
 		.OnTextCommitted(this, &SAutoSizeCommentsGraphNode::OnNameTextCommited)
@@ -934,6 +953,12 @@ FSlateRect SAutoSizeCommentsGraphNode::GetTitleRect() const
 	return FSlateRect(NodePosition.X, NodePosition.Y, NodePosition.X + NodeSize.X, NodePosition.Y + NodeSize.Y) + TitleBarOffset;
 }
 
+FSlateColor SAutoSizeCommentsGraphNode::GetCommentTextColor() const
+{
+	const FLinearColor TransparentGray(1.0f, 1.0f, 1.0f, 0.4f);
+	return IsNodeUnrelated() ? TransparentGray : FLinearColor::White;
+}
+
 void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 {
 	if (GetDesiredSize().IsZero())
@@ -1059,7 +1084,14 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 
 FSlateColor SAutoSizeCommentsGraphNode::GetCommentBodyColor() const
 {
-	return CommentNode ? CommentNode->CommentColor : FLinearColor::White;
+	if (!CommentNode)
+	{
+		return FLinearColor::White;
+	}
+
+	return IsNodeUnrelated()
+		? CommentNode->CommentColor * FLinearColor(0.5f, 0.5f, 0.5f, 0.4f)
+		: CommentNode->CommentColor;
 }
 
 FSlateColor SAutoSizeCommentsGraphNode::GetCommentTitleBarColor() const
@@ -1067,8 +1099,9 @@ FSlateColor SAutoSizeCommentsGraphNode::GetCommentTitleBarColor() const
 	if (CommentNode)
 	{
 		const FLinearColor Color = CommentNode->CommentColor * 0.6f;
-		return FLinearColor(Color.R, Color.G, Color.B);
+		return FLinearColor(Color.R, Color.G, Color.B, IsNodeUnrelated() ? 0.4f : 1.0f);
 	}
+
 	const FLinearColor Color = FLinearColor::White * 0.6f;
 	return FLinearColor(Color.R, Color.G, Color.B);
 }
@@ -1597,6 +1630,53 @@ bool SAutoSizeCommentsGraphNode::AreResizeModifiersDown() const
 	const FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 	const FInputChord ResizeChord = GetDefault<UAutoSizeCommentsSettings>()->ResizeChord;
 	return KeysState.AreModifersDown(EModifierKey::FromBools(ResizeChord.bCtrl, ResizeChord.bAlt, ResizeChord.bShift, ResizeChord.bCmd));
+}
+
+bool SAutoSizeCommentsGraphNode::IsSingleSelectedNode() const
+{
+	TSharedPtr<SGraphPanel> OwnerPanel = OwnerGraphPanelPtr.Pin();
+	return OwnerPanel->SelectionManager.GetSelectedNodes().Num() == 1 && OwnerPanel->SelectionManager.IsNodeSelected(GraphNode); 
+}
+
+bool SAutoSizeCommentsGraphNode::IsNodeUnrelated() const
+{
+#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
+	return CommentNode->IsNodeUnrelated();
+#else
+	return false;
+#endif
+}
+
+void SAutoSizeCommentsGraphNode::SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf)
+{
+#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
+	const TArray<UEdGraphNode*>& AllNodes = GetNodeObj()->GetGraph()->Nodes;
+	for (UEdGraphNode* Node : AllNodes)
+	{
+		Node->SetNodeUnrelated(true);
+	}
+
+	if (bIncludeSelf)
+	{
+		GetCommentNodeObj()->SetNodeUnrelated(false);
+	}
+
+	for (UEdGraphNode* Node : Nodes)
+	{
+		Node->SetNodeUnrelated(false);
+	}
+#endif
+}
+
+void SAutoSizeCommentsGraphNode::ResetNodesUnrelated()
+{
+#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
+	const TArray<UEdGraphNode*>& AllNodes = GetNodeObj()->GetGraph()->Nodes;
+	for (UEdGraphNode* Node : AllNodes)
+	{
+		Node->SetNodeUnrelated(false);
+	}
+#endif
 }
 
 bool SAutoSizeCommentsGraphNode::IsPresetStyle()

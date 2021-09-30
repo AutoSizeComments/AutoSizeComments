@@ -15,6 +15,10 @@ public:
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FDelegateHandle> GraphHandles;
 
+	void OnNodeAdded(const FEdGraphEditAction& Action);
+
+	void OnNodeDeleted(const FEdGraphEditAction& Action);
+
 	void OnObjectSaved(UObject* Object);
 
 	void OnObjectTransacted(UObject* Object, const FTransactionObjectEvent& Event);

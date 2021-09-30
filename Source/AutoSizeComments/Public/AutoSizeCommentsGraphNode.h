@@ -47,6 +47,8 @@ public:
 	EASCAnchorPoint CachedAnchorPoint = EASCAnchorPoint::None;
 	float AnchorSize = 40.f;
 
+	bool bLastSelected = false;
+
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 27
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 #else
@@ -61,6 +63,7 @@ public:
 
 	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
 	virtual ~SAutoSizeCommentsGraphNode() override;
+	void OnDeleted();
 
 	//~ Begin SWidget Interface
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
@@ -181,6 +184,7 @@ private:
 
 	/** Local copy of the comment style */
 	FInlineEditableTextBlockStyle CommentStyle;
+	FSlateColor GetCommentTextColor() const;
 
 	TSharedPtr<class SButton> ToggleHeaderButton;
 	TSharedPtr<class SHorizontalBox> ColorControls;
@@ -235,4 +239,10 @@ public:
 
 	FKey GetResizeKey() const;
 	bool AreResizeModifiersDown() const;
+
+	bool IsSingleSelectedNode() const;
+
+	bool IsNodeUnrelated() const;
+	void SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf = true);
+	void ResetNodesUnrelated();
 };

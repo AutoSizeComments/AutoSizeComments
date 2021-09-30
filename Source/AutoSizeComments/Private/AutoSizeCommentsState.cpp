@@ -9,12 +9,12 @@ void FASCState::RegisterComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCCommen
 	CommentToASCMapping.Add(Comment->NodeGuid, ASCComment);
 }
 
-void FASCState::RemoveComment(UEdGraphNode_Comment* Comment)
+void FASCState::RemoveComment(const UEdGraphNode_Comment* Comment)
 {
 	CommentToASCMapping.Remove(Comment->NodeGuid);
 }
-
-TSharedPtr<SAutoSizeCommentsGraphNode> FASCState::GetASCComment(UEdGraphNode_Comment* Comment)
+	
+TSharedPtr<SAutoSizeCommentsGraphNode> FASCState::GetASCComment(const UEdGraphNode_Comment* Comment)
 {
 	TWeakPtr<SAutoSizeCommentsGraphNode> WeakPtr = CommentToASCMapping.FindRef(Comment->NodeGuid);
 	return WeakPtr.Pin();

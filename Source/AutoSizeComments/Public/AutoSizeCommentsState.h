@@ -10,8 +10,8 @@ struct FASCState
 	TMap<FGuid, TWeakPtr<SAutoSizeCommentsGraphNode>> CommentToASCMapping;
 
 	void RegisterComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment);
-	void RemoveComment(UEdGraphNode_Comment* Comment);
+	void RemoveComment(const UEdGraphNode_Comment* Comment);
 
-	TSharedPtr<SAutoSizeCommentsGraphNode> GetASCComment(UEdGraphNode_Comment* Comment);
+	TSharedPtr<SAutoSizeCommentsGraphNode> GetASCComment(const UEdGraphNode_Comment* Comment);
 	bool HasRegisteredComment(UEdGraphNode_Comment* Comment);
 };

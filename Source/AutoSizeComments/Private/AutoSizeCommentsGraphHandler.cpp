@@ -46,48 +46,15 @@ void FAutoSizeCommentGraphHandler::BindToGraph(UEdGraph* Graph)
 
 void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Action)
 {
-	if (Action.Action != GRAPHACTION_AddNode)
+	if (Action.Action == GRAPHACTION_AddNode)
 	{
-		return;
+		OnNodeAdded(Action);
+	}
+	else if (Action.Action == GRAPHACTION_RemoveNode)
+	{
+		OnNodeDeleted(Action);
 	}
 
-	if (Action.Nodes.Num() != 1)
-	{
-		return;
-	}
-
-	const UEdGraphNode* ConstNewNode = Action.Nodes.Array()[0];
-	if (ConstNewNode->Pins.Num() == 0)
-	{
-		return;
-	}
-
-	// we don't want a const prt
-	UEdGraphNode* NewNode = ConstNewNode->Pins[0]->GetOwningNode();
-
-	TArray<UEdGraphNode_Comment*> Comments;
-	NewNode->GetGraph()->GetNodesOfClassEx<UEdGraphNode_Comment>(Comments);
-	if (Comments.Num() == 0)
-	{
-		return;
-	}
-
-	FASCState& State = IAutoSizeCommentsModule::Get().GetState();
-	TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = State.GetASCComment(Comments[0]);
-	if (!ASCComment.IsValid())
-	{
-		return;
-	}
-
-	TSharedPtr<SGraphPanel> OwnerPanel = ASCComment->GetOwnerPanel();
-	if (!OwnerPanel || OwnerPanel->SelectionManager.SelectedNodes.Num() != 1)
-	{
-		return;
-	}
-
-	UEdGraphNode* SelectedNode = Cast<UEdGraphNode>(OwnerPanel->SelectionManager.SelectedNodes.Array()[0]);
-
-	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes, TWeakObjectPtr<UEdGraphNode>(NewNode), TWeakObjectPtr<UEdGraphNode>(SelectedNode)));
 }
 
 void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEdGraphNode> NewNode, TWeakObjectPtr<UEdGraphNode> LastSelectedNode)
@@ -152,6 +119,65 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEd
 		if (LinkedInput.Num() == 1)
 		{
 			FLocal::TakeCommentNode(Graph, NewNode.Get(), LinkedInput[0]);
+		}
+	}
+}
+
+void FAutoSizeCommentGraphHandler::OnNodeAdded(const FEdGraphEditAction& Action)
+{
+	if (Action.Nodes.Num() != 1)
+	{
+		return;
+	}
+
+	const UEdGraphNode* ConstNewNode = Action.Nodes.Array()[0];
+	if (ConstNewNode->Pins.Num() == 0)
+	{
+		return;
+	}
+
+	// we don't want a const ptr
+	UEdGraphNode* NewNode = ConstNewNode->Pins[0]->GetOwningNode();
+
+	TArray<UEdGraphNode_Comment*> Comments;
+	NewNode->GetGraph()->GetNodesOfClassEx<UEdGraphNode_Comment>(Comments);
+	if (Comments.Num() == 0)
+	{
+		return;
+	}
+
+	FASCState& State = IAutoSizeCommentsModule::Get().GetState();
+	TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = State.GetASCComment(Comments[0]);
+	if (!ASCComment.IsValid())
+	{
+		return;
+	}
+
+	TSharedPtr<SGraphPanel> OwnerPanel = ASCComment->GetOwnerPanel();
+	if (!OwnerPanel || OwnerPanel->SelectionManager.SelectedNodes.Num() != 1)
+	{
+		return;
+	}
+
+	UEdGraphNode* SelectedNode = Cast<UEdGraphNode>(OwnerPanel->SelectionManager.SelectedNodes.Array()[0]);
+
+	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes, TWeakObjectPtr<UEdGraphNode>(NewNode), TWeakObjectPtr<UEdGraphNode>(SelectedNode)));
+}
+
+void FAutoSizeCommentGraphHandler::OnNodeDeleted(const FEdGraphEditAction& Action)
+{
+	for (const UEdGraphNode* Node : Action.Nodes)
+	{
+		const UEdGraphNode_Comment* Comment = Cast<UEdGraphNode_Comment>(Node);
+		if (!Comment)
+		{
+			return;
+		}
+
+		TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode = IAutoSizeCommentsModule::Get().GetState().GetASCComment(Comment);
+		if (ASCNode.IsValid())
+		{
+			ASCNode->OnDeleted();
 		}
 	}
 }
