@@ -140,9 +140,9 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 		QueryNodesUnderComment(NodesUnderComment, AltCollisionMethod);
 		SetNodesRelated(NodesUnderComment);
 	}
-	else
+	else if (IsSingleSelectedNode())
 	{
-		TArray<UEdGraphNode*> NodesUnderComment = GetEdGraphNodesUnderComment(GetCommentNodeObj());
+		const TArray<UEdGraphNode*> NodesUnderComment = GetEdGraphNodesUnderComment(CommentNode);
 		SetNodesRelated(NodesUnderComment);
 	}
 
