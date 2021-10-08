@@ -9,6 +9,9 @@
 #include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 
+#define ASC_UE_VERSION_OR_LATER(major, minor) ENGINE_MAJOR_VERSION == major && ENGINE_MINOR_VERSION >= minor || ENGINE_MAJOR_VERSION > major
+#define ASC_USE_NEW_MOVETO ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 27
+
 struct FPresetCommentStyle;
 class UEdGraphNode_Comment;
 
@@ -49,7 +52,7 @@ public:
 
 	bool bLastSelected = false;
 
-#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 27
+#if ASC_USE_NEW_MOVETO
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 #else
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;

@@ -104,7 +104,7 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 	}
 }
 
-#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 27
+#if ASC_USE_NEW_MOVETO
 void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 #else
 void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
@@ -124,7 +124,7 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 
 	FVector2D NewPos = GetPosition() + PositionDelta;
 
-#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 27
+#if ASC_USE_NEW_MOVETO
 	SGraphNode::MoveTo(NewPos, NodeFilter, bMarkDirty);
 #else
 	SGraphNode::MoveTo(NewPos, NodeFilter);
@@ -295,7 +295,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 			}
 		}
 
-#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
+#if ASC_UE_VERSION_OR_LATER(4, 23)
 		TArray<UEdGraphNode*> Nodes;
 		QueryNodesUnderComment(Nodes, GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod);
 		SetNodesRelated(Nodes);
@@ -1640,7 +1640,7 @@ bool SAutoSizeCommentsGraphNode::IsSingleSelectedNode() const
 
 bool SAutoSizeCommentsGraphNode::IsNodeUnrelated() const
 {
-#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
+#if ASC_UE_VERSION_OR_LATER(4, 23)
 	return CommentNode->IsNodeUnrelated();
 #else
 	return false;
@@ -1649,7 +1649,7 @@ bool SAutoSizeCommentsGraphNode::IsNodeUnrelated() const
 
 void SAutoSizeCommentsGraphNode::SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf)
 {
-#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
+#if ASC_UE_VERSION_OR_LATER(4, 23)
 	const TArray<UEdGraphNode*>& AllNodes = GetNodeObj()->GetGraph()->Nodes;
 	for (UEdGraphNode* Node : AllNodes)
 	{
@@ -1670,7 +1670,7 @@ void SAutoSizeCommentsGraphNode::SetNodesRelated(const TArray<UEdGraphNode*>& No
 
 void SAutoSizeCommentsGraphNode::ResetNodesUnrelated()
 {
-#if ENGINE_MINOR_VERSION >= 23 || ENGINE_MAJOR_VERSION >= 5
+#if ASC_UE_VERSION_OR_LATER(4, 23)
 	const TArray<UEdGraphNode*>& AllNodes = GetNodeObj()->GetGraph()->Nodes;
 	for (UEdGraphNode* Node : AllNodes)
 	{
