@@ -50,7 +50,9 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	if (ASCSettings->bEnableGlobalSettings)
 	{
 		CommentNode->bColorCommentBubble = ASCSettings->bGlobalColorBubble;
-		CommentNode->bCommentBubbleVisible_InDetailsPanel = CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
+		CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings->bGlobalShowBubbleWhenZoomed;
+		CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
+		CommentNode->SetMakeCommentBubbleVisible(ASCSettings->bGlobalShowBubbleWhenZoomed);
 	}
 
 	bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible;
@@ -418,7 +420,9 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 		if (CommentNode->bCommentBubbleVisible_InDetailsPanel != ASCSettings->bGlobalShowBubbleWhenZoomed)
 		{
-			CommentNode->bCommentBubbleVisible_InDetailsPanel = CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
+			CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings->bGlobalShowBubbleWhenZoomed;
+			CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
+			CommentNode->SetMakeCommentBubbleVisible(ASCSettings->bGlobalShowBubbleWhenZoomed);
 
 			if (CommentBubble.IsValid())
 			{
