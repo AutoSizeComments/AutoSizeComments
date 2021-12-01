@@ -70,12 +70,12 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 {
 	UpdateCache();
-	IAutoSizeCommentsModule::Get().RemoveComment(GetCommentNodeObj());
 }
 
 void SAutoSizeCommentsGraphNode::OnDeleted()
 {
 	ResetNodesUnrelated();
+	IAutoSizeCommentsModule::Get().RemoveComment(GetCommentNodeObj());
 }
 
 void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
