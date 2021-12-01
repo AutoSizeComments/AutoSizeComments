@@ -2,13 +2,24 @@
 
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphNode.h"
-#include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "GraphEditAction.h"
 #include "SGraphPanel.h"
+#include "Misc/LazySingleton.h"
+
+FAutoSizeCommentGraphHandler& FAutoSizeCommentGraphHandler::Get()
+{
+	return TLazySingleton<FAutoSizeCommentGraphHandler>::Get();
+}
+
+void FAutoSizeCommentGraphHandler::TearDown()
+{
+	TLazySingleton<FAutoSizeCommentGraphHandler>::TearDown();
+}
+
 
 void FAutoSizeCommentGraphHandler::BindDelegates()
 {
@@ -146,8 +157,7 @@ void FAutoSizeCommentGraphHandler::OnNodeAdded(const FEdGraphEditAction& Action)
 		return;
 	}
 
-	FASCState& State = IAutoSizeCommentsModule::Get().GetState();
-	TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = State.GetASCComment(Comments[0]);
+	TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Comments[0]);
 	if (!ASCComment.IsValid())
 	{
 		return;
@@ -174,7 +184,7 @@ void FAutoSizeCommentGraphHandler::OnNodeDeleted(const FEdGraphEditAction& Actio
 			return;
 		}
 
-		TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode = IAutoSizeCommentsModule::Get().GetState().GetASCComment(Comment);
+		TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode = FASCState::Get().GetASCComment(Comment);
 		if (ASCNode.IsValid())
 		{
 			ASCNode->OnDeleted();
@@ -189,7 +199,7 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 		return;
 	}
 
-	FAutoSizeCommentsCacheFile& SizeCache = IAutoSizeCommentsModule::Get().GetSizeCache();
+	FAutoSizeCommentsCacheFile& SizeCache = FAutoSizeCommentsCacheFile::Get();
 
 	// upon saving a graph, save all comments to cache
 	if (UEdGraph* Graph = Cast<UEdGraph>(Object))
@@ -234,14 +244,12 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 
 void FAutoSizeCommentGraphHandler::SaveSizeCache()
 {
-	IAutoSizeCommentsModule::Get().GetSizeCache().SaveCache();
+	FAutoSizeCommentsCacheFile::Get().SaveCache();
 	bPendingSave = false;
 }
 
 void FAutoSizeCommentGraphHandler::UpdateContainingComments(TWeakObjectPtr<UEdGraphNode> Node)
 {
-	FASCState& State = IAutoSizeCommentsModule::Get().GetState();
-
 	if (!Node.IsValid() || !IsValid(Node.Get()))
 	{
 		return;
@@ -261,7 +269,7 @@ void FAutoSizeCommentGraphHandler::UpdateContainingComments(TWeakObjectPtr<UEdGr
 	{
 		if (Comment->GetNodesUnderComment().Contains(Node))
 		{
-			if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = State.GetASCComment(Comment))
+			if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Comment))
 			{
 				ASCComment->ResizeToFit();
 			}

@@ -18,7 +18,18 @@
 #include "Editor/GraphEditor/Public/SGraphPanel.h"
 #include "EngineSettings/Classes/GeneralProjectSettings.h"
 #include "JsonUtilities/Public/JsonObjectConverter.h"
+#include "Misc/LazySingleton.h"
 #include "Projects/Public/Interfaces/IPluginManager.h"
+
+FAutoSizeCommentsCacheFile& FAutoSizeCommentsCacheFile::Get()
+{
+	return TLazySingleton<FAutoSizeCommentsCacheFile>::Get();
+}
+
+void FAutoSizeCommentsCacheFile::TearDown()
+{
+	TLazySingleton<FAutoSizeCommentsCacheFile>::TearDown();
+}
 
 void FAutoSizeCommentsCacheFile::Init()
 {
@@ -126,7 +137,7 @@ void FAutoSizeCommentsCacheFile::UpdateComment(UEdGraphNode_Comment* Comment)
 		return;
 	}
 
-	if (!IAutoSizeCommentsModule::Get().GetState().HasRegisteredComment(Comment))
+	if (!FASCState::Get().HasRegisteredComment(Comment))
 	{
 		return;
 	}

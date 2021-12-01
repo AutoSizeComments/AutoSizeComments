@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
 #include "Modules/ModuleManager.h"
 
+class FAutoSizeCommentsGraphPanelNodeFactory;
 class UEdGraphNode_Comment;
 class SAutoSizeCommentsGraphNode;
 struct FASCState;
@@ -13,38 +13,34 @@ class FAutoSizeCommentsCacheFile;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogAutoSizeComments, Log, All)
 
-
-/**
-* The public interface to this module
-*/
-class IAutoSizeCommentsModule : public IModuleInterface
+class FAutoSizeCommentsModule final : public IModuleInterface
 {
 public:
-	/**
-	* Singleton-like access to this module's interface.  This is just for convenience!
-	* Beware of calling this during the shutdown phase, though.  Your module might have been unloaded already.
-	*
-	* @return Returns singleton instance, loading the module on demand if needed
-	*/
-	static IAutoSizeCommentsModule& Get()
+	/** IModuleInterface implementation */
+	virtual void StartupModule() override;
+	virtual void ShutdownModule() override;
+	/** IModuleInterface implementation */
+
+	static FAutoSizeCommentsModule& Get()
 	{
-		return FModuleManager::LoadModuleChecked<IAutoSizeCommentsModule>("AutoSizeComments");
+		return FModuleManager::LoadModuleChecked<FAutoSizeCommentsModule>("AutoSizeComments");
 	}
 
-	/**
-	* Checks to see if this module is loaded and ready.  It is only valid to call Get() if IsAvailable() returns true.
-	*
-	* @return True if the module is loaded and ready to use
-	*/
 	static bool IsAvailable()
 	{
 		return FModuleManager::Get().IsModuleLoaded("AutoSizeComments");
 	}
 
-	virtual FAutoSizeCommentsCacheFile& GetSizeCache() = 0;
+private:
+	TSharedPtr<FAutoSizeCommentsGraphPanelNodeFactory> ASCNodeFactory;
 
-	virtual FASCState& GetState() = 0;
+	TWeakPtr<SNotificationItem> SuggestedSettingsNotification;
 
-	virtual void RegisterComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment) = 0;
-	virtual void RemoveComment(UEdGraphNode_Comment* Comment) = 0;
+	void OnPostEngineInit();
+
+	void SuggestBlueprintAssistSettings();
+
+	void OnCancelSuggestion();
+
+	void OnApplySuggestion();
 };

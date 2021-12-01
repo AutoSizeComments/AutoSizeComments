@@ -5,6 +5,7 @@
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
+#include "AutoSizeCommentsState.h"
 #include "EdGraphNode_Comment.h"
 #include "GraphEditorSettings.h"
 #include "K2Node_Knot.h"
@@ -63,8 +64,11 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	CommentControlsTextColor = FLinearColor(1, 1, 1, OpacityValue);
 	CommentControlsColor = FLinearColor(CommentNode->CommentColor.R, CommentNode->CommentColor.G, CommentNode->CommentColor.B, OpacityValue);
 
-	// register to ASCModule
-	IAutoSizeCommentsModule::Get().RegisterComment(SharedThis(this));
+	// register graph
+	FASCState::Get().RegisterComment(SharedThis(this));
+
+	// init graph handler for containing graph
+	FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
 }
 
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
@@ -75,7 +79,8 @@ SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 void SAutoSizeCommentsGraphNode::OnDeleted()
 {
 	ResetNodesUnrelated();
-	IAutoSizeCommentsModule::Get().RemoveComment(GetCommentNodeObj());
+
+	FASCState::Get().RemoveComment(GetCommentNodeObj());
 }
 
 void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
@@ -1698,9 +1703,8 @@ bool SAutoSizeCommentsGraphNode::IsPresetStyle()
 
 bool SAutoSizeCommentsGraphNode::LoadCache()
 {
-	FAutoSizeCommentsCacheFile& SizeCache = IAutoSizeCommentsModule::Get().GetSizeCache();
 	TArray<UEdGraphNode*> OutNodesUnder;
-	if (SizeCache.GetNodesUnderComment(SharedThis(this), OutNodesUnder))
+	if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(SharedThis(this), OutNodesUnder))
 	{
 		CommentNode->ClearNodesUnderComment();
 		for (UEdGraphNode* Node : OutNodesUnder)
@@ -1719,7 +1723,7 @@ bool SAutoSizeCommentsGraphNode::LoadCache()
 
 void SAutoSizeCommentsGraphNode::UpdateCache()
 {
-	IAutoSizeCommentsModule::Get().GetSizeCache().UpdateComment(GetCommentNodeObj());
+	FAutoSizeCommentsCacheFile::Get().UpdateComment(GetCommentNodeObj());
 }
 
 void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots)

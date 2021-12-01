@@ -2,6 +2,17 @@
 
 #include "AutoSizeCommentsGraphNode.h"
 #include "EdGraphNode_Comment.h"
+#include "Misc/LazySingleton.h"
+
+FASCState& FASCState::Get()
+{
+	return TLazySingleton<FASCState>::Get();
+}
+
+void FASCState::TearDown()
+{
+	TLazySingleton<FASCState>::TearDown();
+}
 
 void FASCState::RegisterComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment)
 {

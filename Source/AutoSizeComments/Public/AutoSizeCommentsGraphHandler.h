@@ -3,6 +3,9 @@
 class FAutoSizeCommentGraphHandler
 {
 public:
+	static FAutoSizeCommentGraphHandler& Get();
+	static void TearDown();
+
 	void BindDelegates();
 	void UnbindDelegates();
 

@@ -5,6 +5,9 @@ class SAutoSizeCommentsGraphNode;
 
 struct FASCState
 {
+	static FASCState& Get();
+	static void TearDown();
+
 	FASCState() = default;
 
 	TMap<FGuid, TWeakPtr<SAutoSizeCommentsGraphNode>> CommentToASCMapping;
