@@ -3,7 +3,7 @@
 #include "AutoSizeCommentsGraphNode.h"
 
 #include "AutoSizeCommentsCacheFile.h"
-#include "AutoSizeCommentsModule.h"
+#include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "EdGraphNode_Comment.h"
@@ -74,13 +74,16 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 {
 	UpdateCache();
+
+	if (FASCState::Get().GetASCComment(CommentNode).Get() == this)
+	{
+		FASCState::Get().RemoveComment(CommentNode);
+	}
 }
 
 void SAutoSizeCommentsGraphNode::OnDeleted()
 {
 	ResetNodesUnrelated();
-
-	FASCState::Get().RemoveComment(GetCommentNodeObj());
 }
 
 void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
@@ -667,7 +670,7 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 	{
 		return;
 	}
-	
+
 	if (IsHeaderComment())
 	{
 		return;
