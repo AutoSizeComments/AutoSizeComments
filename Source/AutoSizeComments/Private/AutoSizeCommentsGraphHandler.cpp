@@ -70,6 +70,12 @@ void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Acti
 
 void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEdGraphNode> NewNode, TWeakObjectPtr<UEdGraphNode> LastSelectedNode)
 {
+	EASCAutoInsertComment AutoInsertStyle = GetDefault<UAutoSizeCommentsSettings>()->AutoInsertComment;
+	if (AutoInsertStyle == EASCAutoInsertComment::Never)
+	{
+		return;
+	}
+
 	if (!NewNode.IsValid() || !IsValid(NewNode.Get()))
 	{
 		return;
@@ -79,16 +85,23 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEd
 	{
 		return;
 	}
-	
+
 	UEdGraph* Graph = NewNode->GetGraph();
 	const auto IsSelectedNode = [&LastSelectedNode](UEdGraphNode* LinkedNode) { return LinkedNode == LastSelectedNode; };
-	TArray<UEdGraphNode*> LinkedInput = FASCUtils::GetLinkedNodes(NewNode.Get(), EGPD_Input).FilterByPredicate(IsSelectedNode);
-	TArray<UEdGraphNode*> LinkedOutput = FASCUtils::GetLinkedNodes(NewNode.Get(), EGPD_Output).FilterByPredicate(IsSelectedNode);
+
+	TArray<UEdGraphNode*> LinkedInput = FASCUtils::GetLinkedNodes(NewNode.Get(), EGPD_Input);
+	TArray<UEdGraphNode*> LinkedOutput = FASCUtils::GetLinkedNodes(NewNode.Get(), EGPD_Output);
+
+	UEdGraphNode** SelectedInput = LinkedInput.FindByPredicate(IsSelectedNode);
+	UEdGraphNode** SelectedOutput = LinkedOutput.FindByPredicate(IsSelectedNode);
 
 	struct FLocal
 	{
 		static void TakeCommentNode(UEdGraph* Graph, UEdGraphNode* Node, UEdGraphNode* NodeToTakeFrom)
 		{
+			if (!Graph || !Node || !NodeToTakeFrom)
+				return;
+
 			TArray<UEdGraphNode_Comment*> CommentNodes;
 			Graph->GetNodesOfClass(CommentNodes);
 			auto ContainingComments = FASCUtils::GetContainingCommentNodes(CommentNodes, NodeToTakeFrom);
@@ -99,37 +112,57 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEd
 		};
 	};
 
-	const auto AutoInsertStyle = GetDefault<UAutoSizeCommentsSettings>()->AutoInsertComment;
+	// always include parameter nodes (no exec pins)
+	const auto IsExecPin = [](const UEdGraphPin* Pin){ return Pin->PinType.PinCategory == UEdGraphSchema_K2::PC_Exec; };
+	if (!NewNode->Pins.ContainsByPredicate(IsExecPin))
+	{
+		AutoInsertStyle = EASCAutoInsertComment::Always;
+	}
+
 	if (AutoInsertStyle == EASCAutoInsertComment::Surrounded)
 	{
-		if (LinkedInput.Num() == 1 && LinkedOutput.Num() == 1)
+		UEdGraphNode* NodeA = nullptr;
+		UEdGraphNode* NodeB = nullptr;
+		if (SelectedInput)
 		{
-			TArray<UEdGraphNode_Comment*> CommentNodes;
-			Graph->GetNodesOfClass(CommentNodes);
-			auto ContainingCommentsA = FASCUtils::GetContainingCommentNodes(CommentNodes, LinkedOutput[0]);
-			auto ContainingCommentsB = FASCUtils::GetContainingCommentNodes(CommentNodes, LinkedInput[0]);
-	
-			ContainingCommentsA.RemoveAll([&ContainingCommentsB](UEdGraphNode_Comment* Comment)
-			{
-				return !ContainingCommentsB.Contains(Comment);
-			});
-	
-			if (ContainingCommentsA.Num() > 0)
-			{
-				FLocal::TakeCommentNode(Graph, NewNode.Get(), ContainingCommentsA[0]);
-			}
+			NodeA = *SelectedInput;
+			NodeB = LinkedOutput.Num() > 0 ? LinkedOutput[0] : nullptr;
+		}
+		else if (SelectedOutput)
+		{
+			NodeA = *SelectedOutput;
+			NodeB = LinkedInput.Num() > 0 ? LinkedInput[0] : nullptr;
+		}
+
+		if (NodeA == nullptr || NodeB == nullptr)
+		{
+			return;
+		}
+
+		TArray<UEdGraphNode_Comment*> CommentNodes;
+		Graph->GetNodesOfClass(CommentNodes);
+		auto ContainingCommentsA = FASCUtils::GetContainingCommentNodes(CommentNodes, NodeA);
+		auto ContainingCommentsB = FASCUtils::GetContainingCommentNodes(CommentNodes, NodeB);
+
+		ContainingCommentsA.RemoveAll([&ContainingCommentsB](UEdGraphNode_Comment* Comment)
+		{
+			return !ContainingCommentsB.Contains(Comment);
+		});
+
+		if (ContainingCommentsA.Num() > 0)
+		{
+			FLocal::TakeCommentNode(Graph, NewNode.Get(), NodeA);
 		}
 	}
 	else if (AutoInsertStyle == EASCAutoInsertComment::Always)
 	{
-		if (LinkedOutput.Num() == 1)
+		if (SelectedInput)
 		{
-			FLocal::TakeCommentNode(Graph, NewNode.Get(), LinkedOutput[0]);
+			FLocal::TakeCommentNode(Graph, NewNode.Get(), *SelectedInput);
 		}
-	
-		if (LinkedInput.Num() == 1)
+		else if (SelectedOutput)
 		{
-			FLocal::TakeCommentNode(Graph, NewNode.Get(), LinkedInput[0]);
+			FLocal::TakeCommentNode(Graph, NewNode.Get(), *SelectedOutput);
 		}
 	}
 }
