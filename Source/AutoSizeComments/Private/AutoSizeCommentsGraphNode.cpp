@@ -759,12 +759,12 @@ int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 
 	if (IsHeaderComment())
 	{
-		return 1;
+		return 0;
 	}
 
 	if (IsSelectedExclusively())
 	{
-		return 0;
+		return -999;
 	}
 
 	return CommentNode->CommentDepth;
