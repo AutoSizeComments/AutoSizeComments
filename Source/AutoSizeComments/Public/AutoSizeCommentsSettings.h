@@ -94,6 +94,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	EASCAutoInsertComment AutoInsertComment;
 
+	/** When you click a node's pin, also select the node (required for AutoInsertComment to function correctly) */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bSelectNodeWhenClickingOnPin;
+
 	/** Disable the auto resizing behavior for comments */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bDisableResizing;

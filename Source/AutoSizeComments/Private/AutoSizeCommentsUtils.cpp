@@ -1,6 +1,7 @@
 #include "AutoSizeCommentsUtils.h"
 
 #include "EdGraphNode_Comment.h"
+#include "SGraphPanel.h"
 
 TArray<UEdGraphNode_Comment*> FASCUtils::GetContainingCommentNodes(const TArray<UEdGraphNode_Comment*>& Comments, UEdGraphNode* Node)
 {
@@ -82,4 +83,88 @@ bool FASCUtils::HasNodeBeenDeleted(UEdGraphNode* Node)
 	}
 
 	return !Graph->Nodes.Contains(Node);
+}
+
+bool FASCUtils::IsValidPin(UEdGraphPin* Pin)
+{
+	return Pin != nullptr && !Pin->bWasTrashed;
+}
+
+TSharedPtr<SGraphPin> FASCUtils::GetGraphPin(TSharedPtr<SGraphPanel> GraphPanel, UEdGraphPin* Pin)
+{
+	if (!IsValidPin(Pin) || !GraphPanel.IsValid())
+	{
+		return nullptr;
+	}
+
+	TSharedPtr<SGraphNode> GraphNode = GetGraphNode(GraphPanel, Pin->GetOwningNode());
+	return GraphNode.IsValid() ? GraphNode->FindWidgetForPin(Pin) : nullptr;
+}
+
+TSharedPtr<SGraphNode> FASCUtils::GetGraphNode(TSharedPtr<SGraphPanel> GraphPanel, UEdGraphNode* Node)
+{
+	if (Node == nullptr || !GraphPanel.IsValid())
+	{
+		return nullptr;
+	}
+
+	TSharedPtr<SGraphNode> GraphNode_GUID = GraphPanel->GetNodeWidgetFromGuid(Node->NodeGuid);
+	if (GraphNode_GUID.IsValid())
+	{
+		return GraphNode_GUID;
+	}
+
+	FChildren* Children = GraphPanel->GetChildren();
+	for (int i = 0; i < Children->Num(); i++)
+	{
+		TSharedPtr<SGraphNode> GraphNode = StaticCastSharedRef<SGraphNode>(Children->GetChildAt(i));
+
+		if (GraphNode.IsValid())
+		{
+			if (GraphNode->GetNodeObj() == Node)
+			{
+				return GraphNode;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+TSharedPtr<SGraphPin> FASCUtils::GetHoveredGraphPin(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	if (!GraphPanel.IsValid())
+	{
+		return nullptr;
+	}
+
+	UEdGraph* Graph = GraphPanel->GetGraphObj();
+	if (Graph == nullptr)
+	{
+		return nullptr;
+	}
+
+	const bool bIsMaterialGraph = Graph->GetClass()->GetFName() == "MaterialGraph";
+
+	// check if graph pin "IsHovered" function
+	for (UEdGraphNode* Node : Graph->Nodes)
+	{
+		for (UEdGraphPin* Pin : Node->Pins)
+		{
+			if (!Pin->bHidden)
+			{
+				TSharedPtr<SGraphPin> GraphPin = GetGraphPin(GraphPanel, Pin);
+				if (GraphPin.IsValid())
+				{
+					const bool bIsHovered = bIsMaterialGraph ? GraphPin->IsDirectlyHovered() : GraphPin->IsHovered();
+					if (bIsHovered)
+					{
+						return GraphPin;
+					}
+				}
+			}
+		}
+	}
+
+	return nullptr;
 }

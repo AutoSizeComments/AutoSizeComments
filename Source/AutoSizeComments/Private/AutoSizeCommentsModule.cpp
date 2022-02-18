@@ -6,6 +6,7 @@
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
+#include "AutoSizeCommentsInputProcessor.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "ISettingsModule.h"
@@ -49,6 +50,8 @@ void FAutoSizeCommentsModule::OnPostEngineInit()
 	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FAutoSizeCommentsModule::SuggestBlueprintAssistSettings);
 
 	FAutoSizeCommentGraphHandler::Get().BindDelegates();
+
+	FAutoSizeCommentsInputProcessor::Create();
 }
 
 void FAutoSizeCommentsModule::ShutdownModule()
@@ -80,6 +83,8 @@ void FAutoSizeCommentsModule::ShutdownModule()
 	FCoreDelegates::OnPostEngineInit.RemoveAll(this);
 
 	FAutoSizeCommentGraphHandler::Get().UnbindDelegates();
+
+	FAutoSizeCommentsInputProcessor::Cleanup();
 #endif
 }
 
