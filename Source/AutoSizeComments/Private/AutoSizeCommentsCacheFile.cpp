@@ -34,10 +34,7 @@ void FAutoSizeCommentsCacheFile::TearDown()
 void FAutoSizeCommentsCacheFile::Init()
 {
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
-	AssetRegistry.OnFilesLoaded().AddLambda([&]()
-	{
-		LoadCache();
-	});
+	AssetRegistry.OnFilesLoaded().AddRaw(this, &FAutoSizeCommentsCacheFile::LoadCache);
 
 	FCoreDelegates::OnPreExit.AddRaw(this, &FAutoSizeCommentsCacheFile::SaveCache);
 }
@@ -48,6 +45,13 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 	{
 		return;
 	}
+
+	if (bHasLoaded)
+	{
+		return;
+	}
+
+	bHasLoaded = true;
 
 	const auto CachePath = GetCachePath();
 
@@ -67,6 +71,9 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 	}
 
 	CleanupFiles();
+
+	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
+	AssetRegistry.OnFilesLoaded().RemoveAll(this);
 }
 
 void FAutoSizeCommentsCacheFile::SaveCache()

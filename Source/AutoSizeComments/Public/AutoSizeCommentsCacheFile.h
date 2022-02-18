@@ -78,6 +78,8 @@ public:
 	void PrintCache();
 
 private:
+	bool bHasLoaded = false;
+
 	FASCPackageData PackageData;
 
 	void OnPreExit();
