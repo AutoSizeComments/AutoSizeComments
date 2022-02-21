@@ -49,9 +49,12 @@ bool FAutoSizeCommentsInputProcessor::HandleMouseButtonDownEvent(FSlateApplicati
 						if (HoveredPin.IsValid())
 						{
 							UEdGraphNode* OwningNode = HoveredPin->GetPinObj()->GetOwningNode();
-							TSet<const UEdGraphNode*> NodesToSelect;
-							NodesToSelect.Add(OwningNode);
-							OwningNode->GetGraph()->SelectNodeSet(NodesToSelect, false);
+
+							// select the owning node when it is not the only selected node 
+							if (!GraphPanel->SelectionManager.IsNodeSelected(OwningNode) || GraphPanel->SelectionManager.GetSelectedNodes().Num() > 1)
+							{
+								GraphPanel->SelectionManager.SelectSingleNode(OwningNode);
+							}
 						}
 					}
 
