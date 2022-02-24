@@ -1,4 +1,8 @@
+// Copyright 2021 fpwong. All Rights Reserved.
+
 #pragma once
+
+#include "AutoSIzeCommentsMacros.h"
 
 class FAutoSizeCommentGraphHandler
 {
@@ -21,6 +25,10 @@ private:
 	void OnNodeAdded(const FEdGraphEditAction& Action);
 
 	void OnNodeDeleted(const FEdGraphEditAction& Action);
+
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+	void OnObjectPreSave(UObject* Object, FObjectPreSaveContext Context);
+#endif
 
 	void OnObjectSaved(UObject* Object);
 

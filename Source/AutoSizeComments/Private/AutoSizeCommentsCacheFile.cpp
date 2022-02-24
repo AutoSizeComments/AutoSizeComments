@@ -117,12 +117,23 @@ void FAutoSizeCommentsCacheFile::CleanupFiles()
 
 	// Get package guids from assets
 	TSet<FName> CurrentPackageNames;
+
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+	TArray<FAssetData> Assets;
+	FARFilter Filter;
+	AssetRegistry.GetAllAssets(Assets, true);
+	for (FAssetData& Asset : Assets)
+	{
+		CurrentPackageNames.Add(Asset.PackageName);
+	}
+#else
 	const auto& AssetDataMap = AssetRegistry.GetAssetRegistryState()->GetObjectPathToAssetDataMap();
 	for (const TPair<FName, const FAssetData*>& AssetDataPair : AssetDataMap)
 	{
 		const FAssetData* AssetData = AssetDataPair.Value;
 		CurrentPackageNames.Add(AssetData->PackageName);
 	}
+#endif
 
 	// Remove missing files
 	TArray<FName> OldPackageGuids;

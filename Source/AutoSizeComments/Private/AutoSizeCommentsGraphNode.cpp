@@ -114,7 +114,7 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 	}
 }
 
-#if ASC_USE_NEW_MOVETO
+#if ASC_UE_VERSION_OR_LATER(4, 27)
 void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 #else
 void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
@@ -134,7 +134,7 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 
 	FVector2D NewPos = GetPosition() + PositionDelta;
 
-#if ASC_USE_NEW_MOVETO
+#if ASC_UE_VERSION_OR_LATER(4, 27)
 	SGraphNode::MoveTo(NewPos, NodeFilter, bMarkDirty);
 #else
 	SGraphNode::MoveTo(NewPos, NodeFilter);
@@ -1178,7 +1178,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 
 		// If a node gets deleted it can still stay inside the comment box
 		// So checks if the node is still on the graph
-		if (Obj != nullptr && !Obj->IsPendingKillOrUnreachable() && Nodes.Contains(Obj))
+		if (Obj != nullptr && IsValid(Obj) && !Obj->IsUnreachable() && Nodes.Contains(Obj))
 		{
 			CommentNode->AddNodeUnderComment(Obj);
 		}

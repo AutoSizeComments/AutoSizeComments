@@ -1,3 +1,5 @@
+// Copyright 2021 fpwong. All Rights Reserved.
+
 #include "AutoSizeCommentsGraphHandler.h"
 
 #include "AutoSizeCommentsCacheFile.h"
@@ -9,6 +11,10 @@
 #include "GraphEditAction.h"
 #include "SGraphPanel.h"
 #include "Misc/LazySingleton.h"
+
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+#include "UObject/ObjectSaveContext.h"
+#endif
 
 FAutoSizeCommentGraphHandler& FAutoSizeCommentGraphHandler::Get()
 {
@@ -24,13 +30,22 @@ void FAutoSizeCommentGraphHandler::TearDown()
 void FAutoSizeCommentGraphHandler::BindDelegates()
 {
 	bPendingSave = false;
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+	FCoreUObjectDelegates::OnObjectPreSave.AddRaw(this, &FAutoSizeCommentGraphHandler::OnObjectPreSave);
+#else
 	FCoreUObjectDelegates::OnObjectSaved.AddRaw(this, &FAutoSizeCommentGraphHandler::OnObjectSaved);
+#endif
+
 	FCoreUObjectDelegates::OnObjectTransacted.AddRaw(this, &FAutoSizeCommentGraphHandler::OnObjectTransacted);
 }
 
 void FAutoSizeCommentGraphHandler::UnbindDelegates()
 {
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+	FCoreUObjectDelegates::OnObjectPreSave.RemoveAll(this);
+#else
 	FCoreUObjectDelegates::OnObjectSaved.RemoveAll(this);
+#endif
 	FCoreUObjectDelegates::OnObjectTransacted.RemoveAll(this);
 
 	for (const auto& Kvp: GraphHandles)
@@ -224,6 +239,13 @@ void FAutoSizeCommentGraphHandler::OnNodeDeleted(const FEdGraphEditAction& Actio
 		}
 	}
 }
+
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+void FAutoSizeCommentGraphHandler::OnObjectPreSave(UObject* Object, FObjectPreSaveContext Context)
+{
+	OnObjectSaved(Object);
+}
+#endif
 
 void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 {
