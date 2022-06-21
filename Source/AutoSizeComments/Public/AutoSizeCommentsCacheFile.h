@@ -18,13 +18,17 @@ struct AUTOSIZECOMMENTS_API FASCCommentData
 	UPROPERTY()
 	TArray<FGuid> NodeGuids;
 
-	/* Whether the color has been modified (determine if we should randomize the color) */ 
+	void SetHeader(bool bValue) { bHeader = bValue != 0; }
+	bool IsHeader() const { return static_cast<bool>(bHeader); }
+
+private:
+	/* Whether the color has been initialized */ 
 	UPROPERTY()
 	bool bModified = false;
 
 	/* Is this node a header node */
 	UPROPERTY()
-	bool bHeader = false;
+	uint32 bHeader = 0;
 };
 
 USTRUCT()
@@ -83,6 +87,10 @@ public:
 	FString GetCachePath();
 
 	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
+
+	FASCCommentData* GetCommentData(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode);
+
+	FASCCommentData* GetCommentData(UEdGraphNode* CommentNode);
 
 	void PrintCache();
 

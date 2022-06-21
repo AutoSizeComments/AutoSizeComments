@@ -28,6 +28,8 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 	CommentNode = Cast<UEdGraphNode_Comment>(InNode);
 
+	CommentData = FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode);
+
 	UpdateGraphNode();
 
 	// Pull out sizes
@@ -88,8 +90,14 @@ void SAutoSizeCommentsGraphNode::OnDeleted()
 
 void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
 {
-	// don't need to initialize if our color is a preset style or is a header comment 
-	if (bIsPresetStyle || bIsHeaderComment)
+	if (bIsHeaderComment)
+	{
+		ApplyHeaderStyle();
+		return;
+	}
+
+	// don't need to initialize if our color is a preset style
+	if (bIsPresetStyle)
 	{
 		return;
 	}
@@ -778,20 +786,19 @@ FReply SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked()
 
 FReply SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked()
 {
-	FPresetCommentStyle Style = GetMutableDefault<UAutoSizeCommentsSettings>()->HeaderStyle;
-
-	if (CommentNode->CommentColor == Style.Color)
+	if (CommentData->IsHeader()) // undo header style
 	{
-		CommentNode->CommentColor = FLinearColor::MakeRandomColor();
+		CommentNode->CommentColor = FLinearColor::MakeRandomColor(); // why is this randomizing?
 		CommentNode->FontSize = GetMutableDefault<UAutoSizeCommentsSettings>()->DefaultFontSize;
 		AdjustMinSize(UserSize);
 	}
-	else
+	else // apply header style
 	{
-		CommentNode->CommentColor = Style.Color;
-		CommentNode->FontSize = Style.FontSize;
+		ApplyHeaderStyle();
 		CommentNode->ClearNodesUnderComment();
 	}
+
+	CommentData->SetHeader(!CommentData->IsHeader());
 
 	UpdateGraphNode();
 
@@ -1247,6 +1254,13 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 	}
 }
 
+void SAutoSizeCommentsGraphNode::ApplyHeaderStyle()
+{
+	FPresetCommentStyle Style = GetDefault<UAutoSizeCommentsSettings>()->HeaderStyle;
+	CommentNode->CommentColor = Style.Color;
+	CommentNode->FontSize = Style.FontSize;
+}
+
 void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 {
 	TArray<UObject*> UnderComment = CommentNode->GetNodesUnderComment();
@@ -1623,12 +1637,17 @@ EASCAnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 
 bool SAutoSizeCommentsGraphNode::IsHeaderComment() const
 {
-	return CommentNode->CommentColor == GetMutableDefault<UAutoSizeCommentsSettings>()->HeaderStyle.Color;
+	return CommentData->IsHeader();
 }
 
-bool SAutoSizeCommentsGraphNode::IsHeaderComment(UEdGraphNode_Comment* InCommentNode)
+bool SAutoSizeCommentsGraphNode::IsHeaderComment(UEdGraphNode_Comment* OtherComment)
 {
-	return InCommentNode->CommentColor == GetMutableDefault<UAutoSizeCommentsSettings>()->HeaderStyle.Color;
+	if (FASCCommentData* OtherCommentData = FAutoSizeCommentsCacheFile::Get().GetCommentData(OtherComment))
+	{
+		return OtherCommentData->IsHeader();
+	}
+
+	return false;
 }
 
 FKey SAutoSizeCommentsGraphNode::GetResizeKey() const

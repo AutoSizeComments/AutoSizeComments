@@ -9,6 +9,7 @@
 #include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 
+struct FASCCommentData;
 struct FPresetCommentStyle;
 class UEdGraphNode_Comment;
 
@@ -48,6 +49,8 @@ public:
 	float AnchorSize = 40.f;
 
 	bool bLastSelected = false;
+
+	FASCCommentData* CommentData;
 
 #if ASC_UE_VERSION_OR_LATER(4, 27)
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
@@ -100,6 +103,8 @@ public:
 	class UEdGraphNode_Comment* GetCommentNodeObj() const { return CommentNode; }
 
 	void ResizeToFit();
+
+	void ApplyHeaderStyle();
 
 protected:
 	//~ Begin SGraphNode Interface
@@ -235,7 +240,7 @@ public:
 	static bool IsCommentNode(UObject* Object);
 	static bool IsNotCommentNode(UObject* Object) { return !IsCommentNode(Object); }
 	static bool IsMajorNode(UObject* Object);
-	static bool IsHeaderComment(UEdGraphNode_Comment* InCommentNode);
+	static bool IsHeaderComment(UEdGraphNode_Comment* OtherComment);
 
 	FKey GetResizeKey() const;
 	bool AreResizeModifiersDown() const;

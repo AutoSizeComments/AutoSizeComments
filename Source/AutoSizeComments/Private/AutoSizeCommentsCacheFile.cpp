@@ -235,6 +235,23 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 	return false;
 }
 
+FASCCommentData* FAutoSizeCommentsCacheFile::GetCommentData(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode)
+{
+	return GetCommentData(ASCNode->GetNodeObj());
+}
+
+FASCCommentData* FAutoSizeCommentsCacheFile::GetCommentData(UEdGraphNode* CommentNode)
+{
+	if (!CommentNode)
+	{
+		return nullptr;
+	}
+
+	UEdGraph* Graph = CommentNode->GetGraph();
+	FASCGraphData& Data = GetGraphData(Graph);
+	return &Data.CommentData.FindOrAdd(CommentNode->NodeGuid);
+}
+
 void FAutoSizeCommentsCacheFile::PrintCache()
 {
 	for (auto& Package : CacheData.PackageData)
