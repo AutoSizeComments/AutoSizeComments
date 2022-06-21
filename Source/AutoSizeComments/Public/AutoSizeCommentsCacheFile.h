@@ -22,10 +22,6 @@ struct AUTOSIZECOMMENTS_API FASCCommentData
 	bool IsHeader() const { return static_cast<bool>(bHeader); }
 
 private:
-	/* Whether the color has been initialized */ 
-	UPROPERTY()
-	bool bModified = false;
-
 	/* Is this node a header node */
 	UPROPERTY()
 	uint32 bHeader = 0;

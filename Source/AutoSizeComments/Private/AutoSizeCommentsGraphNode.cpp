@@ -788,7 +788,16 @@ FReply SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked()
 {
 	if (CommentData->IsHeader()) // undo header style
 	{
-		CommentNode->CommentColor = FLinearColor::MakeRandomColor(); // why is this randomizing?
+		const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+		if (ASCSettings->bUseRandomColor)
+		{
+			RandomizeColor();
+		}
+		else
+		{
+			CommentNode->CommentColor = ASCSettings->DefaultCommentColor;
+		}
+
 		CommentNode->FontSize = GetMutableDefault<UAutoSizeCommentsSettings>()->DefaultFontSize;
 		AdjustMinSize(UserSize);
 	}
