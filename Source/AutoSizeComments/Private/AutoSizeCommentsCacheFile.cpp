@@ -60,7 +60,7 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 		FString FileData;
 		FFileHelper::LoadFileToString(FileData, *CachePath);
 
-		if (FJsonObjectConverter::JsonObjectStringToUStruct(FileData, &PackageData, 0, 0))
+		if (FJsonObjectConverter::JsonObjectStringToUStruct(FileData, &CacheData, 0, 0))
 		{
 			UE_LOG(LogAutoSizeComments, Log, TEXT("Loaded auto size comments cache: %s"), *CachePath);
 		}
@@ -89,7 +89,7 @@ void FAutoSizeCommentsCacheFile::SaveCache()
 
 	// Write data to file
 	FString JsonAsString;
-	FJsonObjectConverter::UStructToJsonObjectString(PackageData, JsonAsString);
+	FJsonObjectConverter::UStructToJsonObjectString(CacheData, JsonAsString);
 	FFileHelper::SaveStringToFile(JsonAsString, *CachePath);
 	const double TimeTaken = (FPlatformTime::Seconds() - StartTime) * 1000.0f;
 	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved node cache to %s took %6.2fms"), *CachePath, TimeTaken);
@@ -137,12 +137,12 @@ void FAutoSizeCommentsCacheFile::CleanupFiles()
 
 	// Remove missing files
 	TArray<FName> OldPackageGuids;
-	PackageData.PackageData.GetKeys(OldPackageGuids);
+	CacheData.PackageData.GetKeys(OldPackageGuids);
 	for (FName PackageGuid : OldPackageGuids)
 	{
 		if (!CurrentPackageNames.Contains(PackageGuid))
 		{
-			PackageData.PackageData.Remove(PackageGuid);
+			CacheData.PackageData.Remove(PackageGuid);
 		}
 	}
 }
@@ -167,7 +167,7 @@ void FAutoSizeCommentsCacheFile::UpdateComment(UEdGraphNode_Comment* Comment)
 		return;
 	}
 
-	FASCCommentData& GraphData = GetGraphData(Graph);
+	FASCGraphData& GraphData = GetGraphData(Graph);
 
 	if (FASCUtils::HasNodeBeenDeleted(Comment))
 	{
@@ -175,28 +175,28 @@ void FAutoSizeCommentsCacheFile::UpdateComment(UEdGraphNode_Comment* Comment)
 	}
 	else
 	{
-		FASCNodesInside& NodesInside = GraphData.CommentData.FindOrAdd(Comment->NodeGuid);
-		NodesInside.NodeGuids.Empty();
+		FASCCommentData& CommentData = GraphData.CommentData.FindOrAdd(Comment->NodeGuid);
+		CommentData.NodeGuids.Empty();
 
-		// update cache file
+		// update nodes inside
 		const TArray<UEdGraphNode*> Nodes = FASCUtils::GetNodesUnderComment(Comment);
 		for (UEdGraphNode* Node : Nodes)
 		{
 			if (!FASCUtils::HasNodeBeenDeleted(Node))
 			{
-				NodesInside.NodeGuids.Add(Node->NodeGuid);
+				CommentData.NodeGuids.Add(Node->NodeGuid);
 			}
 		}
 	}
 }
 
-FASCCommentData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
+FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 {
 	UPackage* Package = Graph->GetOutermost();
 
-	FASCGraphData& CacheData = PackageData.PackageData.FindOrAdd(Package->GetFName());
+	FASCPackageData& PackageData = CacheData.PackageData.FindOrAdd(Package->GetFName());
 
-	return CacheData.GraphData.FindOrAdd(Graph->GraphGuid);
+	return PackageData.GraphData.FindOrAdd(Graph->GraphGuid);
 }
 
 FString FAutoSizeCommentsCacheFile::GetCachePath()
@@ -214,7 +214,7 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 	UEdGraphNode* Node = ASCNode->GetNodeObj();
 	UEdGraph* Graph = Node->GetGraph();
 	TSharedPtr<SGraphPanel> GraphPanel = ASCNode->GetOwnerPanel();
-	FASCCommentData& Data = GetGraphData(Graph);
+	FASCGraphData& Data = GetGraphData(Graph);
 	if (Data.CommentData.Contains(Node->NodeGuid))
 	{
 		for (FGuid NodeInsideGuid : Data.CommentData[Node->NodeGuid].NodeGuids)
@@ -237,7 +237,7 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 
 void FAutoSizeCommentsCacheFile::PrintCache()
 {
-	for (auto& Package : PackageData.PackageData)
+	for (auto& Package : CacheData.PackageData)
 	{
 		for (auto& GraphData : Package.Value.GraphData)
 		{
@@ -262,7 +262,7 @@ void FAutoSizeCommentsCacheFile::OnPreExit()
 	}
 }
 
-void FASCCommentData::CleanupGraph(UEdGraph* Graph)
+void FASCGraphData::CleanupGraph(UEdGraph* Graph)
 {
 	// Get all the current nodes and pins from the graph
 	TSet<FGuid> CurrentNodes;

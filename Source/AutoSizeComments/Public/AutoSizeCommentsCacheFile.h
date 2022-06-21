@@ -10,23 +10,21 @@ class UEdGraphNode_Comment;
 class SAutoSizeCommentsGraphNode;
 
 USTRUCT()
-struct AUTOSIZECOMMENTS_API FASCNodesInside
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	TArray<FGuid> NodeGuids; // containing nodes
-};
-
-USTRUCT()
 struct AUTOSIZECOMMENTS_API FASCCommentData
 {
 	GENERATED_USTRUCT_BODY()
 
+	/* Containing nodes */
 	UPROPERTY()
-	TMap<FGuid, FASCNodesInside> CommentData; // nodes -> nodes inside
+	TArray<FGuid> NodeGuids;
 
-	void CleanupGraph(UEdGraph* Graph);
+	/* Whether the color has been modified (determine if we should randomize the color) */ 
+	UPROPERTY()
+	bool bModified = false;
+
+	/* Is this node a header node */
+	UPROPERTY()
+	bool bHeader = false;
 };
 
 USTRUCT()
@@ -35,7 +33,9 @@ struct AUTOSIZECOMMENTS_API FASCGraphData
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
-	TMap<FGuid, FASCCommentData> GraphData; // graph -> comment nodes
+	TMap<FGuid, FASCCommentData> CommentData; // node guid -> comment data
+
+	void CleanupGraph(UEdGraph* Graph);
 };
 
 USTRUCT()
@@ -44,7 +44,16 @@ struct AUTOSIZECOMMENTS_API FASCPackageData
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
-	TMap<FName, FASCGraphData> PackageData; // package -> graph
+	TMap<FGuid, FASCGraphData> GraphData; // graph guid -> graph data
+};
+
+USTRUCT()
+struct AUTOSIZECOMMENTS_API FASCCacheData
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	TMap<FName, FASCPackageData> PackageData; // package -> graph data
 };
 
 class AUTOSIZECOMMENTS_API FAutoSizeCommentsCacheFile
@@ -55,7 +64,7 @@ public:
 
 	FAutoSizeCommentsCacheFile() = default;
 
-	FASCPackageData& GetPackageData() { return PackageData; }
+	FASCCacheData& GetCacheData() { return CacheData; }
 
 	void Init();
 
@@ -69,7 +78,7 @@ public:
 
 	void UpdateComment(UEdGraphNode_Comment* Comment);
 
-	FASCCommentData& GetGraphData(UEdGraph* Graph);
+	FASCGraphData& GetGraphData(UEdGraph* Graph);
 
 	FString GetCachePath();
 
@@ -80,7 +89,7 @@ public:
 private:
 	bool bHasLoaded = false;
 
-	FASCPackageData PackageData;
+	FASCCacheData CacheData;
 
 	void OnPreExit();
 };
