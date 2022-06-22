@@ -858,37 +858,7 @@ bool SAutoSizeCommentsGraphNode::AddInitialNodes()
 		return false;
 	}
 
-	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
-
-	bool bDidAddAnything = false;
-
-	if (!OwnerPanel.IsValid())
-	{
-		return false;
-	}
-
-	auto SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
-	const auto SelectedCommentNodes = SelectedNodes.Array().FilterByPredicate(IsCommentNode);
-	if (SelectedCommentNodes.Num() > 0)
-	{
-		return false;
-	}
-
-	for (UObject* SelectedObj : SelectedNodes)
-	{
-		if (CanAddNode(SelectedObj))
-		{
-			CommentNode->AddNodeUnderComment(SelectedObj);
-			bDidAddAnything = true;
-		}
-	}
-
-	if (bDidAddAnything)
-	{
-		UpdateExistingCommentNodes();
-	}
-
-	return bDidAddAnything;
+	return AddAllSelectedNodes();
 }
 
 bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes()
@@ -896,6 +866,11 @@ bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes()
 	bool bDidAddAnything = false;
 
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
+	if (!OwnerPanel)
+	{
+		return false;
+	}
+
 	auto SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
 	for (UObject* SelectedObj : SelectedNodes)
 	{
