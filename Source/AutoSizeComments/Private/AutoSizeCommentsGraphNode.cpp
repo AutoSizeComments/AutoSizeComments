@@ -689,10 +689,14 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 		return;
 	}
 
-	if (LoadCache())
+	LoadCache();
+
+	if (CommentData->HasBeenInitialized())
 	{
 		return;
 	}
+
+	CommentData->SetInitialized(true);
 
 	if (!GetDefault<UAutoSizeCommentsSettings>()->bIgnoreSelectedNodesOnCreation && AnySelectedNodes() && AddInitialNodes())
 	{

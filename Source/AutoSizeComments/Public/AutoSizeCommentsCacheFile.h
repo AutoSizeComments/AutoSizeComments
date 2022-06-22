@@ -21,10 +21,17 @@ struct AUTOSIZECOMMENTS_API FASCCommentData
 	void SetHeader(bool bValue) { bHeader = bValue != 0; }
 	bool IsHeader() const { return static_cast<bool>(bHeader); }
 
+	void SetInitialized(bool bValue) { bInit = bValue != 0; }
+	bool HasBeenInitialized() const { return static_cast<bool>(bInit); }
+
 private:
 	/* Is this node a header node */
 	UPROPERTY()
 	uint32 bHeader = 0;
+
+	/* Has the node been initialized */
+	UPROPERTY()
+	uint32 bInit = 0;
 };
 
 USTRUCT()
