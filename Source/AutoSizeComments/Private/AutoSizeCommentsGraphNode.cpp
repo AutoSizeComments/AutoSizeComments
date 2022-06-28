@@ -776,7 +776,14 @@ int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 
 	if (IsSelectedExclusively())
 	{
-		return -999;
+		return 0;
+	}
+
+	// Check if mouse is above titlebar for sort depth so comments can be dragged on first click
+	const FVector2D LocalPos = GetCachedGeometry().AbsoluteToLocal(FSlateApplication::Get().GetCursorPos());
+	if (CanBeSelected(LocalPos))
+	{
+		return 0;
 	}
 
 	return CommentNode->CommentDepth;
