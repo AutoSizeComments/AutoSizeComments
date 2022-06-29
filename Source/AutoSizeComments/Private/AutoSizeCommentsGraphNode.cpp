@@ -30,12 +30,6 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 	CommentData = FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode);
 
-	UpdateGraphNode();
-
-	// Pull out sizes
-	UserSize.X = InNode->NodeWidth;
-	UserSize.Y = InNode->NodeHeight;
-
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
 	const bool bIsPresetStyle = IsPresetStyle();
@@ -71,6 +65,12 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 	// init graph handler for containing graph
 	FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
+
+	// Pull out sizes
+	UserSize.X = InNode->NodeWidth;
+	UserSize.Y = InNode->NodeHeight;
+
+	UpdateGraphNode();
 }
 
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
