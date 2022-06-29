@@ -81,10 +81,21 @@ SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 	{
 		FASCState::Get().RemoveComment(CommentNode);
 	}
+
+	ResetNodesUnrelated();
 }
 
 void SAutoSizeCommentsGraphNode::OnDeleted()
 {
+	// we shouldn't need to update the cache here this but the guid seems to be reused
+	// if it has been removed (but not destructed), so a newly created comment may reuse old comment data 
+	UpdateCache();  
+
+	if (FASCState::Get().GetASCComment(CommentNode).Get() == this)
+	{
+		FASCState::Get().RemoveComment(CommentNode);
+	}
+
 	ResetNodesUnrelated();
 }
 
