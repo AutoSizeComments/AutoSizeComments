@@ -689,15 +689,22 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 		return;
 	}
 
-	LoadCache();
-
 	if (CommentData->HasBeenInitialized())
 	{
+		LoadCache();
 		return;
 	}
 
 	CommentData->SetInitialized(true);
 
+	// if this node is selected then we have been copy pasted, don't add all selected nodes
+	if (OwnerPanel->SelectionManager.GetSelectedNodes().Contains(CommentNode))
+	{
+		RefreshNodesDelay = 2;
+		return;
+	}
+
+	// add all selected nodes
 	if (!GetDefault<UAutoSizeCommentsSettings>()->bIgnoreSelectedNodesOnCreation && AnySelectedNodes() && AddInitialNodes())
 	{
 		return;
