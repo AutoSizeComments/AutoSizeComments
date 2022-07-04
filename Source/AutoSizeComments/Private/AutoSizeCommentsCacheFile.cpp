@@ -99,6 +99,8 @@ void FAutoSizeCommentsCacheFile::DeleteCache()
 {
 	FString CachePath = GetCachePath();
 
+	CacheData.PackageData.Reset();
+
 	if (FPlatformFileManager::Get().GetPlatformFile().DeleteFile(*CachePath))
 	{
 		UE_LOG(LogAutoSizeComments, Log, TEXT("Deleted cache file at %s"), *CachePath);
@@ -201,7 +203,7 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 
 FString FAutoSizeCommentsCacheFile::GetCachePath()
 {
-	const FString PluginDir = IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir();
+	const FString PluginDir = FPaths::ConvertRelativePathToFull(IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir());
 
 	const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>();
 	const FGuid& ProjectID = ProjectSettings->ProjectID;
@@ -235,21 +237,16 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 	return false;
 }
 
-FASCCommentData* FAutoSizeCommentsCacheFile::GetCommentData(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode)
+FASCCommentData& FAutoSizeCommentsCacheFile::GetCommentData(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode)
 {
 	return GetCommentData(ASCNode->GetNodeObj());
 }
 
-FASCCommentData* FAutoSizeCommentsCacheFile::GetCommentData(UEdGraphNode* CommentNode)
+FASCCommentData& FAutoSizeCommentsCacheFile::GetCommentData(UEdGraphNode* CommentNode)
 {
-	if (!CommentNode)
-	{
-		return nullptr;
-	}
-
 	UEdGraph* Graph = CommentNode->GetGraph();
 	FASCGraphData& Data = GetGraphData(Graph);
-	return &Data.CommentData.FindOrAdd(CommentNode->NodeGuid);
+	return Data.CommentData.FindOrAdd(CommentNode->NodeGuid);
 }
 
 void FAutoSizeCommentsCacheFile::PrintCache()

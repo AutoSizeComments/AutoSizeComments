@@ -28,18 +28,18 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 	CommentNode = Cast<UEdGraphNode_Comment>(InNode);
 
-	CommentData = FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode);
+	// check if we are a header comment
+	bIsHeader = GetCommentData().IsHeader();
 
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
 	const bool bIsPresetStyle = IsPresetStyle();
-	const bool bIsHeaderComment = IsHeaderComment();
 
 	// init color
-	InitializeColor(ASCSettings, bIsPresetStyle, bIsHeaderComment);
+	InitializeColor(ASCSettings, bIsPresetStyle, bIsHeader);
 
 	// use default font
-	if (ASCSettings->bUseDefaultFontSize && !bIsHeaderComment && !bIsPresetStyle)
+	if (ASCSettings->bUseDefaultFontSize && !bIsHeader && !bIsPresetStyle)
 	{
 		CommentNode->FontSize = ASCSettings->DefaultFontSize;
 	}
@@ -612,7 +612,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	// Create the bottom horizontal box containing comment controls and anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> BottomHBox = SNew(SHorizontalBox);
 	if (!IsHeaderComment())
-	{
+	{ 
 		if (!bHideCornerPoints)
 		{
 			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(MakeAnchorBox());
@@ -700,13 +700,14 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 		return;
 	}
 
-	if (CommentData->HasBeenInitialized())
+	FASCCommentData& CommentData = GetCommentData();
+	if (CommentData.HasBeenInitialized())
 	{
 		LoadCache();
 		return;
 	}
 
-	CommentData->SetInitialized(true);
+	CommentData.SetInitialized(true);
 
 	// if this node is selected then we have been copy pasted, don't add all selected nodes
 	if (OwnerPanel->SelectionManager.GetSelectedNodes().Contains(CommentNode))
@@ -815,31 +816,7 @@ FReply SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked()
 
 FReply SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked()
 {
-	if (CommentData->IsHeader()) // undo header style
-	{
-		const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-		if (ASCSettings->bUseRandomColor)
-		{
-			RandomizeColor();
-		}
-		else
-		{
-			CommentNode->CommentColor = ASCSettings->DefaultCommentColor;
-		}
-
-		CommentNode->FontSize = GetMutableDefault<UAutoSizeCommentsSettings>()->DefaultFontSize;
-		AdjustMinSize(UserSize);
-	}
-	else // apply header style
-	{
-		ApplyHeaderStyle();
-		CommentNode->ClearNodesUnderComment();
-	}
-
-	CommentData->SetHeader(!CommentData->IsHeader());
-
-	UpdateGraphNode();
-
+	SetIsHeader(!bIsHeader);
 	return FReply::Handled();
 }
 
@@ -1176,6 +1153,11 @@ float SAutoSizeCommentsGraphNode::GetWrapAt() const
 	const float AnchorPointWidth = ASCSettings->bHideCornerPoints ? 0 : 32;
 	const float TextPadding = ASCSettings->CommentTextPadding.Left + ASCSettings->CommentTextPadding.Right;
 	return FMath::Max(0.f, CachedWidth - AnchorPointWidth - HeaderSize - TextPadding - 12);
+}
+
+FASCCommentData& SAutoSizeCommentsGraphNode::GetCommentData() const
+{
+	return FAutoSizeCommentsCacheFile::Get().GetCommentData(GraphNode);
 }
 
 void SAutoSizeCommentsGraphNode::ResizeToFit()
@@ -1648,19 +1630,46 @@ EASCAnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 	return EASCAnchorPoint::None;
 }
 
+void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue)
+{
+	bIsHeader = bNewValue;
+
+	// update the comment data
+	FASCCommentData& CommentData = GetCommentData();
+	CommentData.SetHeader(bNewValue);
+
+	if (bIsHeader) // apply header style
+	{
+		ApplyHeaderStyle();
+		CommentNode->ClearNodesUnderComment();
+	}
+	else  // undo header style
+	{
+		const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+		if (ASCSettings->bUseRandomColor)
+		{
+			RandomizeColor();
+		}
+		else
+		{
+			CommentNode->CommentColor = ASCSettings->DefaultCommentColor;
+		}
+
+		CommentNode->FontSize = ASCSettings->DefaultFontSize;
+		AdjustMinSize(UserSize);
+	}
+
+	UpdateGraphNode();
+}
+
 bool SAutoSizeCommentsGraphNode::IsHeaderComment() const
 {
-	return CommentData->IsHeader();
+	return bIsHeader;
 }
 
 bool SAutoSizeCommentsGraphNode::IsHeaderComment(UEdGraphNode_Comment* OtherComment)
 {
-	if (FASCCommentData* OtherCommentData = FAutoSizeCommentsCacheFile::Get().GetCommentData(OtherComment))
-	{
-		return OtherCommentData->IsHeader();
-	}
-
-	return false;
+	return FAutoSizeCommentsCacheFile::Get().GetCommentData(OtherComment).IsHeader();
 }
 
 FKey SAutoSizeCommentsGraphNode::GetResizeKey() const

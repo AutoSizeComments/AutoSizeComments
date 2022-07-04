@@ -91,9 +91,9 @@ public:
 
 	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 
-	FASCCommentData* GetCommentData(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode);
+	FASCCommentData& GetCommentData(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode);
 
-	FASCCommentData* GetCommentData(UEdGraphNode* CommentNode);
+	FASCCommentData& GetCommentData(UEdGraphNode* CommentNode);
 
 	void PrintCache();
 

@@ -50,8 +50,6 @@ public:
 
 	bool bLastSelected = false;
 
-	FASCCommentData* CommentData;
-
 #if ASC_UE_VERSION_OR_LATER(4, 27)
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 #else
@@ -101,6 +99,8 @@ public:
 	virtual FSlateRect GetTitleRect() const override;
 
 	class UEdGraphNode_Comment* GetCommentNodeObj() const { return CommentNode; }
+
+	FASCCommentData& GetCommentData() const;
 
 	void ResizeToFit();
 
@@ -184,6 +184,8 @@ private:
 
 	float OpacityValue = 0;
 
+	bool bIsHeader = false;
+
 	// TODO: Look into resize transaction perhaps requires the EdGraphNode_Comment to have UPROPERTY() for NodesUnderComment
 	// TSharedPtr<FScopedTransaction> ResizeTransaction;
 
@@ -218,6 +220,7 @@ public:
 
 	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
 
+	void SetIsHeader(bool bNewValue);
 	bool IsHeaderComment() const;
 	bool IsPresetStyle();
 
