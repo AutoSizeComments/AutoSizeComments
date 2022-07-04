@@ -2,6 +2,11 @@
 
 #include "AutoSizeCommentsSettings.h"
 
+#include "AutoSizeCommentsCacheFile.h"
+#include "DetailCategoryBuilder.h"
+#include "DetailLayoutBuilder.h"
+#include "DetailWidgetRow.h"
+
 UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
 {
@@ -58,4 +63,43 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bHideCommentBubble = false;
 	bHideCornerPoints = false;
 	bDebugGraph_ASC = false;
+
+}
+
+TSharedRef<IDetailCustomization> FASCSettingsDetails::MakeInstance()
+{
+	return MakeShareable(new FASCSettingsDetails);
+}
+void FASCSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
+{
+	IDetailCategoryBuilder& GeneralCategory = DetailBuilder.EditCategory("Misc");
+	auto& SizeCache = FAutoSizeCommentsCacheFile::Get();
+
+	const FString CachePath = SizeCache.GetCachePath();
+
+	const auto DeleteSizeCache = [&SizeCache]()
+	{
+		SizeCache.DeleteCache();
+		return FReply::Handled();
+	};
+
+	GeneralCategory.AddCustomRow(FText::FromString("Clear comment cache"))
+		.NameContent()
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("Clear comment cache"))
+			.Font(FEditorStyle::GetFontStyle(TEXT("PropertyWindow.NormalFont")))
+		]
+		.ValueContent()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().Padding(5).AutoWidth()
+			[
+				SNew(SButton)
+				.Text(FText::FromString("Clear comment cache"))
+				.ToolTipText(FText::FromString(FString::Printf(TEXT("Delete comment cache file located at: %s"), *CachePath)))
+				.OnClicked_Lambda(DeleteSizeCache)
+			]
+		];
+	
 }

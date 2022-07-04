@@ -45,6 +45,9 @@ void FAutoSizeCommentsModule::OnPostEngineInit()
 			LOCTEXT("AutoSizeCommentsNameDesc", "Configure the Auto Size Comments plugin"),
 			GetMutableDefault<UAutoSizeCommentsSettings>()
 		);
+
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyModule.RegisterCustomClassLayout(UAutoSizeCommentsSettings::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FASCSettingsDetails::MakeInstance));
 	}
 
 	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FAutoSizeCommentsModule::SuggestBlueprintAssistSettings);
