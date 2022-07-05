@@ -75,7 +75,7 @@ void FASCSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	IDetailCategoryBuilder& GeneralCategory = DetailBuilder.EditCategory("Misc");
 	auto& SizeCache = FAutoSizeCommentsCacheFile::Get();
 
-	const FString CachePath = SizeCache.GetCachePath();
+	const FString CachePath = SizeCache.GetCachePath(true);
 
 	const auto DeleteSizeCache = [&SizeCache]()
 	{

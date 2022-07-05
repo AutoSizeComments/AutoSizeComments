@@ -201,9 +201,14 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 	return PackageData.GraphData.FindOrAdd(Graph->GraphGuid);
 }
 
-FString FAutoSizeCommentsCacheFile::GetCachePath()
+FString FAutoSizeCommentsCacheFile::GetCachePath(bool bFullPath)
 {
-	const FString PluginDir = FPaths::ConvertRelativePathToFull(IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir());
+	FString PluginDir = IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir();
+
+	if (bFullPath)
+	{
+		PluginDir = FPaths::ConvertRelativePathToFull(PluginDir);
+	}
 
 	const UGeneralProjectSettings* ProjectSettings = GetDefault<UGeneralProjectSettings>();
 	const FGuid& ProjectID = ProjectSettings->ProjectID;
