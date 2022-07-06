@@ -157,11 +157,6 @@ void FAutoSizeCommentsCacheFile::UpdateNodesUnderComment(UEdGraphNode_Comment* C
 		return;
 	}
 
-	if (!FASCState::Get().HasRegisteredComment(Comment))
-	{
-		return;
-	}
-
 	UEdGraph* Graph = Comment->GetGraph();
 	if (!Graph)
 	{
