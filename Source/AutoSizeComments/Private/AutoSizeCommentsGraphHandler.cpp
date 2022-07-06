@@ -31,13 +31,13 @@ void FAutoSizeCommentGraphHandler::BindDelegates()
 	bPendingSave = false;
 #if ASC_UE_VERSION_OR_LATER(5, 0)
 	FCoreUObjectDelegates::OnObjectPreSave.AddRaw(this, &FAutoSizeCommentGraphHandler::OnObjectPreSave);
+	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::Tick));
 #else
 	FCoreUObjectDelegates::OnObjectSaved.AddRaw(this, &FAutoSizeCommentGraphHandler::OnObjectSaved);
+	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::Tick));
 #endif
 
 	FCoreUObjectDelegates::OnObjectTransacted.AddRaw(this, &FAutoSizeCommentGraphHandler::OnObjectTransacted);
-
-	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::Tick));
 }
 
 void FAutoSizeCommentGraphHandler::UnbindDelegates()
@@ -59,7 +59,11 @@ void FAutoSizeCommentGraphHandler::UnbindDelegates()
 
 	GraphDatas.Empty();
 
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+	FTSTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
+#else
 	FTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
+#endif
 }
 
 void FAutoSizeCommentGraphHandler::BindToGraph(UEdGraph* Graph)

@@ -35,7 +35,11 @@ private:
 
 	TArray<TWeakPtr<SGraphPanel>> ActiveGraphPanels;
 
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+	FTSTicker::FDelegateHandle TickDelegateHandle;
+#else
 	FDelegateHandle TickDelegateHandle;
+#endif
 
 	bool bPendingSave = false;
 
