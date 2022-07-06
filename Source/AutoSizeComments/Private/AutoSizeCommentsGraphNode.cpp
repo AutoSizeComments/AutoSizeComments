@@ -376,41 +376,40 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 	bLastSelected = bNewIsSelected;
 
+	UpdateRefreshDelay();
 
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bDisableResizing)
+	if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
 	{
-		UpdateRefreshDelay();
+		const FModifierKeysState& KeysState = FSlateApplication::Get().GetModifierKeys();
 
-		if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
+		const bool bIsAltDown = KeysState.IsAltDown();
+		if (!bIsAltDown)
 		{
-			const FModifierKeysState& KeysState = FSlateApplication::Get().GetModifierKeys();
+			const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
 
-			const bool bIsAltDown = KeysState.IsAltDown();
-			if (!bIsAltDown)
+			// still update collision when we alt-control drag
+			const bool bUseAltCollision = AltCollisionMethod != ECommentCollisionMethod::Disabled;
+
+			// refresh when the alt key is released
+			if (bPreviousAltDown && bUseAltCollision)
 			{
-				const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
-
-				// still update collision when we alt-control drag
-				const bool bUseAltCollision = AltCollisionMethod != ECommentCollisionMethod::Disabled;
-
-				// refresh when the alt key is released
-				if (bPreviousAltDown && bUseAltCollision)
-				{
-					OnAltReleased();
-				}
-
-				ResizeToFit();
-
-				MoveEmptyCommentBoxes();
-
-				// if (ResizeTransaction.IsValid())
-				// {
-				// 	ResizeTransaction.Reset();
-				// }
+				OnAltReleased();
 			}
 
-			bPreviousAltDown = bIsAltDown;
+			if (!GetDefault<UAutoSizeCommentsSettings>()->bDisableResizing)
+			{
+				ResizeToFit();
+			}
+
+			MoveEmptyCommentBoxes();
+
+			// if (ResizeTransaction.IsValid())
+			// {
+			// 	ResizeTransaction.Reset();
+			// }
 		}
+
+		bPreviousAltDown = bIsAltDown;
 	}
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
