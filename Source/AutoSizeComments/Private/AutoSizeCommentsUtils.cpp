@@ -168,3 +168,20 @@ TSharedPtr<SGraphPin> FASCUtils::GetHoveredGraphPin(TSharedPtr<SGraphPanel> Grap
 
 	return nullptr;
 }
+
+TArray<UEdGraphNode_Comment*> FASCUtils::GetSelectedComments(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	TArray<UEdGraphNode_Comment*> OutComments;
+	if (!GraphPanel)
+		return OutComments;
+
+	for (UObject* SelectedObj : GraphPanel->SelectionManager.SelectedNodes)
+	{
+		if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(SelectedObj))
+		{
+			OutComments.Add(SelectedComment);
+		}
+	}
+
+	return OutComments;
+}

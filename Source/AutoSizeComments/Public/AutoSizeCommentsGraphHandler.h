@@ -4,6 +4,15 @@
 
 #include "AutoSIzeCommentsMacros.h"
 
+class UEdGraphNode_Comment;
+class SGraphPanel;
+
+struct FASCGraphHandlerData
+{
+	TArray<TWeakObjectPtr<UEdGraphNode_Comment>> LastSelectionSet;
+	FDelegateHandle OnGraphChangedHandle;
+};
+
 class FAutoSizeCommentGraphHandler
 {
 public:
@@ -19,8 +28,18 @@ public:
 
 	void AutoInsertIntoCommentNodes(TWeakObjectPtr<UEdGraphNode> Node, TWeakObjectPtr<UEdGraphNode> LastSelectedNode);
 
+	void RegisterActiveGraphPanel(TSharedPtr<SGraphPanel> GraphPanel) { ActiveGraphPanels.Add(GraphPanel); }
+
 private:
-	TMap<TWeakObjectPtr<UEdGraph>, FDelegateHandle> GraphHandles;
+	TMap<TWeakObjectPtr<UEdGraph>, FASCGraphHandlerData> GraphDatas;
+
+	TArray<TWeakPtr<SGraphPanel>> ActiveGraphPanels;
+
+	FDelegateHandle TickDelegateHandle;
+
+	bool bPendingSave = false;
+
+	bool Tick(float DeltaTime);
 
 	void OnNodeAdded(const FEdGraphEditAction& Action);
 
@@ -37,6 +56,4 @@ private:
 	void SaveSizeCache();
 
 	void UpdateContainingComments(TWeakObjectPtr<UEdGraphNode> Node);
-
-	bool bPendingSave = false;
 };

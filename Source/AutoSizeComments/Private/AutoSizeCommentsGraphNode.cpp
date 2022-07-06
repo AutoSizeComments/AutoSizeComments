@@ -361,21 +361,6 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 {
 	bool bRequireUpdate = false;
 
-	// lost selection
-	const bool bNewIsSelected = IsSingleSelectedNode();
-	if (bLastSelected && !bNewIsSelected)
-	{
-		ResetNodesUnrelated();
-	}
-
-	// gained selection
-	if (!bLastSelected && bNewIsSelected)
-	{
-		SetNodesRelated(GetEdGraphNodesUnderComment(CommentNode));
-	}
-
-	bLastSelected = bNewIsSelected;
-
 	UpdateRefreshDelay();
 
 	if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
@@ -688,6 +673,8 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 	{
 		return;
 	}
+
+	FAutoSizeCommentGraphHandler::Get().RegisterActiveGraphPanel(OwnerPanel);
 
 	if (IsHeaderComment())
 	{
