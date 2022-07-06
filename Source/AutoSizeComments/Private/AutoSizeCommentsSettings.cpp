@@ -52,6 +52,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bIgnoreSelectedNodesOnCreation = false;
 	bRefreshContainingNodesOnMove = false;
 	bDisableTooltip = false;
+	bHighlightContainingNodesOnSelection = true;
 #if !(ASC_UE_VERSION_OR_LATER(5, 0))
 	IgnoredGraphs.Add("ControlRigGraph");
 #endif

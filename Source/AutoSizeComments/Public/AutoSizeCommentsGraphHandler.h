@@ -41,6 +41,8 @@ private:
 
 	bool Tick(float DeltaTime);
 
+	void UpdateNodeUnrelatedState();
+
 	void OnNodeAdded(const FEdGraphEditAction& Action);
 
 	void OnNodeDeleted(const FEdGraphEditAction& Action);

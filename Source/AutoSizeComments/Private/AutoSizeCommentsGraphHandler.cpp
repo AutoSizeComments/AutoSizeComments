@@ -189,6 +189,18 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEd
 
 bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 {
+	UpdateNodeUnrelatedState();
+
+	return true;
+}
+
+void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
+{
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bHighlightContainingNodesOnSelection)
+	{
+		return;
+	}
+
 	// iterate by graph panel to access the selection manager (otherwise we could use the graph)
 	for (int i = ActiveGraphPanels.Num() - 1; i >= 0; --i)
 	{
@@ -241,7 +253,7 @@ bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 				GraphData->LastSelectionSet.Add(SelectedComment);
 
 				// also check if we need to refresh the selected nodes
-				if (!bRefreshSelectedNodes && !LastSelection.Contains(SelectedComment)) 
+				if (!bRefreshSelectedNodes && !LastSelection.Contains(SelectedComment))
 				{
 					bRefreshSelectedNodes = true;
 				}
@@ -266,8 +278,6 @@ bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 			}
 		}
 	}
-
-	return true;
 }
 
 void FAutoSizeCommentGraphHandler::OnNodeAdded(const FEdGraphEditAction& Action)

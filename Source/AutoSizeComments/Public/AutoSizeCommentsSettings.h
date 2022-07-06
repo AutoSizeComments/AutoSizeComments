@@ -195,6 +195,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bDisableTooltip;
 
+	/** Highlight the contained node for a comment when you select it */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bHighlightContainingNodesOnSelection;
+
 	/** Do not use ASC node for these graphs, turn on DebugClass_ASC and open graph to find graph class name */
 	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	TArray<FString> IgnoredGraphs;
