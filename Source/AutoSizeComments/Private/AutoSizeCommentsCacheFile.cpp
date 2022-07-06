@@ -313,7 +313,7 @@ void FASCGraphData::CleanupGraph(UEdGraph* Graph)
 		}
 	}
 
-	for (FGuid NodeGuid : NodesToRemove)
+	for (const FGuid& NodeGuid : NodesToRemove)
 	{
 		CommentData.Remove(NodeGuid);
 	}
