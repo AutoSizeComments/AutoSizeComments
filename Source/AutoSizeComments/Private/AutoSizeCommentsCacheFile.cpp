@@ -149,7 +149,7 @@ void FAutoSizeCommentsCacheFile::CleanupFiles()
 	}
 }
 
-void FAutoSizeCommentsCacheFile::UpdateComment(UEdGraphNode_Comment* Comment)
+void FAutoSizeCommentsCacheFile::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
 {
 	if (!Comment)
 	{

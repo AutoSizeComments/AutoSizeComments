@@ -83,7 +83,7 @@ public:
 
 	void CleanupFiles();
 
-	void UpdateComment(UEdGraphNode_Comment* Comment);
+	void UpdateNodesUnderComment(UEdGraphNode_Comment* Comment);
 
 	FASCGraphData& GetGraphData(UEdGraph* Graph);
 

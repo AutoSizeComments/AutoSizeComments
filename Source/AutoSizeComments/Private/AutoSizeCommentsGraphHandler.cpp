@@ -362,7 +362,7 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 
 		for (UEdGraphNode_Comment* Comment : Comments)
 		{
-			SizeCache.UpdateComment(Comment);
+			SizeCache.UpdateNodesUnderComment(Comment);
 		}
 
 		if (!bPendingSave)
