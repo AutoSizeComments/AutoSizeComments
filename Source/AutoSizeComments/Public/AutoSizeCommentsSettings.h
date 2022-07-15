@@ -234,6 +234,9 @@ public:
 	/** Print info about the graph when opening a graph */
 	UPROPERTY(EditAnywhere, config, Category = Debug)
 	bool bDebugGraph_ASC;
+
+	UPROPERTY(EditAnywhere, config, Category = Debug)
+	bool bDisablePackageCleanup;
 };
 
 class FASCSettingsDetails final : public IDetailCustomization

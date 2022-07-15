@@ -65,6 +65,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bHideCornerPoints = false;
 	bDebugGraph_ASC = false;
 
+	bDisablePackageCleanup = false;
 }
 
 TSharedRef<IDetailCustomization> FASCSettingsDetails::MakeInstance()

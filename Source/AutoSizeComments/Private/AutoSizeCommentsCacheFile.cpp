@@ -113,6 +113,11 @@ void FAutoSizeCommentsCacheFile::DeleteCache()
 
 void FAutoSizeCommentsCacheFile::CleanupFiles()
 {
+	if (GetDefault<UAutoSizeCommentsSettings>()->bDisablePackageCleanup)
+	{
+		return;
+	}
+
 	// Get all assets
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
 	TArray<FAssetData> AllAssets;
