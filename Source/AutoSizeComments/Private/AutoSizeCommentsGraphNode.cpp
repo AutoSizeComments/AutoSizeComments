@@ -658,6 +658,30 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 {
 	SGraphNode::SetOwner(OwnerPanel);
 
+	// since the graph node is created twice, we need to delay initialization so the correct graph node gets initialized
+	RegisterActiveTimer(0.0f, FWidgetActiveTimerDelegate::CreateSP(this, &SAutoSizeCommentsGraphNode::InitializeASCNode));
+}
+
+
+EActiveTimerReturnType SAutoSizeCommentsGraphNode::InitializeASCNode(double InCurrentTime, float InDeltaTime)
+{
+	if (!bInitialized)
+	{
+		bInitialized = true;
+		InitializeNodesUnderComment();
+	}
+
+	return EActiveTimerReturnType::Stop;
+}
+
+void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment()
+{
+	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
+	if (!OwnerPanel)
+	{
+		return;
+	}
+
 	if (!CommentNode)
 	{
 		return;
@@ -670,19 +694,20 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 		return;
 	}
 
-	if (CommentNode->GetNodesUnderComment().Num() > 0)
-	{
-		return;
-	}
+	LoadCache();
 
 	FASCCommentData& CommentData = GetCommentData();
 	if (CommentData.HasBeenInitialized())
 	{
-		LoadCache();
 		return;
 	}
 
 	CommentData.SetInitialized(true);
+
+	if (CommentNode->GetNodesUnderComment().Num() > 0)
+	{
+		return;
+	}
 
 	// if this node is selected then we have been copy pasted, don't add all selected nodes
 	if (OwnerPanel->SelectionManager.GetSelectedNodes().Contains(CommentNode))

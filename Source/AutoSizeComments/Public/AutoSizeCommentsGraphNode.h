@@ -121,6 +121,9 @@ protected:
 	FReply HandleSubtractButtonClicked();
 	FReply HandleClearButtonClicked();
 
+	EActiveTimerReturnType InitializeASCNode(double InCurrentTime, float InDeltaTime);
+	void InitializeNodesUnderComment();
+
 	bool AddInitialNodes();
 	bool AddAllSelectedNodes();
 	bool RemoveAllSelectedNodes();
@@ -183,6 +186,8 @@ private:
 	float OpacityValue = 0;
 
 	bool bIsHeader = false;
+
+	bool bInitialized = false;
 
 	// TODO: Look into resize transaction perhaps requires the EdGraphNode_Comment to have UPROPERTY() for NodesUnderComment
 	// TSharedPtr<FScopedTransaction> ResizeTransaction;
