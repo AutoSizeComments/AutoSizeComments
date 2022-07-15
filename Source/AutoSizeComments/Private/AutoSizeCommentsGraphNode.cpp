@@ -660,11 +660,20 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 	SGraphNode::SetOwner(OwnerPanel);
 
 	// since the graph node is created twice, we need to delay initialization so the correct graph node gets initialized
-	RegisterActiveTimer(0.0f, FWidgetActiveTimerDelegate::CreateSP(this, &SAutoSizeCommentsGraphNode::InitializeASCNode));
+	const auto InitNode = [](TWeakPtr<SAutoSizeCommentsGraphNode> NodePtr)
+	{
+		if (NodePtr.IsValid())
+		{
+			NodePtr.Pin()->InitializeASCNode();
+		}
+	};
+
+	const auto Delegate = FTimerDelegate::CreateLambda(InitNode, SharedThis(this));
+	GEditor->GetTimerManager()->SetTimerForNextTick(Delegate);
 }
 
 
-EActiveTimerReturnType SAutoSizeCommentsGraphNode::InitializeASCNode(double InCurrentTime, float InDeltaTime)
+void SAutoSizeCommentsGraphNode::InitializeASCNode()
 {
 	if (!bInitialized)
 	{
@@ -685,8 +694,6 @@ EActiveTimerReturnType SAutoSizeCommentsGraphNode::InitializeASCNode(double InCu
 			CommentData.SetInitialized(true);
 		}
 	}
-
-	return EActiveTimerReturnType::Stop;
 }
 
 void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment()

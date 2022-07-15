@@ -121,7 +121,7 @@ protected:
 	FReply HandleSubtractButtonClicked();
 	FReply HandleClearButtonClicked();
 
-	EActiveTimerReturnType InitializeASCNode(double InCurrentTime, float InDeltaTime);
+	void InitializeASCNode();
 	void InitializeNodesUnderComment();
 
 	bool AddInitialNodes();
