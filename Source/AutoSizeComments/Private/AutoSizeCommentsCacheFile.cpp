@@ -62,11 +62,11 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 
 		if (FJsonObjectConverter::JsonObjectStringToUStruct(FileData, &CacheData, 0, 0))
 		{
-			UE_LOG(LogAutoSizeComments, Log, TEXT("Loaded auto size comments cache: %s"), *CachePath);
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Loaded auto size comments cache: %s"), *GetCachePath(true));
 		}
 		else
 		{
-			UE_LOG(LogAutoSizeComments, Log, TEXT("Failed to load auto size comments cache: %s"), *CachePath);
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Failed to load auto size comments cache: %s"), *GetCachePath(true));
 		}
 	}
 
