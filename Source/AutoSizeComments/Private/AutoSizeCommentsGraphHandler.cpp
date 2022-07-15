@@ -220,10 +220,25 @@ void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
 
 		if (FASCGraphHandlerData* GraphData = GraphDatas.Find(Graph))
 		{
-			TArray<UEdGraphNode_Comment*> SelectedComments = FASCUtils::GetSelectedComments(GraphPanel);
+			// gather selected comments
+			TArray<UEdGraphNode_Comment*> SelectedComments;
+
+			bool bSelectedNonComment = false;
+			for (UObject* SelectedObj : GraphPanel->SelectionManager.SelectedNodes)
+			{
+				if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(SelectedObj))
+				{
+					SelectedComments.Add(SelectedComment);
+				}
+				else
+				{
+					bSelectedNonComment = true;
+					break;
+				}
+			}
 
 			// clear the unrelated nodes and empty the last selection set
-			if (SelectedComments.Num() == 0 && GraphData->LastSelectionSet.Num() != 0)
+			if (bSelectedNonComment || (SelectedComments.Num() == 0 && GraphData->LastSelectionSet.Num() != 0))
 			{
 				for (UEdGraphNode* Node : Graph->Nodes)
 				{
