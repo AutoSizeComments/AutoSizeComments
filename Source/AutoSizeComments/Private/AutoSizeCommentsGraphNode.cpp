@@ -75,12 +75,19 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 {
+	if (!bInitialized)
+	{
+		return;
+	}
+
 	if (FASCState::Get().GetASCComment(CommentNode).Get() == this)
 	{
 		FASCState::Get().RemoveComment(CommentNode);
 	}
 
 	ResetNodesUnrelated();
+
+	UpdateCache();
 }
 
 void SAutoSizeCommentsGraphNode::OnDeleted()
