@@ -1043,6 +1043,10 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 	// Get list of all other comment nodes
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> OtherCommentNodes = GetOtherCommentNodes();
 
+	TArray<UEdGraphNode_Comment*> OldParentComments = GetParentComments();
+
+	TArray<UObject*> OurMainNodes = CommentNode->GetNodesUnderComment().FilterByPredicate(IsMajorNode);
+
 	// Remove ourselves from our parent comments, as we will be adding ourselves later if required
 	for (UEdGraphNode_Comment* ParentComment : GetParentComments())
 	{
@@ -1056,6 +1060,7 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 		return;
 	}
 
+	bool bNeedsPurging = false;
 	for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : OtherCommentNodes)
 	{
 		UEdGraphNode_Comment* OtherComment = OtherCommentNode->GetCommentNodeObj();
@@ -1070,29 +1075,35 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 			continue;
 		}
 
-		// check if all nodes in the other comment box are within our comment box
-		bool bAllNodesContainedUnderOther = !CommentNode->GetNodesUnderComment().ContainsByPredicate([OtherComment](UObject* NodeUnderSelf)
+		const auto OtherMainNodes = OtherComment->GetNodesUnderComment().FilterByPredicate(IsMajorNode);
+
+		// check if all nodes in the other comment box are within our comment box AND we are not inside the other comment already
+		const bool bAllNodesContainedUnderSelf = !OtherMainNodes.ContainsByPredicate([&OurMainNodes](UObject* NodeUnderOther)
 		{
-			return !OtherComment->GetNodesUnderComment().Contains(NodeUnderSelf);
+			return !OurMainNodes.Contains(NodeUnderOther);
 		});
 
-		if (bAllNodesContainedUnderOther) // all nodes under the other comment box is also in this comment box, so add the other comment box
+		const bool bAlreadyHasParentAndSameSet = OldParentComments.Contains(OtherComment) && OurMainNodes.Num() == OtherMainNodes.Num();
+
+
+		// all nodes under the other comment box is also in this comment box, so add the other comment box
+		if (bAllNodesContainedUnderSelf && !bAlreadyHasParentAndSameSet)
 		{
-			OtherComment->AddNodeUnderComment(CommentNode);
+			CommentNode->AddNodeUnderComment(OtherComment);
+			bNeedsPurging = true;
 		}
 		else
 		{
-			const auto OtherNodesWithoutComments = OtherComment->GetNodesUnderComment().FilterByPredicate(IsMajorNode);
-
 			// check if all nodes in the other comment box are within our comment box
-			bool bAllNodesContainedUnderSelf = !OtherNodesWithoutComments.ContainsByPredicate([this](UObject* NodeUnderOther)
+			const bool bAllNodesContainedUnderOther = !CommentNode->GetNodesUnderComment().ContainsByPredicate([OtherComment](UObject* NodeUnderSelf)
 			{
-				return !CommentNode->GetNodesUnderComment().Contains(NodeUnderOther);
+				return !OtherComment->GetNodesUnderComment().Contains(NodeUnderSelf);
 			});
 
-			if (bAllNodesContainedUnderSelf) // all nodes under the other comment box is also in this comment box, so add the other comment box
+			if (bAllNodesContainedUnderOther) // all nodes under the other comment box is also in this comment box, so add the other comment box
 			{
-				CommentNode->AddNodeUnderComment(OtherComment);
+				OtherComment->AddNodeUnderComment(CommentNode);
+				bNeedsPurging = true;
 			}
 		}
 	}
