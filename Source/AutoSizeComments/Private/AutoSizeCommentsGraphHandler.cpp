@@ -81,11 +81,11 @@ void FAutoSizeCommentGraphHandler::BindToGraph(UEdGraph* Graph)
 
 void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Action)
 {
-	if (Action.Action == GRAPHACTION_AddNode)
+	if ((Action.Action & GRAPHACTION_AddNode) != 0)
 	{
 		OnNodeAdded(Action);
 	}
-	else if (Action.Action == GRAPHACTION_RemoveNode)
+	else if ((Action.Action & GRAPHACTION_RemoveNode) != 0)
 	{
 		OnNodeDeleted(Action);
 	}
