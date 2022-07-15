@@ -278,7 +278,7 @@ void FAutoSizeCommentsCacheFile::OnPreExit()
 
 void FASCGraphData::CleanupGraph(UEdGraph* Graph)
 {
-	// Get all the current nodes and pins from the graph
+	// Get all the current nodes from the graph
 	TSet<FGuid> CurrentNodes;
 	for (UEdGraphNode* Node : Graph->Nodes)
 	{
@@ -286,24 +286,23 @@ void FASCGraphData::CleanupGraph(UEdGraph* Graph)
 	}
 
 	// Remove any missing guids from the cached comments nodes
-	TArray<FGuid> CachedNodeGuids;
-	CommentData.GetKeys(CachedNodeGuids);
-
 	TArray<FGuid> NodesToRemove;
 	for (auto& Elem : CommentData)
 	{
-		FGuid CommentNode = Elem.Key;
+		const FGuid& CommentNode = Elem.Key;
 		if (!CurrentNodes.Contains(CommentNode))
 		{
 			NodesToRemove.Add(CommentNode);
 			break;
 		}
-		auto ContainingNodes = Elem.Value.NodeGuids;
-		for (auto Node : ContainingNodes)
+
+		TArray<FGuid>& ContainingNodes = Elem.Value.NodeGuids;
+		for (int i = ContainingNodes.Num() - 1; i >= 0; --i)
 		{
+			const FGuid& Node = ContainingNodes[i];
 			if (!CurrentNodes.Contains(Node))
 			{
-				Elem.Value.NodeGuids.Remove(Node);
+				ContainingNodes.Remove(Node);
 			}
 		}
 	}
