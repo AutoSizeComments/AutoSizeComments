@@ -356,7 +356,7 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 		return;
 	}
 
-	FAutoSizeCommentsCacheFile& SizeCache = FAutoSizeCommentsCacheFile::Get();
+	FAutoSizeCommentsCacheFile& CacheFile = FAutoSizeCommentsCacheFile::Get();
 
 	// upon saving a graph, save all comments to cache
 	if (UEdGraph* Graph = Cast<UEdGraph>(Object))
@@ -366,7 +366,7 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 
 		for (UEdGraphNode_Comment* Comment : Comments)
 		{
-			SizeCache.UpdateNodesUnderComment(Comment);
+			CacheFile.UpdateNodesUnderComment(Comment);
 		}
 
 		if (!bPendingSave)
