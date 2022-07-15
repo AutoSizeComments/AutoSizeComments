@@ -30,6 +30,8 @@ public:
 
 	void RegisterActiveGraphPanel(TSharedPtr<SGraphPanel> GraphPanel) { ActiveGraphPanels.Add(GraphPanel); }
 
+	void RequestGraphVisualRefresh(TSharedPtr<SGraphPanel> GraphPanel);
+
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FASCGraphHandlerData> GraphDatas;
 
@@ -42,6 +44,8 @@ private:
 #endif
 
 	bool bPendingSave = false;
+
+	bool bPendingGraphVisualRequest = false;
 
 	bool Tick(float DeltaTime);
 
@@ -62,4 +66,6 @@ private:
 	void SaveSizeCache();
 
 	void UpdateContainingComments(TWeakObjectPtr<UEdGraphNode> Node);
+
+	void RefreshGraphVisualRefresh(TWeakPtr<SGraphPanel> GraphPanel);
 };

@@ -191,6 +191,41 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEd
 	}
 }
 
+void FAutoSizeCommentGraphHandler::RequestGraphVisualRefresh(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	if (bPendingGraphVisualRequest)
+	{
+		return;
+	}
+
+	bPendingGraphVisualRequest = true;
+
+	const auto Delegate = FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::RefreshGraphVisualRefresh, TWeakPtr<SGraphPanel>(GraphPanel));
+	GEditor->GetTimerManager()->SetTimerForNextTick(Delegate);
+}
+
+void FAutoSizeCommentGraphHandler::RefreshGraphVisualRefresh(TWeakPtr<SGraphPanel> GraphPanel)
+{
+	bPendingGraphVisualRequest = false;
+
+	if (!GraphPanel.IsValid())
+	{
+		return;
+	}
+
+	GraphPanel.Pin()->PurgeVisualRepresentation();
+
+	const auto UpdateGraphPanel = [](TWeakPtr<SGraphPanel> LocalPanel)
+	{
+		if (LocalPanel.IsValid())
+		{
+			LocalPanel.Pin()->Update();
+		}
+	};
+
+	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda(UpdateGraphPanel, GraphPanel));
+}
+
 bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 {
 	UpdateNodeUnrelatedState();

@@ -231,6 +231,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideCornerPoints;
 
+	/** Experimental fix for sort depth issue in UE5 (unable to move nested nodes until you compile the blueprint) */
+	UPROPERTY(EditAnywhere, config, Category = Experimental)
+	bool bEnableFixForSortDepthIssue;
+
 	/** Print info about the graph when opening a graph */
 	UPROPERTY(EditAnywhere, config, Category = Debug)
 	bool bDebugGraph_ASC;

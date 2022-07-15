@@ -1002,6 +1002,11 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 		if (RefreshNodesDelay == 0)
 		{
 			RefreshNodesInsideComment(ECommentCollisionMethod::Point);
+			
+			if (GetDefault<UAutoSizeCommentsSettings>()->bEnableFixForSortDepthIssue)
+			{
+				FAutoSizeCommentGraphHandler::Get().RequestGraphVisualRefresh(GetOwnerPanel());
+			}
 		}
 	}
 }
@@ -1112,6 +1117,11 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 				bNeedsPurging = true;
 			}
 		}
+	}
+
+	if (bNeedsPurging && GetDefault<UAutoSizeCommentsSettings>()->bEnableFixForSortDepthIssue)
+	{
+		FAutoSizeCommentGraphHandler::Get().RequestGraphVisualRefresh(GetOwnerPanel());
 	}
 }
 
