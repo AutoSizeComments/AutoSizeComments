@@ -669,6 +669,9 @@ EActiveTimerReturnType SAutoSizeCommentsGraphNode::InitializeASCNode(double InCu
 	if (!bInitialized)
 	{
 		bInitialized = true;
+
+		FASCCommentData& CommentData = GetCommentData();
+
 		InitializeNodesUnderComment();
 
 		// register graph
@@ -676,6 +679,11 @@ EActiveTimerReturnType SAutoSizeCommentsGraphNode::InitializeASCNode(double InCu
 
 		// init graph handler for containing graph
 		FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
+
+		if (!CommentData.HasBeenInitialized())
+		{
+			CommentData.SetInitialized(true);
+		}
 	}
 
 	return EActiveTimerReturnType::Stop;
@@ -708,8 +716,6 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment()
 	{
 		return;
 	}
-
-	CommentData.SetInitialized(true);
 
 	if (CommentNode->GetNodesUnderComment().Num() > 0)
 	{
