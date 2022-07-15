@@ -361,6 +361,11 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 	// upon saving a graph, save all comments to cache
 	if (UEdGraph* Graph = Cast<UEdGraph>(Object))
 	{
+		if (!GraphDatas.Contains(Graph))
+		{
+			return;
+		}
+
 		TArray<UEdGraphNode_Comment*> Comments;
 		Graph->GetNodesOfClassEx<UEdGraphNode_Comment>(Comments);
 
