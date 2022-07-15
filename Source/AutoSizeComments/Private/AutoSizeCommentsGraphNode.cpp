@@ -60,12 +60,6 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	CommentControlsTextColor = FLinearColor(1, 1, 1, OpacityValue);
 	CommentControlsColor = FLinearColor(CommentNode->CommentColor.R, CommentNode->CommentColor.G, CommentNode->CommentColor.B, OpacityValue);
 
-	// register graph
-	FASCState::Get().RegisterComment(SharedThis(this));
-
-	// init graph handler for containing graph
-	FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
-
 	// Pull out sizes
 	UserSize.X = InNode->NodeWidth;
 	UserSize.Y = InNode->NodeHeight;
@@ -676,6 +670,12 @@ EActiveTimerReturnType SAutoSizeCommentsGraphNode::InitializeASCNode(double InCu
 	{
 		bInitialized = true;
 		InitializeNodesUnderComment();
+
+		// register graph
+		FASCState::Get().RegisterComment(SharedThis(this));
+
+		// init graph handler for containing graph
+		FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
 	}
 
 	return EActiveTimerReturnType::Stop;
