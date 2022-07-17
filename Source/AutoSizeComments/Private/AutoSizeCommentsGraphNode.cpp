@@ -924,7 +924,7 @@ bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes()
 	{
 		if (CanAddNode(SelectedObj))
 		{
-			CommentNode->AddNodeUnderComment(SelectedObj);
+			AddNodeIntoComment(SelectedObj);
 			bDidAddAnything = true;
 		}
 	}
@@ -944,7 +944,7 @@ bool SAutoSizeCommentsGraphNode::AddAllNodesUnderComment(const TArray<UObject*>&
 	{
 		if (CanAddNode(Node))
 		{
-			CommentNode->AddNodeUnderComment(Node);
+			AddNodeIntoComment(Node);
 			bDidAddAnything = true;
 		}
 	}
@@ -974,7 +974,7 @@ bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes()
 	{
 		if (!SelectedNodes.Contains(NodeUnderComment))
 		{
-			CommentNode->AddNodeUnderComment(NodeUnderComment);
+			AddNodeIntoComment(NodeUnderComment);
 		}
 		else
 		{
@@ -1086,7 +1086,7 @@ void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisi
 	{
 		if (CanAddNode(Node, bIgnoreKnots))
 		{
-			CommentNode->AddNodeUnderComment(Node);
+			AddNodeIntoComment(Node);
 		}
 	}
 
@@ -1149,7 +1149,7 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 		// all nodes under the other comment box is also in this comment box, so add the other comment box
 		if (bAllNodesContainedUnderSelf && !bAlreadyHasParentAndSameSet)
 		{
-			CommentNode->AddNodeUnderComment(OtherComment);
+			AddNodeIntoComment(OtherComment);
 			bNeedsPurging = true;
 		}
 		else
@@ -1162,7 +1162,7 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 
 			if (bAllNodesContainedUnderOther) // all nodes under the other comment box is also in this comment box, so add the other comment box
 			{
-				OtherComment->AddNodeUnderComment(CommentNode);
+				AddNodeIntoComment(CommentNode, OtherComment);
 				bNeedsPurging = true;
 			}
 		}
@@ -1265,7 +1265,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 		// So checks if the node is still on the graph
 		if (Obj != nullptr && IsValid(Obj) && !Obj->IsUnreachable() && Nodes.Contains(Obj))
 		{
-			CommentNode->AddNodeUnderComment(Obj);
+			AddNodeIntoComment(Obj);
 		}
 	}
 
@@ -1817,6 +1817,27 @@ void SAutoSizeCommentsGraphNode::ResetNodesUnrelated()
 #endif
 }
 
+bool SAutoSizeCommentsGraphNode::AddNodeIntoComment(UObject* Node, UEdGraphNode_Comment* Comment)
+{
+	if (!Node || !Comment)
+	{
+		return false;
+	}
+
+	if (Comment->GetNodesUnderComment().Contains(Node))
+	{
+		return false;
+	}
+
+	Comment->AddNodeUnderComment(Node);
+	return true;
+}
+
+bool SAutoSizeCommentsGraphNode::AddNodeIntoComment(UObject* Node)
+{
+	return AddNodeIntoComment(Node, CommentNode);
+}
+
 bool SAutoSizeCommentsGraphNode::IsPresetStyle()
 {
 	for (FPresetCommentStyle Style : GetMutableDefault<UAutoSizeCommentsSettings>()->PresetStyles)
@@ -1839,7 +1860,7 @@ bool SAutoSizeCommentsGraphNode::LoadCache()
 		{
 			if (!HasNodeBeenDeleted(Node))
 			{
-				CommentNode->AddNodeUnderComment(Node);
+				AddNodeIntoComment(Node);
 			}
 		}
 
@@ -2065,11 +2086,7 @@ void SAutoSizeCommentsGraphNode::OnAltReleased()
 		if (bChanged)
 		{
 			CommentNode->ClearNodesUnderComment();
-			for (UObject* Node : NewSelection)
-			{
-				CommentNode->AddNodeUnderComment(Node);
-			}
-			UpdateExistingCommentNodes();
+			AddAllNodesUnderComment(NewSelection.Array());
 		}
 	}
 }

@@ -259,4 +259,7 @@ public:
 	bool IsNodeUnrelated() const;
 	void SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf = true);
 	void ResetNodesUnrelated();
+
+	bool AddNodeIntoComment(UObject* Node, UEdGraphNode_Comment* Comment);
+	bool AddNodeIntoComment(UObject* Node);
 };
