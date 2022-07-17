@@ -675,6 +675,12 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 
 void SAutoSizeCommentsGraphNode::InitializeASCNode()
 {
+	TSharedPtr<SGraphNode> NodeWidget = GetOwnerPanel()->GetNodeWidgetFromGuid(GetCommentNodeObj()->NodeGuid);
+	if (NodeWidget != AsShared())
+	{
+		return;
+	}
+
 	if (!bInitialized)
 	{
 		bInitialized = true;
