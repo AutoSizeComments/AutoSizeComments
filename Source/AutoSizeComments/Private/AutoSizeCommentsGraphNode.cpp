@@ -78,15 +78,10 @@ SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 	{
 		FASCState::Get().RemoveComment(CommentNode);
 	}
-
-	ResetNodesUnrelated();
-
-	UpdateCache();
 }
 
 void SAutoSizeCommentsGraphNode::OnDeleted()
 {
-	ResetNodesUnrelated();
 }
 
 void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
@@ -728,6 +723,12 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 		return;
 	}
 
+	// skip loading from cache if the comment node already contains any nodes (e.g. when reloading visuals)
+	if (CommentNode->GetNodesUnderComment().Num() > 0)
+	{
+		return;
+	}
+
 	LoadCache();
 
 	FASCCommentData& CommentData = GetCommentData();
@@ -736,6 +737,7 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 		return;
 	}
 
+	// check if we actually found anything from the node cache
 	if (CommentNode->GetNodesUnderComment().Num() > 0)
 	{
 		return;

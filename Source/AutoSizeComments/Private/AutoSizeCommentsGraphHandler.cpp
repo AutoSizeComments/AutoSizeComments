@@ -376,6 +376,7 @@ void FAutoSizeCommentGraphHandler::OnNodeAdded(const FEdGraphEditAction& Action)
 
 void FAutoSizeCommentGraphHandler::OnNodeDeleted(const FEdGraphEditAction& Action)
 {
+	bool bResetUnrelatedNodes = false;
 	for (const UEdGraphNode* Node : Action.Nodes)
 	{
 		const UEdGraphNode_Comment* Comment = Cast<UEdGraphNode_Comment>(Node);
@@ -384,10 +385,23 @@ void FAutoSizeCommentGraphHandler::OnNodeDeleted(const FEdGraphEditAction& Actio
 			return;
 		}
 
+		if (Action.Graph)
+		{
+			bResetUnrelatedNodes = true;
+		}
+
 		TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode = FASCState::Get().GetASCComment(Comment);
 		if (ASCNode.IsValid())
 		{
 			ASCNode->OnDeleted();
+		}
+	}
+
+	if (bResetUnrelatedNodes)
+	{
+		for (UEdGraphNode* NodeToUpdate : Action.Graph->Nodes)
+		{
+			NodeToUpdate->SetNodeUnrelated(false);
 		}
 	}
 }
