@@ -1765,10 +1765,12 @@ void SAutoSizeCommentsGraphNode::SetNodesRelated(const TArray<UEdGraphNode*>& No
 void SAutoSizeCommentsGraphNode::ResetNodesUnrelated()
 {
 #if ASC_UE_VERSION_OR_LATER(4, 23)
-	const TArray<UEdGraphNode*>& AllNodes = GetNodeObj()->GetGraph()->Nodes;
-	for (UEdGraphNode* Node : AllNodes)
+	if (UEdGraph* Graph = GetNodeObj()->GetGraph())
 	{
-		Node->SetNodeUnrelated(false);
+		for (UEdGraphNode* Node : Graph->Nodes)
+		{
+			Node->SetNodeUnrelated(false);
+		}
 	}
 #endif
 }
