@@ -121,11 +121,12 @@ protected:
 	FReply HandleSubtractButtonClicked();
 	FReply HandleClearButtonClicked();
 
-	void InitializeASCNode();
-	void InitializeNodesUnderComment();
+	void InitializeASCNode(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes);
+	void InitializeNodesUnderComment(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes);
 
 	bool AddInitialNodes();
 	bool AddAllSelectedNodes();
+	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes);
 	bool RemoveAllSelectedNodes();
 
 	void UpdateColors(const float InDeltaTime);

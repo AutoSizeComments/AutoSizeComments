@@ -659,21 +659,27 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 {
 	SGraphNode::SetOwner(OwnerPanel);
 
+	TArray<TWeakObjectPtr<UObject>> InitialSelectedNodes;
+	for (UObject* SelectedNode : OwnerPanel->SelectionManager.GetSelectedNodes())
+	{
+		InitialSelectedNodes.Add(SelectedNode);
+	}
+
 	// since the graph node is created twice, we need to delay initialization so the correct graph node gets initialized
-	const auto InitNode = [](TWeakPtr<SAutoSizeCommentsGraphNode> NodePtr)
+	const auto InitNode = [](TWeakPtr<SAutoSizeCommentsGraphNode> NodePtr, const TArray<TWeakObjectPtr<UObject>>& SelectedNodes)
 	{
 		if (NodePtr.IsValid())
 		{
-			NodePtr.Pin()->InitializeASCNode();
+			NodePtr.Pin()->InitializeASCNode(SelectedNodes);
 		}
 	};
 
-	const auto Delegate = FTimerDelegate::CreateLambda(InitNode, SharedThis(this));
+	const auto Delegate = FTimerDelegate::CreateLambda(InitNode, SharedThis(this), InitialSelectedNodes);
 	GEditor->GetTimerManager()->SetTimerForNextTick(Delegate);
 }
 
 
-void SAutoSizeCommentsGraphNode::InitializeASCNode()
+void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes)
 {
 	TSharedPtr<SGraphNode> NodeWidget = GetOwnerPanel()->GetNodeWidgetFromGuid(GetCommentNodeObj()->NodeGuid);
 	if (NodeWidget != AsShared())
@@ -687,7 +693,7 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode()
 
 		FASCCommentData& CommentData = GetCommentData();
 
-		InitializeNodesUnderComment();
+		InitializeNodesUnderComment(InitialSelectedNodes);
 
 		// register graph
 		FASCState::Get().RegisterComment(SharedThis(this));
@@ -702,7 +708,7 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode()
 	}
 }
 
-void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment()
+void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes)
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 	if (!OwnerPanel)
@@ -742,9 +748,19 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment()
 		return;
 	}
 
-	// add all selected nodes
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bIgnoreSelectedNodesOnCreation && AnySelectedNodes() && AddInitialNodes())
+	TArray<UObject*> SelectedNodes;
+	for (TWeakObjectPtr<UObject> Node : InitialSelectedNodes)
 	{
+		if (Node.IsValid())
+		{
+			SelectedNodes.Add(Node.Get());
+		}
+	}
+
+	// add all selected nodes
+	if (SelectedNodes.Num() > 0 && !GetDefault<UAutoSizeCommentsSettings>()->bIgnoreSelectedNodesOnCreation)
+	{
+		AddAllNodesUnderComment(SelectedNodes);
 		return;
 	}
 
@@ -903,12 +919,32 @@ bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes()
 		return false;
 	}
 
-	auto SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
+	const FGraphPanelSelectionSet& SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
 	for (UObject* SelectedObj : SelectedNodes)
 	{
 		if (CanAddNode(SelectedObj))
 		{
 			CommentNode->AddNodeUnderComment(SelectedObj);
+			bDidAddAnything = true;
+		}
+	}
+
+	if (bDidAddAnything)
+	{
+		UpdateExistingCommentNodes();
+	}
+
+	return bDidAddAnything;
+}
+
+bool SAutoSizeCommentsGraphNode::AddAllNodesUnderComment(const TArray<UObject*>& Nodes)
+{
+	bool bDidAddAnything = false;
+	for (UObject* Node : Nodes)
+	{
+		if (CanAddNode(Node))
+		{
+			CommentNode->AddNodeUnderComment(Node);
 			bDidAddAnything = true;
 		}
 	}
