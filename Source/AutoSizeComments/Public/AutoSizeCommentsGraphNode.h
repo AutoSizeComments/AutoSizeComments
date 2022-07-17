@@ -48,6 +48,8 @@ public:
 	EASCAnchorPoint CachedAnchorPoint = EASCAnchorPoint::None;
 	float AnchorSize = 40.f;
 
+	bool bWasCopyPasted = false;
+
 #if ASC_UE_VERSION_OR_LATER(4, 27)
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 #else

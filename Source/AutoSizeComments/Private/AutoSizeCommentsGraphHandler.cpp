@@ -450,6 +450,10 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 
 	if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
 	{
+		if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Cast<UEdGraphNode_Comment>(Node)))
+		{
+			ASCComment->bWasCopyPasted = true;
+		}
 		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
 	}
 }
