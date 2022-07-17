@@ -27,8 +27,18 @@ void FASCState::RemoveComment(const UEdGraphNode_Comment* Comment)
 	
 TSharedPtr<SAutoSizeCommentsGraphNode> FASCState::GetASCComment(const UEdGraphNode_Comment* Comment)
 {
+	if (!Comment)
+	{
+		return nullptr;
+	}
+
 	TWeakPtr<SAutoSizeCommentsGraphNode> WeakPtr = CommentToASCMapping.FindRef(Comment->NodeGuid);
-	return WeakPtr.Pin();
+	if (WeakPtr.IsValid())
+	{
+		return WeakPtr.Pin();
+	}
+
+	return nullptr;
 }
 
 bool FASCState::HasRegisteredComment(UEdGraphNode_Comment* Comment)
