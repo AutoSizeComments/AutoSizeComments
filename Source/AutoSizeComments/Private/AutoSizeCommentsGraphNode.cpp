@@ -1155,9 +1155,9 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 		else
 		{
 			// check if all nodes in the other comment box are within our comment box
-			const bool bAllNodesContainedUnderOther = !CommentNode->GetNodesUnderComment().ContainsByPredicate([OtherComment](UObject* NodeUnderSelf)
+			const bool bAllNodesContainedUnderOther = !OurMainNodes.ContainsByPredicate([&OtherMainNodes](UObject* NodeUnderSelf)
 			{
-				return !OtherComment->GetNodesUnderComment().Contains(NodeUnderSelf);
+				return !OtherMainNodes.Contains(NodeUnderSelf);
 			});
 
 			if (bAllNodesContainedUnderOther) // all nodes under the other comment box is also in this comment box, so add the other comment box
@@ -1835,7 +1835,6 @@ bool SAutoSizeCommentsGraphNode::LoadCache()
 	TArray<UEdGraphNode*> OutNodesUnder;
 	if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(SharedThis(this), OutNodesUnder))
 	{
-		CommentNode->ClearNodesUnderComment();
 		for (UEdGraphNode* Node : OutNodesUnder)
 		{
 			if (!HasNodeBeenDeleted(Node))
