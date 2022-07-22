@@ -73,6 +73,8 @@ void FAutoSizeCommentGraphHandler::BindToGraph(UEdGraph* Graph)
 		return;
 	}
 
+	GraphDatas.Remove(nullptr);
+
 	FASCGraphHandlerData GraphData;
 	GraphData.OnGraphChangedHandle = Graph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::OnGraphChanged));
 
@@ -89,7 +91,6 @@ void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Acti
 	{
 		OnNodeDeleted(Action);
 	}
-
 }
 
 void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEdGraphNode> NewNode, TWeakObjectPtr<UEdGraphNode> LastSelectedNode)
@@ -335,6 +336,31 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 	{
 		bProcessedAltReleased = false;
 	}));
+}
+
+void FAutoSizeCommentGraphHandler::UpdateCommentChangeState(UEdGraphNode_Comment* Comment)
+{
+	UEdGraph* Graph = Comment->GetGraph();
+	if (!Graph)
+	{
+		return;
+	}
+
+	FASCGraphHandlerData& GraphData = GraphDatas.FindOrAdd(Comment->GetGraph());
+	GraphData.CommentChangeData.FindOrAdd(Comment).UpdateComment(Comment);
+}
+
+bool FAutoSizeCommentGraphHandler::HasCommentChanged(UEdGraphNode_Comment* Comment)
+{
+	if (FASCGraphHandlerData* GraphData = GraphDatas.Find(Comment->GetGraph()))
+	{
+		if (FASCCommentChangeData* CommentChangeData = GraphData->CommentChangeData.Find(Comment))
+		{
+			return CommentChangeData->HasCommentChanged(Comment);
+		}
+	}
+
+	return false;
 }
 
 bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)

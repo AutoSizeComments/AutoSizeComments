@@ -386,9 +386,10 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 			{
 				ResizeToFit();
 			}
-			else if (ASCSettings->ResizingMode == EASCResizingMode::Reactive && CommentChangeData.HasCommentChanged(CommentNode))
+			else if (ASCSettings->ResizingMode == EASCResizingMode::Reactive &&
+				FAutoSizeCommentGraphHandler::Get().HasCommentChanged(CommentNode))
 			{
-				CommentChangeData.UpdateComment(CommentNode);
+				FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
 				ResizeToFit();
 			}
 
@@ -715,7 +716,10 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		// init graph handler for containing graph
 		FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
 
-		CommentChangeData.UpdateComment(CommentNode);
+		if (!FAutoSizeCommentGraphHandler::Get().HasCommentChanged(CommentNode))
+		{
+			FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
+		}
 
 		if (!CommentData.HasBeenInitialized())
 		{

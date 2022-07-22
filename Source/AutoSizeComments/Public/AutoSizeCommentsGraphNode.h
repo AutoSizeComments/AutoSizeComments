@@ -51,8 +51,6 @@ public:
 
 	bool bWasCopyPasted = false;
 
-	FASCCommentChangeData CommentChangeData;
-
 #if ASC_UE_VERSION_OR_LATER(4, 27)
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 #else

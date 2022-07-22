@@ -3,6 +3,7 @@
 #pragma once
 
 #include "AutoSIzeCommentsMacros.h"
+#include "AutoSizeCommentsNodeChangeData.h"
 
 class UEdGraphNode_Comment;
 class SGraphPanel;
@@ -11,6 +12,8 @@ struct FASCGraphHandlerData
 {
 	TArray<TWeakObjectPtr<UEdGraphNode_Comment>> LastSelectionSet;
 	FDelegateHandle OnGraphChangedHandle;
+
+	TMap<TWeakObjectPtr<UEdGraphNode_Comment>, FASCCommentChangeData> CommentChangeData;
 };
 
 class FAutoSizeCommentGraphHandler
@@ -33,6 +36,9 @@ public:
 	void RequestGraphVisualRefresh(TSharedPtr<SGraphPanel> GraphPanel);
 
 	void ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel);
+
+	void UpdateCommentChangeState(UEdGraphNode_Comment* Comment);
+	bool HasCommentChanged(UEdGraphNode_Comment* Comment);
 
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FASCGraphHandlerData> GraphDatas;
