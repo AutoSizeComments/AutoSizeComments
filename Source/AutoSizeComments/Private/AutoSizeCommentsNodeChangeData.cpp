@@ -48,13 +48,13 @@ void FASCNodeChangeData::UpdateNode(UEdGraphNode* Node)
 	NodeTitle = FASCUtils::GetNodeName(Node);
 	bCommentBubblePinned = Node->bCommentBubblePinned;
 	NodeEnabledState = Node->GetDesiredEnabledState();
-	NodePosition.X = Node->NodePosX;
-	NodePosition.Y = Node->NodePosY;
+	NodeX = Node->NodePosX;
+	NodeY = Node->NodePosY;
 }
 
 bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 {
-	if (Node->NodePosX != NodePosition.X || Node->NodePosY != NodePosition.Y)
+	if (Node->NodePosX != NodeX || Node->NodePosY != NodeY)
 	{
 		return true;
 	}

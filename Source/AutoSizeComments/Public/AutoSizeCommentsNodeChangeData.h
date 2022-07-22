@@ -36,7 +36,8 @@ class FASCNodeChangeData
 	FString NodeTitle;
 	TEnumAsByte<ENodeAdvancedPins::Type> AdvancedPinDisplay;
 	ENodeEnabledState NodeEnabledState;
-	FIntVector2 NodePosition;
+	int32 NodeX;
+	int32 NodeY;
 
 public:
 	FASCNodeChangeData() = default;

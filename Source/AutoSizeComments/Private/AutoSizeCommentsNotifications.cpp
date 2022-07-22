@@ -2,6 +2,7 @@
 
 #include "AutoSizeCommentsNotifications.h"
 
+#include "AutoSizeCommentsMacros.h"
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
 #include "ISourceControlModule.h"
@@ -41,8 +42,12 @@ void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
 		return;
 	}
 
+#if ASC_UE_VERSION_OR_LATER(5, 0)
 	FNotificationInfo Info(FText::FromString("Auto Size Comments"));
 	Info.SubText = FText::FromString("Source control is enabled: Apply Reactive resizing mode?");
+#else
+	FNotificationInfo Info(FText::FromString("[AutoSizeComments] Source control is enabled: Apply Reactive resizing mode?"));
+#endif
 	Info.bUseSuccessFailIcons = false;
 	Info.ExpireDuration = 0.0f;
 	Info.FadeInDuration = 0.0f;
@@ -131,9 +136,12 @@ void FAutoSizeCommentsNotifications::ShowBlueprintAssistNotification()
 		return;
 	}
 
-	const FText Message = FText::FromString("AutoSizeComments: The Blueprint Assist plugin is loaded, apply suggested settings?");
-	FNotificationInfo Info(FText::FromString("AutoSizeComments"));
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+	FNotificationInfo Info(FText::FromString("Auto Size Comments"));
 	Info.SubText = FText::FromString("Blueprint Assist plugin is loaded: Apply suggested settings?");
+#else
+	FNotificationInfo Info(FText::FromString("[AutoSizeComments] Blueprint Assist plugin is loaded: Apply suggested settings?"));
+#endif
 	Info.bUseSuccessFailIcons = false;
 	Info.ExpireDuration = 0.0f;
 	Info.FadeInDuration = 0.0f;
