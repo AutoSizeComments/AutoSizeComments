@@ -173,12 +173,18 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 			{
 				if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
 				{
-					if (!Panel->SelectionManager.IsNodeSelected(Node) && !NodeFilter.Find(Node->DEPRECATED_NodeWidget.Pin()))
+					if (!Panel->SelectionManager.IsNodeSelected(Node))
 					{
-						NodeFilter.Add(Node->DEPRECATED_NodeWidget.Pin());
-						Node->Modify();
-						Node->NodePosX += PositionDelta.X;
-						Node->NodePosY += PositionDelta.Y;
+						if (TSharedPtr<SGraphNode> PanelGraphNode = FASCUtils::GetGraphNode(Panel, Node))
+						{
+							if (!NodeFilter.Find(PanelGraphNode))
+							{
+								NodeFilter.Add(PanelGraphNode);
+								Node->Modify();
+								Node->NodePosX += PositionDelta.X;
+								Node->NodePosY += PositionDelta.Y;
+							}
+						}
 					}
 				}
 			}
@@ -2092,11 +2098,11 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 
 	FVector2D Size(300, 150);
 
-	TWeakPtr<SGraphNode> LocalGraphNode = Node->DEPRECATED_NodeWidget;
+	auto LocalGraphNode = FASCUtils::GetGraphNode(GetOwnerPanel(), Node);
 	if (LocalGraphNode.IsValid())
 	{
-		Pos = LocalGraphNode.Pin()->GetPosition();
-		Size = LocalGraphNode.Pin()->GetDesiredSize();
+		Pos = LocalGraphNode->GetPosition();
+		Size = LocalGraphNode->GetDesiredSize();
 
 		if (CommentBubble.IsValid() && CommentBubble->IsBubbleVisible())
 		{
