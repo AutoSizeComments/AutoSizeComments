@@ -221,9 +221,13 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	TArray<FString> IgnoredGraphs;
 
-	/** Show prompt for suggested settings with Blueprint Assist plugin */
+	/** Hide prompt for suggested settings with Blueprint Assist plugin */
 	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	bool bSuppressSuggestedSettings;
+
+	/** Hide prompt for suggested settings when source control is enabled*/
+	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
+	bool bSuppressSourceControlNotification;
 
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)

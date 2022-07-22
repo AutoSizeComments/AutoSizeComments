@@ -57,6 +57,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	IgnoredGraphs.Add("ControlRigGraph");
 #endif
 	bSuppressSuggestedSettings = false;
+	bSuppressSourceControlNotification = false;
 	bHideHeaderButton = false;
 	bHideCommentBoxControls = false;
 	bHidePresets = false;

@@ -7,6 +7,7 @@
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
 #include "AutoSizeCommentsInputProcessor.h"
+#include "AutoSizeCommentsNotifications.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "ISettingsModule.h"
@@ -55,6 +56,8 @@ void FAutoSizeCommentsModule::OnPostEngineInit()
 	FAutoSizeCommentGraphHandler::Get().BindDelegates();
 
 	FAutoSizeCommentsInputProcessor::Create();
+
+	FAutoSizeCommentsNotifications::Get().Initialize();
 }
 
 void FAutoSizeCommentsModule::ShutdownModule()
