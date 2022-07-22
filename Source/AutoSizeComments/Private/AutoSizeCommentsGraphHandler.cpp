@@ -226,6 +226,117 @@ void FAutoSizeCommentGraphHandler::RefreshGraphVisualRefresh(TWeakPtr<SGraphPane
 	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda(UpdateGraphPanel, GraphPanel));
 }
 
+void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	if (!GraphPanel)
+	{
+		return;
+	}
+
+	auto Graph = GraphPanel->GetGraphObj();
+	if (!Graph)
+	{
+		return;
+	}
+
+	if (bProcessedAltReleased)
+	{
+		return;
+	}
+
+	bProcessedAltReleased = true;
+
+	TArray<UEdGraphNode_Comment*> CommentNodes;
+	Graph->GetNodesOfClass(CommentNodes);
+
+	TSet<UObject*> SelectedNodes;
+	for (auto Node : GraphPanel->SelectionManager.GetSelectedNodes())
+	{
+		SelectedNodes.Add(Node);
+		if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(Node))
+		{
+			SelectedNodes.Append(SelectedComment->GetNodesUnderComment());
+		}
+	}
+
+	TMap<TSharedPtr<SAutoSizeCommentsGraphNode>, TArray<UEdGraphNode_Comment*>> OldParentComments;
+	TArray<TSharedPtr<SAutoSizeCommentsGraphNode>> ASCGraphNodes;
+
+	// gather asc graph nodes and store the parent comments for later
+	for (UEdGraphNode_Comment* CommentNode : CommentNodes)
+	{
+		TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode);
+		if (!ASCGraphNode)
+		{
+			continue;
+		}
+
+		if (ASCGraphNode->IsHeaderComment())
+		{
+			return;
+		}
+
+		ASCGraphNodes.Add(ASCGraphNode);
+		OldParentComments.Add(ASCGraphNode, ASCGraphNode->GetParentComments());
+	}
+
+	// update their containing nodes
+	for (TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode : ASCGraphNodes)
+	{
+		UEdGraphNode_Comment* CommentNode = ASCGraphNode->GetCommentNodeObj();
+
+		const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
+
+		if (SelectedNodes.Contains(CommentNode))
+		{
+			ASCGraphNode->RefreshNodesInsideComment(AltCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenPressingAlt, false);
+		}
+		else
+		{
+			TArray<UEdGraphNode*> OutNodes;
+			ASCGraphNode->QueryNodesUnderComment(OutNodes, AltCollisionMethod);
+			OutNodes = OutNodes.FilterByPredicate(SAutoSizeCommentsGraphNode::IsMajorNode);
+
+			TSet<UObject*> NewSelection(CommentNode->GetNodesUnderComment());
+			bool bChanged = false;
+			for (UObject* Node : SelectedNodes)
+			{
+				if (OutNodes.Contains(Node))
+				{
+					bool bAlreadyInSet = false;
+					NewSelection.Add(Node, &bAlreadyInSet);
+					bChanged = !bAlreadyInSet;
+				}
+				else
+				{
+					if (NewSelection.Remove(Node) > 0)
+					{
+						bChanged = true;
+					}
+				}
+			}
+
+			if (bChanged)
+			{
+				CommentNode->ClearNodesUnderComment();
+				ASCGraphNode->AddAllNodesUnderComment(NewSelection.Array(), false);
+				OldParentComments.Add(ASCGraphNode, ASCGraphNode->GetParentComments());
+			}
+		}
+	}
+
+	// update existing comment nodes using the parent comments stored earlier 
+	for (auto Kvp : OldParentComments)
+	{
+		Kvp.Key->UpdateExistingCommentNodes(Kvp.Value);
+	}
+
+	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([&]
+	{
+		bProcessedAltReleased = false;
+	}));
+}
+
 bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 {
 	UpdateNodeUnrelatedState();

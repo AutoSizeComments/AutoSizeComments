@@ -939,7 +939,7 @@ bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes()
 	return bDidAddAnything;
 }
 
-bool SAutoSizeCommentsGraphNode::AddAllNodesUnderComment(const TArray<UObject*>& Nodes)
+bool SAutoSizeCommentsGraphNode::AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments)
 {
 	bool bDidAddAnything = false;
 	for (UObject* Node : Nodes)
@@ -951,7 +951,7 @@ bool SAutoSizeCommentsGraphNode::AddAllNodesUnderComment(const TArray<UObject*>&
 		}
 	}
 
-	if (bDidAddAnything)
+	if (bDidAddAnything && bUpdateExistingComments)
 	{
 		UpdateExistingCommentNodes();
 	}
@@ -1062,7 +1062,7 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 	}
 }
 
-void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots)
+void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots, const bool bUpdateExistingComments)
 {
 	if (OverrideCollisionMethod == ECommentCollisionMethod::Disabled)
 	{
@@ -1092,7 +1092,10 @@ void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisi
 		}
 	}
 
-	UpdateExistingCommentNodes();
+	if (bUpdateExistingComments)
+	{
+		UpdateExistingCommentNodes();
+	}
 }
 
 float SAutoSizeCommentsGraphNode::GetTitleBarHeight() const
@@ -1102,10 +1105,14 @@ float SAutoSizeCommentsGraphNode::GetTitleBarHeight() const
 
 void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 {
+	UpdateExistingCommentNodes(GetParentComments());
+}
+
+
+void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>& OldParentComments)
+{
 	// Get list of all other comment nodes
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> OtherCommentNodes = GetOtherCommentNodes();
-
-	TArray<UEdGraphNode_Comment*> OldParentComments = GetParentComments();
 
 	TArray<UObject*> OurMainNodes = CommentNode->GetNodesUnderComment().FilterByPredicate(IsMajorNode);
 
@@ -2039,58 +2046,7 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(const UObject* Node, const bool bIgn
 
 void SAutoSizeCommentsGraphNode::OnAltReleased()
 {
-	if (IsHeaderComment())
-	{
-		return;
-	}
-
-	const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
-
-	TSet<UObject*> SelectedNodes;
-	for (auto Node : GetOwnerPanel()->SelectionManager.GetSelectedNodes())
-	{
-		SelectedNodes.Add(Node);
-		if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(Node))
-		{
-			SelectedNodes.Append(SelectedComment->GetNodesUnderComment());
-		}
-	}
-
-	if (SelectedNodes.Contains(CommentNode))
-	{
-		RefreshNodesInsideComment(AltCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenPressingAlt);
-	}
-	else
-	{
-		TArray<UEdGraphNode*> OutNodes;
-		QueryNodesUnderComment(OutNodes, AltCollisionMethod);
-		OutNodes = OutNodes.FilterByPredicate(IsMajorNode);
-
-		TSet<UObject*> NewSelection(CommentNode->GetNodesUnderComment());
-		bool bChanged = false;
-		for (UObject* Node : SelectedNodes)
-		{
-			if (OutNodes.Contains(Node))
-			{
-				bool bAlreadyInSet = false;
-				NewSelection.Add(Node, &bAlreadyInSet);
-				bChanged = !bAlreadyInSet;
-			}
-			else
-			{
-				if (NewSelection.Remove(Node) > 0)
-				{
-					bChanged = true;
-				}
-			}
-		}
-
-		if (bChanged)
-		{
-			CommentNode->ClearNodesUnderComment();
-			AddAllNodesUnderComment(NewSelection.Array());
-		}
-	}
+	FAutoSizeCommentGraphHandler::Get().ProcessAltReleased(GetOwnerPanel());
 }
 
 bool SAutoSizeCommentsGraphNode::IsCommentNode(UObject* Object)

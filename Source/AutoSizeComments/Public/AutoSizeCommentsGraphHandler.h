@@ -32,6 +32,8 @@ public:
 
 	void RequestGraphVisualRefresh(TSharedPtr<SGraphPanel> GraphPanel);
 
+	void ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel);
+
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FASCGraphHandlerData> GraphDatas;
 
@@ -46,6 +48,8 @@ private:
 	bool bPendingSave = false;
 
 	bool bPendingGraphVisualRequest = false;
+
+	bool bProcessedAltReleased = false;
 
 	bool Tick(float DeltaTime);
 

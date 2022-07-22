@@ -128,7 +128,6 @@ protected:
 
 	bool AddInitialNodes();
 	bool AddAllSelectedNodes();
-	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes);
 	bool RemoveAllSelectedNodes();
 
 	void UpdateColors(const float InDeltaTime);
@@ -207,7 +206,7 @@ public:
 	/** Update the nodes */
 	void UpdateRefreshDelay();
 
-	void RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
+	void RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false, const bool bUpdateExistingComments = true);
 
 	float GetTitleBarHeight() const;
 
@@ -216,6 +215,7 @@ public:
 	FSlateRect GetNodeBounds(UEdGraphNode* Node);
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> GetOtherCommentNodes();
 	TArray<UEdGraphNode_Comment*> GetParentComments() const;
+	void UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>& OldParentComments);
 	void UpdateExistingCommentNodes();
 	bool AnySelectedNodes();
 	static bool RemoveNodesFromUnderComment(UEdGraphNode_Comment* InCommentNode, TSet<UObject*>& NodesToRemove);
@@ -223,6 +223,7 @@ public:
 	void SnapVectorToGrid(FVector2D& Vector);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 	TArray<UEdGraphNode*> GetEdGraphNodesUnderComment(UEdGraphNode_Comment* InCommentNode) const;
+	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments = true);
 
 	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
 
