@@ -22,4 +22,9 @@ protected:
 	void HandleSourceControlProviderChanged(ISourceControlProvider& OldSourceControlProvider, ISourceControlProvider& NewControlProvider);
 	bool ShouldShowSourceControlNotification();
 	// ~~ Source control related
+
+	// ~~ Blueprint Assist related
+	TWeakPtr<SNotificationItem> BlueprintAssistNotification;
+	void ShowBlueprintAssistNotification();
+	// ~~ Blueprint Assist related
 };

@@ -29,6 +29,9 @@ void FAutoSizeCommentsNotifications::Initialize()
 	{
 		ISourceControlModule::Get().RegisterProviderChanged(FSourceControlProviderChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged));
 	}
+
+	// We need this right now but leaving this here in case we do in the future
+	// ShowBlueprintAssistNotification();
 }
 
 void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
@@ -113,4 +116,89 @@ bool FAutoSizeCommentsNotifications::ShouldShowSourceControlNotification()
 	return !SourceControlNotification.IsValid() &&
 		ASCSettings->ResizingMode != EASCResizingMode::Reactive &&
 		!ASCSettings->bSuppressSourceControlNotification;
+}
+
+void FAutoSizeCommentsNotifications::ShowBlueprintAssistNotification()
+{
+	if (!FModuleManager::Get().IsModuleLoaded("BlueprintAssist"))
+	{
+		return;
+	}
+
+	UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
+	if (MutableSettings->bSuppressSuggestedSettings)
+	{
+		return;
+	}
+
+	const FText Message = FText::FromString("AutoSizeComments: The Blueprint Assist plugin is loaded, apply suggested settings?");
+	FNotificationInfo Info(FText::FromString("AutoSizeComments"));
+	Info.SubText = FText::FromString("Blueprint Assist plugin is loaded: Apply suggested settings?");
+	Info.bUseSuccessFailIcons = false;
+	Info.ExpireDuration = 0.0f;
+	Info.FadeInDuration = 0.0f;
+	Info.FadeOutDuration = 0.5f;
+	Info.bUseThrobber = false;
+	Info.bFireAndForget = false;
+
+	// Close button
+	{
+		const auto OnClose = FSimpleDelegate::CreateLambda([&BlueprintAssistNotification = BlueprintAssistNotification]
+		{
+			if (BlueprintAssistNotification.IsValid())
+			{
+				BlueprintAssistNotification.Pin()->ExpireAndFadeout();
+			}
+		});
+
+		Info.ButtonDetails.Add(FNotificationButtonInfo(
+			FText::FromString(TEXT("Close")),
+			FText(),
+			OnClose,
+			SNotificationItem::CS_Pending
+		));
+	}
+
+	// Apply button
+	{
+		const auto ApplySettings = FSimpleDelegate::CreateLambda([&BlueprintAssistNotification = BlueprintAssistNotification]
+		{
+			UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
+			MutableSettings->Modify();
+			MutableSettings->bIgnoreKnotNodesWhenPressingAlt = true;
+			MutableSettings->SaveConfig();
+
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Applied suggested settings for Blueprint Assist Module"));
+
+			if (BlueprintAssistNotification.IsValid())
+			{
+				BlueprintAssistNotification.Pin()->ExpireAndFadeout();
+			}
+		});
+
+		Info.ButtonDetails.Add(FNotificationButtonInfo(
+			FText::FromString(TEXT("Apply")),
+			FText(),
+			ApplySettings,
+			SNotificationItem::CS_Pending
+		));
+	}
+
+	Info.CheckBoxState = ECheckBoxState::Checked;
+	MutableSettings->Modify();
+	MutableSettings->bSuppressSuggestedSettings = true;
+	MutableSettings->SaveConfig();
+
+	Info.CheckBoxStateChanged = FOnCheckStateChanged::CreateStatic([](ECheckBoxState NewState)
+	{
+		UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
+		MutableSettings->Modify();
+		MutableSettings->bSuppressSuggestedSettings = (NewState == ECheckBoxState::Checked);
+		MutableSettings->SaveConfig();
+	});
+
+	Info.CheckBoxText = FText::FromString(TEXT("Do not show again"));
+
+	BlueprintAssistNotification = FSlateNotificationManager::Get().AddNotification(Info);
+	BlueprintAssistNotification.Pin()->SetCompletionState(SNotificationItem::CS_Pending);
 }

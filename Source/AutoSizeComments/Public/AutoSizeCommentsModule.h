@@ -34,13 +34,5 @@ public:
 private:
 	TSharedPtr<FAutoSizeCommentsGraphPanelNodeFactory> ASCNodeFactory;
 
-	TWeakPtr<SNotificationItem> SuggestedSettingsNotification;
-
 	void OnPostEngineInit();
-
-	void SuggestBlueprintAssistSettings();
-
-	void OnCancelSuggestion();
-
-	void OnApplySuggestion();
 };
