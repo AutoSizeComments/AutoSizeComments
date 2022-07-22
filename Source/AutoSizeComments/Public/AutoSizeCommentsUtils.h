@@ -24,4 +24,8 @@ struct FASCUtils
 	static TSharedPtr<SGraphPin> GetHoveredGraphPin(TSharedPtr<SGraphPanel> GraphPanel);
 
 	static TArray<UEdGraphNode_Comment*> GetSelectedComments(TSharedPtr<SGraphPanel> GraphPanel);
+
+	static bool IsGraphReadOnly(TSharedPtr<SGraphPanel> GraphPanel);
+
+	static FString GetNodeName(UEdGraphNode* Node);
 };

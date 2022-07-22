@@ -11,10 +11,28 @@
 #include "AutoSizeCommentsSettings.generated.h"
 
 UENUM()
+enum class EASCResizingMode : uint8
+{
+	/** Resize to containing nodes on tick */
+	Always UMETA(DisplayName = "Always"),
+
+	/** Resize when detecting containing a node change (position / size) */
+	Reactive UMETA(DisplayName = "Reactive"),
+
+	/** Never resize */
+	Disabled UMETA(DisplayName = "Disabled"),
+};
+
+UENUM()
 enum class ECommentCollisionMethod : uint8
 {
+	/** Add the node if the top-left corner is inside the comment */
 	Point UMETA(DisplayName = "Point"),
+
+	/** Add the node if it is intersecting the comment */
 	Intersect UMETA(DisplayName = "Overlap"),
+
+	/** Add the node if it is fully contained in the comment */
 	Contained UMETA(DisplayName = "Contained"),
 	Disabled UMETA(DisplayName = "Disabled"),
 };
@@ -91,6 +109,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Styles)
 	TArray<FPresetCommentStyle> PresetStyles;
 
+	/** The auto resizing behavior for comments (always: on tick | reactive: upon detecting node movement) */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	EASCResizingMode ResizingMode;
+
 	/** Determines when to insert newly created nodes into existing comments */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	EASCAutoInsertComment AutoInsertComment;
@@ -98,10 +120,6 @@ public:
 	/** When you click a node's pin, also select the node (required for AutoInsertComment to function correctly) */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bSelectNodeWhenClickingOnPin;
-
-	/** Disable the auto resizing behavior for comments */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
-	bool bDisableResizing;
 
 	/** Amount of padding for around the contents of a comment node */
 	UPROPERTY(EditAnywhere, config, Category = Misc)

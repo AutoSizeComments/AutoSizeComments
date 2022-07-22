@@ -6,6 +6,7 @@
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
+#include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "GraphEditorSettings.h"
 #include "K2Node_Knot.h"
@@ -234,6 +235,8 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, 
 
 		ResetNodesUnrelated();
 
+		ResizeToFit();
+
 		return FReply::Handled().ReleaseMouseCapture();
 	}
 
@@ -344,6 +347,13 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDoubleClick(const FGeometry& InM
 
 void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
+	if (!bInitialized)
+	{
+		return;
+	}
+
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+
 	bool bRequireUpdate = false;
 
 	UpdateRefreshDelay();
@@ -366,8 +376,13 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 				OnAltReleased();
 			}
 
-			if (!GetDefault<UAutoSizeCommentsSettings>()->bDisableResizing)
+			if (ASCSettings->ResizingMode == EASCResizingMode::Always)
 			{
+				ResizeToFit();
+			}
+			else if (ASCSettings->ResizingMode == EASCResizingMode::Reactive && CommentChangeData.HasCommentChanged(CommentNode))
+			{
+				CommentChangeData.UpdateComment(CommentNode);
 				ResizeToFit();
 			}
 
@@ -383,8 +398,6 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 	}
 
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
-
-	const auto ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
 	if (IsHeaderComment())
 	{
@@ -696,6 +709,8 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		// init graph handler for containing graph
 		FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
 
+		CommentChangeData.UpdateComment(CommentNode);
+
 		if (!CommentData.HasBeenInitialized())
 		{
 			CommentData.SetInitialized(true);
@@ -763,6 +778,7 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 	if (SelectedNodes.Num() > 0 && !GetDefault<UAutoSizeCommentsSettings>()->bIgnoreSelectedNodesOnCreation)
 	{
 		AddAllNodesUnderComment(SelectedNodes);
+		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &SAutoSizeCommentsGraphNode::ResizeToFit));
 		return;
 	}
 
@@ -1053,7 +1069,9 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 		if (RefreshNodesDelay == 0)
 		{
 			RefreshNodesInsideComment(ECommentCollisionMethod::Point);
-			
+
+			ResizeToFit();
+
 			if (GetDefault<UAutoSizeCommentsSettings>()->bEnableFixForSortDepthIssue)
 			{
 				FAutoSizeCommentGraphHandler::Get().RequestGraphVisualRefresh(GetOwnerPanel());
@@ -1656,6 +1674,15 @@ void SAutoSizeCommentsGraphNode::SnapVectorToGrid(FVector2D& Vector)
 	const float SnapSize = SNodePanel::GetSnapGridSize();
 	Vector.X = SnapSize * FMath::RoundToFloat(Vector.X / SnapSize);
 	Vector.Y = SnapSize * FMath::RoundToFloat(Vector.Y / SnapSize);
+}
+
+void SAutoSizeCommentsGraphNode::SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier)
+{
+	const float SnapSize = SNodePanel::GetSnapGridSize() * GridMultiplier;
+	Bounds.Left = SnapSize * FMath::FloorToInt(Bounds.Left / SnapSize);
+	Bounds.Right = SnapSize * FMath::CeilToInt(Bounds.Right / SnapSize);
+	Bounds.Top = SnapSize * FMath::FloorToInt(Bounds.Top / SnapSize);
+	Bounds.Bottom = SnapSize * FMath::CeilToInt(Bounds.Bottom / SnapSize);
 }
 
 bool SAutoSizeCommentsGraphNode::IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const

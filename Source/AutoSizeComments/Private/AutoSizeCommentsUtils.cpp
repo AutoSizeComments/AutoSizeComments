@@ -2,6 +2,7 @@
 
 #include "EdGraphNode_Comment.h"
 #include "SGraphPanel.h"
+#include "Kismet2/BlueprintEditorUtils.h"
 
 TArray<UEdGraphNode_Comment*> FASCUtils::GetContainingCommentNodes(const TArray<UEdGraphNode_Comment*>& Comments, UEdGraphNode* Node)
 {
@@ -184,4 +185,37 @@ TArray<UEdGraphNode_Comment*> FASCUtils::GetSelectedComments(TSharedPtr<SGraphPa
 	}
 
 	return OutComments;
+}
+
+bool FASCUtils::IsGraphReadOnly(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	if (GraphPanel)
+	{
+		if (!GraphPanel->IsGraphEditable())
+		{
+			return true;
+		}
+
+		if (UEdGraph* Graph = GraphPanel->GetGraphObj())
+		{
+			return FBlueprintEditorUtils::IsGraphReadOnly(Graph);
+		}
+	}
+
+	return false;
+}
+
+FString FASCUtils::GetNodeName(UEdGraphNode* Node)
+{
+	if (Node == nullptr)
+	{
+		return FString("nullptr");
+	}
+
+	if (const UEdGraphNode_Comment* Comment = Cast<UEdGraphNode_Comment>(Node))
+	{
+		return Comment->GetNodeTitle(ENodeTitleType::FullTitle).ToString();
+	}
+
+	return Node->GetNodeTitle(ENodeTitleType::ListView).ToString();
 }

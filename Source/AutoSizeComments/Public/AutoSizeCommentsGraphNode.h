@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AutoSizeCommentsMacros.h"
+#include "AutoSizeCommentsNodeChangeData.h"
 #include "AutoSizeCommentsSettings.h"
 #include "Editor/GraphEditor/Public/SGraphNodeComment.h"
 #include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
@@ -49,6 +50,8 @@ public:
 	float AnchorSize = 40.f;
 
 	bool bWasCopyPasted = false;
+
+	FASCCommentChangeData CommentChangeData;
 
 #if ASC_UE_VERSION_OR_LATER(4, 27)
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
@@ -221,6 +224,7 @@ public:
 	static bool RemoveNodesFromUnderComment(UEdGraphNode_Comment* InCommentNode, TSet<UObject*>& NodesToRemove);
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
 	void SnapVectorToGrid(FVector2D& Vector);
+	void SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 	TArray<UEdGraphNode*> GetEdGraphNodesUnderComment(UEdGraphNode_Comment* InCommentNode) const;
 	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments = true);

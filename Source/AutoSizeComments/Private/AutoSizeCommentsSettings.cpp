@@ -10,9 +10,9 @@
 UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
 {
+	ResizingMode = EASCResizingMode::Always;
 	AutoInsertComment = EASCAutoInsertComment::Always;
 	bSelectNodeWhenClickingOnPin = true;
-	bDisableResizing = false;
 	CommentNodePadding = FVector2D(30, 30);
 	MinimumVerticalPadding = 24.0f;
 	CommentTextPadding = FMargin(2, 0, 2, 0);
