@@ -358,6 +358,11 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		return;
 	}
 
+	if (FASCUtils::IsGraphReadOnly(GetOwnerPanel()))
+	{
+		return;
+	}
+
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
 	bool bRequireUpdate = false;
@@ -674,6 +679,11 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 {
 	SGraphNode::SetOwner(OwnerPanel);
 
+	if (!IsValidGraphPanel(OwnerPanel))
+	{
+		return;
+	}
+
 	TArray<TWeakObjectPtr<UObject>> InitialSelectedNodes;
 	for (UObject* SelectedNode : OwnerPanel->SelectionManager.GetSelectedNodes())
 	{
@@ -700,6 +710,15 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 	if (NodeWidget != AsShared())
 	{
 		return;
+	}
+
+	// if there is already a registered comment do nothing
+	if (TSharedPtr<SAutoSizeCommentsGraphNode> RegisteredComment = FASCState::Get().GetASCComment(CommentNode))
+	{
+		if (RegisteredComment.Get() != this)
+		{
+			return;
+		}
 	}
 
 	if (!bInitialized)
@@ -983,6 +1002,21 @@ bool SAutoSizeCommentsGraphNode::AddAllNodesUnderComment(const TArray<UObject*>&
 	}
 
 	return bDidAddAnything;
+}
+
+bool SAutoSizeCommentsGraphNode::IsValidGraphPanel(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	if (!GraphPanel)
+	{
+		return false;
+	}
+
+	if (FASCUtils::GetParentWidgetOfType(GraphPanel, "SBlueprintDiff"))
+	{
+		return false;
+	}
+
+	return true;
 }
 
 bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes()

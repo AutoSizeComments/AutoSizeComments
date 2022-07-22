@@ -226,6 +226,7 @@ public:
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 	TArray<UEdGraphNode*> GetEdGraphNodesUnderComment(UEdGraphNode_Comment* InCommentNode) const;
 	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments = true);
+	bool IsValidGraphPanel(TSharedPtr<SGraphPanel> GraphPanel);
 
 	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
 

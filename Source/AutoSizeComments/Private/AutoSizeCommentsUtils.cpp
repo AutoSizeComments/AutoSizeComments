@@ -219,3 +219,43 @@ FString FASCUtils::GetNodeName(UEdGraphNode* Node)
 
 	return Node->GetNodeTitle(ENodeTitleType::ListView).ToString();
 }
+
+bool FASCUtils::IsWidgetOfType(TSharedPtr<SWidget> Widget, const FString& WidgetTypeName, bool bCheckContains)
+{
+	if (!Widget.IsValid())
+	{
+		return false;
+	}
+
+	return bCheckContains ? Widget->GetTypeAsString().Contains(WidgetTypeName) : Widget->GetTypeAsString() == WidgetTypeName;
+}
+
+TSharedPtr<SWidget> FASCUtils::GetParentWidgetOfType(
+	TSharedPtr<SWidget> Widget,
+	const FString& ParentType)
+{
+	if (!Widget.IsValid())
+	{
+		return nullptr;
+	}
+
+	if (IsWidgetOfType(Widget, ParentType))
+	{
+		return Widget;
+	}
+
+	if (!Widget->IsParentValid())
+	{
+		return nullptr;
+	}
+
+	check(Widget->GetParentWidget() != Widget)
+
+	TSharedPtr<SWidget> ReturnWidget = GetParentWidgetOfType(Widget->GetParentWidget(), ParentType);
+	if (ReturnWidget.IsValid())
+	{
+		return ReturnWidget;
+	}
+
+	return nullptr;
+}

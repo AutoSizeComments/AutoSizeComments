@@ -28,4 +28,8 @@ struct FASCUtils
 	static bool IsGraphReadOnly(TSharedPtr<SGraphPanel> GraphPanel);
 
 	static FString GetNodeName(UEdGraphNode* Node);
+
+	static bool IsWidgetOfType(TSharedPtr<SWidget> Widget, const FString& WidgetTypeName, bool bCheckContains = false);
+
+	static TSharedPtr<SWidget> GetParentWidgetOfType(TSharedPtr<SWidget> Widget, const FString& ParentType);
 };
