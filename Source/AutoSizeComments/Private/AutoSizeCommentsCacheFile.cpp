@@ -92,7 +92,7 @@ void FAutoSizeCommentsCacheFile::SaveCache()
 	FJsonObjectConverter::UStructToJsonObjectString(CacheData, JsonAsString);
 	FFileHelper::SaveStringToFile(JsonAsString, *CachePath);
 	const double TimeTaken = (FPlatformTime::Seconds() - StartTime) * 1000.0f;
-	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved node cache to %s took %6.2fms"), *CachePath, TimeTaken);
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved node cache to %s took %6.2fms"), *GetCachePath(true), TimeTaken);
 }
 
 void FAutoSizeCommentsCacheFile::DeleteCache()
@@ -103,11 +103,11 @@ void FAutoSizeCommentsCacheFile::DeleteCache()
 
 	if (FPlatformFileManager::Get().GetPlatformFile().DeleteFile(*CachePath))
 	{
-		UE_LOG(LogAutoSizeComments, Log, TEXT("Deleted cache file at %s"), *CachePath);
+		UE_LOG(LogAutoSizeComments, Log, TEXT("Deleted cache file at %s"), *GetCachePath(true));
 	}
 	else
 	{
-		UE_LOG(LogAutoSizeComments, Log, TEXT("Delete cache failed: Cache file does not exist or is read-only %s"), *CachePath);
+		UE_LOG(LogAutoSizeComments, Log, TEXT("Delete cache failed: Cache file does not exist or is read-only %s"), *GetCachePath(true));
 	}
 }
 
