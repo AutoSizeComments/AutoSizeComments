@@ -1,5 +1,6 @@
 #include "AutoSizeCommentsUtils.h"
 
+#include "AutoSizeCommentsCacheFile.h"
 #include "EdGraphNode_Comment.h"
 #include "SGraphPanel.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -258,4 +259,98 @@ TSharedPtr<SWidget> FASCUtils::GetParentWidgetOfType(
 	}
 
 	return nullptr;
+}
+
+void FASCUtils::ClearCommentNodes(UEdGraphNode_Comment* Comment, bool bUpdateCache)
+{
+	if (!Comment)
+	{
+		return;
+	}
+
+	Comment->ClearNodesUnderComment();
+
+	if (bUpdateCache)
+	{
+		FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(Comment);
+	}
+}
+
+bool FASCUtils::RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NodesToRemove, bool bUpdateCache)
+{
+	if (!Comment)
+	{
+		return false;
+	}
+
+	bool bDidRemoveAnything = false;
+	const FCommentNodeSet NodesUnderComment = Comment->GetNodesUnderComment();
+
+	// Clear all nodes under comment
+	Comment->ClearNodesUnderComment();
+
+	// Add back the nodes under comment while filtering out any which are to be removed
+	for (UObject* NodeUnderComment : NodesUnderComment)
+	{
+		if (NodeUnderComment)
+		{
+			if (!NodesToRemove.Contains(NodeUnderComment))
+			{
+				AddNodeIntoComment(Comment, NodeUnderComment, false);
+			}
+			else
+			{
+				bDidRemoveAnything = true;
+			}
+		}
+	}
+
+	if (bUpdateCache)
+	{
+		FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(Comment);
+	}
+
+	return bDidRemoveAnything;
+}
+
+bool FASCUtils::AddNodeIntoComment(UEdGraphNode_Comment* Comment, UObject* NewNode, bool bUpdateCache)
+{
+	if (!Comment || !NewNode)
+	{
+		return false;
+	}
+
+	if (Comment->GetNodesUnderComment().Contains(NewNode))
+	{
+		return false;
+	}
+
+	Comment->AddNodeUnderComment(NewNode);
+
+	if (bUpdateCache)
+	{
+		FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(Comment);
+	}
+
+	return true;
+}
+
+bool FASCUtils::AddNodesIntoComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NewNodes, bool bUpdateCache)
+{
+	if (!Comment)
+	{
+		return false;
+	}
+
+	for (UObject* Node : NewNodes)
+	{
+		FASCUtils::AddNodeIntoComment(Comment, Node, false);
+	}
+
+	if (bUpdateCache)
+	{
+		FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(Comment);
+	}
+
+	return true;
 }

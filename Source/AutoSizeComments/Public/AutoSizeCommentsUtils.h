@@ -32,4 +32,11 @@ struct FASCUtils
 	static bool IsWidgetOfType(TSharedPtr<SWidget> Widget, const FString& WidgetTypeName, bool bCheckContains = false);
 
 	static TSharedPtr<SWidget> GetParentWidgetOfType(TSharedPtr<SWidget> Widget, const FString& ParentType);
+
+	// ~~ Logic that modifies nodes under comment
+	static void ClearCommentNodes(UEdGraphNode_Comment* Comment, bool bUpdateCache = true);
+	static bool RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NodesToRemove, bool bUpdateCache = true);
+	static bool AddNodeIntoComment(UEdGraphNode_Comment* Comment, UObject* NewNode, bool bUpdateCache = true);
+	static bool AddNodesIntoComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NewNodes, bool bUpdateCache = true);
+	// ~~ Logic that modifies nodes under comment
 };

@@ -219,7 +219,6 @@ public:
 	void UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>& OldParentComments);
 	void UpdateExistingCommentNodes();
 	bool AnySelectedNodes();
-	static bool RemoveNodesFromUnderComment(UEdGraphNode_Comment* InCommentNode, TSet<UObject*>& NodesToRemove);
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
 	void SnapVectorToGrid(FVector2D& Vector);
 	void SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier);
@@ -263,7 +262,4 @@ public:
 	bool IsNodeUnrelated() const;
 	void SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf = true);
 	void ResetNodesUnrelated();
-
-	bool AddNodeIntoComment(UObject* Node, UEdGraphNode_Comment* Comment);
-	bool AddNodeIntoComment(UObject* Node);
 };
