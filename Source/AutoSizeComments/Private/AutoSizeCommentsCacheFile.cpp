@@ -154,7 +154,7 @@ void FAutoSizeCommentsCacheFile::CleanupFiles()
 	}
 }
 
-void FAutoSizeCommentsCacheFile::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
+void FAutoSizeCommentsCacheFile::UpdateCommentState(UEdGraphNode_Comment* Comment)
 {
 	if (!Comment)
 	{
@@ -169,25 +169,36 @@ void FAutoSizeCommentsCacheFile::UpdateNodesUnderComment(UEdGraphNode_Comment* C
 		return;
 	}
 
-	FASCGraphData& GraphData = GetGraphData(Graph);
-
 	if (FASCUtils::HasNodeBeenDeleted(Comment))
 	{
-		GraphData.CommentData.Remove(Comment->NodeGuid);
+		GetGraphData(Graph).CommentData.Remove(Comment->NodeGuid);
 	}
 	else
 	{
-		FASCCommentData& CommentData = GraphData.CommentData.FindOrAdd(Comment->NodeGuid);
-		CommentData.NodeGuids.Empty();
+		UpdateNodesUnderComment(Comment);
+	}
+}
 
-		// update nodes inside
-		const TArray<UEdGraphNode*> Nodes = FASCUtils::GetNodesUnderComment(Comment);
-		for (UEdGraphNode* Node : Nodes)
+void FAutoSizeCommentsCacheFile::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
+{
+	UEdGraph* Graph = Comment->GetGraph();
+	if (!Graph)
+	{
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Tried to update comment with null graph"));
+		return;
+	}
+
+	FASCCommentData& CommentData = GetGraphData(Graph).CommentData.FindOrAdd(Comment->NodeGuid);
+
+	const TArray<UEdGraphNode*> NodesUnder = FASCUtils::GetNodesUnderComment(Comment);
+	CommentData.NodeGuids.Reset(NodesUnder.Num());
+
+	// update nodes under
+	for (UEdGraphNode* Node : NodesUnder)
+	{
+		if (!FASCUtils::HasNodeBeenDeleted(Node))
 		{
-			if (!FASCUtils::HasNodeBeenDeleted(Node))
-			{
-				CommentData.NodeGuids.Add(Node->NodeGuid);
-			}
+			CommentData.NodeGuids.Add(Node->NodeGuid);
 		}
 	}
 }

@@ -1955,7 +1955,7 @@ bool SAutoSizeCommentsGraphNode::LoadCache()
 
 void SAutoSizeCommentsGraphNode::UpdateCache()
 {
-	FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(GetCommentNodeObj());
+	FAutoSizeCommentsCacheFile::Get().UpdateCommentState(GetCommentNodeObj());
 }
 
 void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots)
