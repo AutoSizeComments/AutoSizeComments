@@ -478,14 +478,7 @@ void FAutoSizeCommentGraphHandler::OnNodeAdded(const FEdGraphEditAction& Action)
 		return;
 	}
 
-	const UEdGraphNode* ConstNewNode = Action.Nodes.Array()[0];
-	if (ConstNewNode->Pins.Num() == 0)
-	{
-		return;
-	}
-
-	// we don't want a const ptr
-	UEdGraphNode* NewNode = ConstNewNode->Pins[0]->GetOwningNode();
+	UEdGraphNode* NewNode = const_cast<UEdGraphNode*>(Action.Nodes.Array()[0]);
 
 	TArray<UEdGraphNode_Comment*> Comments;
 	NewNode->GetGraph()->GetNodesOfClassEx<UEdGraphNode_Comment>(Comments);
