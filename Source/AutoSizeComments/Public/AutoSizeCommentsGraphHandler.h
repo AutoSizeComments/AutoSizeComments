@@ -10,6 +10,7 @@ class SGraphPanel;
 
 struct FASCGraphHandlerData
 {
+	TSet<TWeakObjectPtr<UEdGraphNode_Comment>> RegisteredComments;
 	TArray<TWeakObjectPtr<UEdGraphNode_Comment>> LastSelectionSet;
 	FDelegateHandle OnGraphChangedHandle;
 
@@ -36,6 +37,8 @@ public:
 	void RequestGraphVisualRefresh(TSharedPtr<SGraphPanel> GraphPanel);
 
 	void ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel);
+
+	bool RegisterComment(UEdGraphNode_Comment* Comment);
 
 	void UpdateCommentChangeState(UEdGraphNode_Comment* Comment);
 	bool HasCommentChanged(UEdGraphNode_Comment* Comment);

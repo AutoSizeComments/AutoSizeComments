@@ -725,24 +725,27 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 	{
 		bInitialized = true;
 
-		FASCCommentData& CommentData = GetCommentData();
-
-		InitializeNodesUnderComment(InitialSelectedNodes);
-
 		// register graph
 		FASCState::Get().RegisterComment(SharedThis(this));
 
 		// init graph handler for containing graph
 		FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
 
+		FASCCommentData& CommentData = GetCommentData();
+		if (!CommentData.HasBeenInitialized())
+		{
+			CommentData.SetInitialized(true);
+		}
+
 		if (!FAutoSizeCommentGraphHandler::Get().HasCommentChanged(CommentNode))
 		{
 			FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
 		}
 
-		if (!CommentData.HasBeenInitialized())
+		// if we failed to register the comment (since it has already been registered) do nothing
+		if (FAutoSizeCommentGraphHandler::Get().RegisterComment(CommentNode))
 		{
-			CommentData.SetInitialized(true);
+			InitializeNodesUnderComment(InitialSelectedNodes);
 		}
 	}
 }

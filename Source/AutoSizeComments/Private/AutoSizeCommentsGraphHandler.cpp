@@ -338,6 +338,26 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 	}));
 }
 
+bool FAutoSizeCommentGraphHandler::RegisterComment(UEdGraphNode_Comment* Comment)
+{
+	if (Comment)
+	{
+		if (UEdGraph* Graph = Comment->GetGraph())
+		{
+			if (FASCGraphHandlerData* GraphData = GraphDatas.Find(Graph))
+			{
+				if (!GraphData->RegisteredComments.Contains(Comment))
+				{
+					GraphData->RegisteredComments.Add(Comment);
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 void FAutoSizeCommentGraphHandler::UpdateCommentChangeState(UEdGraphNode_Comment* Comment)
 {
 	UEdGraph* Graph = Comment->GetGraph();
