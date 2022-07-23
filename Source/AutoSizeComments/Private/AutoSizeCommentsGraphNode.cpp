@@ -2233,7 +2233,7 @@ bool SAutoSizeCommentsGraphNode::IsMajorNode(UObject* Object)
 			return true;
 		}
 	}
-	else if (UEdGraphNode* EdGraphNode = Cast<UEdGraphNode>(Object))
+	else if (Object->IsA(UEdGraphNode::StaticClass()))
 	{
 		return true;
 	}
