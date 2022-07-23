@@ -109,7 +109,7 @@ void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
 
 void FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged(ISourceControlProvider& OldSourceControlProvider, ISourceControlProvider& NewControlProvider)
 {
-	if (ShouldShowSourceControlNotification() && NewControlProvider.IsEnabled())
+	if (ShouldShowSourceControlNotification() && NewControlProvider.GetName() != TEXT("None"))
 	{
 		ShowSourceControlNotification();
 	}
