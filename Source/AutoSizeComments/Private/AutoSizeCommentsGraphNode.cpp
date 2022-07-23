@@ -1330,7 +1330,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 	// Resize the node
 	TArray<UObject*> UnfilteredNodesUnderComment = CommentNode->GetNodesUnderComment();
 
-	const TArray<TObjectPtr<UEdGraphNode>>& GraphNodes = GetOwnerPanel()->GetGraphObj()->Nodes;
+	const TArray<UEdGraphNode*>& GraphNodes = GetOwnerPanel()->GetGraphObj()->Nodes;
 
 	// Remove all invalid objects
 	TSet<UObject*> InvalidObjects;
