@@ -731,11 +731,7 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		// init graph handler for containing graph
 		FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
 
-		FASCCommentData& CommentData = GetCommentData();
-		if (!CommentData.HasBeenInitialized())
-		{
-			CommentData.SetInitialized(true);
-		}
+		FAutoSizeCommentGraphHandler::Get().RegisterActiveGraphPanel(GetOwnerPanel());
 
 		if (!FAutoSizeCommentGraphHandler::Get().HasCommentChanged(CommentNode))
 		{
@@ -746,6 +742,12 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		if (FAutoSizeCommentGraphHandler::Get().RegisterComment(CommentNode))
 		{
 			InitializeNodesUnderComment(InitialSelectedNodes);
+		}
+
+		FASCCommentData& CommentData = GetCommentData();
+		if (!CommentData.HasBeenInitialized())
+		{
+			CommentData.SetInitialized(true);
 		}
 	}
 }
@@ -762,8 +764,6 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 	{
 		return;
 	}
-
-	FAutoSizeCommentGraphHandler::Get().RegisterActiveGraphPanel(OwnerPanel);
 
 	if (IsHeaderComment())
 	{
