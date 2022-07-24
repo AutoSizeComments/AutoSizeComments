@@ -231,7 +231,6 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 {
 	UEdGraphNode* Node = ASCNode->GetNodeObj();
 	UEdGraph* Graph = Node->GetGraph();
-	TSharedPtr<SGraphPanel> GraphPanel = ASCNode->GetOwnerPanel();
 	FASCGraphData& Data = GetGraphData(Graph);
 	if (Data.CommentData.Contains(Node->NodeGuid))
 	{
