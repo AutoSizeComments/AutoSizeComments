@@ -22,16 +22,17 @@ void FAutoSizeCommentsNotifications::TearDown()
 
 void FAutoSizeCommentsNotifications::Initialize()
 {
-	if (ISourceControlModule::Get().IsEnabled())
-	{
-		ShowSourceControlNotification();
-	}
-	else
-	{
-		ISourceControlModule::Get().RegisterProviderChanged(FSourceControlProviderChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged));
-	}
+	// TODO Enable this when the Blueprint Assist update is out 
+	// if (ISourceControlModule::Get().IsEnabled())
+	// {
+	// 	ShowSourceControlNotification();
+	// }
+	// else
+	// {
+	// 	ISourceControlModule::Get().RegisterProviderChanged(FSourceControlProviderChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged));
+	// }
 
-	// We need this right now but leaving this here in case we do in the future
+	// We don't need this right now but leaving this here in case we do in the future
 	// ShowBlueprintAssistNotification();
 }
 
