@@ -791,7 +791,7 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 	}
 
 	// if this node is selected then we have been copy pasted, don't add all selected nodes
-	if (bWasCopyPasted)
+	if (InitialSelectedNodes.Contains(CommentNode))
 	{
 		RefreshNodesDelay = 2;
 		return;
