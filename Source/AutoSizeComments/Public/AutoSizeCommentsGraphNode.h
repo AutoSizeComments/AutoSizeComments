@@ -4,12 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "AutoSizeCommentsMacros.h"
-#include "AutoSizeCommentsNodeChangeData.h"
-#include "AutoSizeCommentsSettings.h"
-#include "Editor/GraphEditor/Public/SGraphNodeComment.h"
-#include "Editor/GraphEditor/Public/SGraphNodeResizable.h"
-#include "Widgets/DeclarativeSyntaxSupport.h"
+#include "SGraphNode.h"
 
+enum class ECommentCollisionMethod : uint8;
+class SCommentBubble;
+class UAutoSizeCommentsSettings;
 struct FASCCommentData;
 struct FPresetCommentStyle;
 class UEdGraphNode_Comment;
@@ -117,6 +116,7 @@ protected:
 	//~ End SNodePanel::SNode Interface
 
 	FReply HandleRandomizeColorButtonClicked();
+	FReply HandleResizeButtonClicked();
 	FReply HandleHeaderButtonClicked();
 	FReply HandleRefreshButtonClicked();
 	FReply HandlePresetButtonClicked(const FPresetCommentStyle Style);
@@ -199,9 +199,10 @@ private:
 	FInlineEditableTextBlockStyle CommentStyle;
 	FSlateColor GetCommentTextColor() const;
 
-	TSharedPtr<class SButton> ToggleHeaderButton;
-	TSharedPtr<class SHorizontalBox> ColorControls;
-	TSharedPtr<class SHorizontalBox> CommentControls;
+	TSharedPtr<SButton> ResizeButton;
+	TSharedPtr<SButton> ToggleHeaderButton;
+	TSharedPtr<SHorizontalBox> ColorControls;
+	TSharedPtr<SHorizontalBox> CommentControls;
 
 public:
 	/** Update the nodes */

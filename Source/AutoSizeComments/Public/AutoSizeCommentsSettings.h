@@ -229,6 +229,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	bool bSuppressSourceControlNotification;
 
+	/** Hide the resize button */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	bool bHideResizeButton;
+
 	/** Hide the header button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideHeaderButton;

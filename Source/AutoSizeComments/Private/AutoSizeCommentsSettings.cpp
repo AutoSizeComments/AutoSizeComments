@@ -58,6 +58,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 #endif
 	bSuppressSuggestedSettings = false;
 	bSuppressSourceControlNotification = false;
+	bHideResizeButton = false;
 	bHideHeaderButton = false;
 	bHideCommentBoxControls = false;
 	bHidePresets = false;

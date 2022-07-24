@@ -834,7 +834,10 @@ FVector2D SAutoSizeCommentsGraphNode::GetDesiredSizeForMarquee() const
 
 FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeometry, const FPointerEvent& CursorEvent) const
 {
-	if (ToggleHeaderButton->IsHovered() || ColorControls->IsHovered() || CommentControls->IsHovered())
+	if (ToggleHeaderButton->IsHovered() ||
+		ColorControls->IsHovered() ||
+		CommentControls->IsHovered() ||
+		(ResizeButton && ResizeButton->IsHovered()))
 	{
 		return FCursorReply::Unhandled();
 	}
@@ -903,6 +906,12 @@ int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 FReply SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked()
 {
 	RandomizeColor();
+	return FReply::Handled();
+}
+
+FReply SAutoSizeCommentsGraphNode::HandleResizeButtonClicked()
+{
+	ResizeToFit();
 	return FReply::Handled();
 }
 
@@ -1585,19 +1594,42 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 	// Create the color controls
 	ColorControls = SNew(SHorizontalBox);
 
-	TArray<FPresetCommentStyle> Presets = GetMutableDefault<UAutoSizeCommentsSettings>()->PresetStyles;
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+
+	const TArray<FPresetCommentStyle>& Presets = ASCSettings->PresetStyles;
 	CachedNumPresets = Presets.Num();
 
 	if (!IsHeaderComment()) // header comments don't need color presets
 	{
+		if (!ASCSettings->bHideResizeButton && ASCSettings->ResizingMode != EASCResizingMode::Always)
+		{
+			// Create the resize button
+			ResizeButton = SNew(SButton)
+				.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+				.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
+				.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleResizeButtonClicked)
+				.ContentPadding(FMargin(2, 2))
+				.ToolTipText(FText::FromString("Resize to containing nodes"))
+				[
+					SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(12).HeightOverride(12)
+					[
+						SNew(SImage)
+						.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
+						.Image(FEditorStyle::GetBrush("Icons.Refresh"))
+					]
+				];
+
+			ColorControls->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Center).Padding(4.0f, 0.0f, 0.0f, 0.0f).AttachWidget(ResizeButton.ToSharedRef());
+		}
+
 		ColorControls->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
 
 		auto Buttons = SNew(SHorizontalBox);
 		ColorControls->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Fill).AttachWidget(Buttons);
 
-		if (!GetDefault<UAutoSizeCommentsSettings>()->bHidePresets)
+		if (!ASCSettings->bHidePresets)
 		{
-			for (FPresetCommentStyle Preset : Presets)
+			for (const FPresetCommentStyle& Preset : Presets)
 			{
 				FLinearColor ColorWithoutOpacity = Preset.Color;
 				ColorWithoutOpacity.A = 1;
@@ -1616,7 +1648,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 			}
 		}
 
-		if (!GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton)
+		if (!ASCSettings->bHideRandomizeButton)
 		{
 			// Create the random color button
 			TSharedRef<SButton> RandomColorButton = SNew(SButton)
