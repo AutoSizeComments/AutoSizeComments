@@ -44,9 +44,9 @@ void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
 
 #if ASC_UE_VERSION_OR_LATER(5, 0)
 	FNotificationInfo Info(FText::FromString("Auto Size Comments"));
-	Info.SubText = FText::FromString("Source control is enabled: Apply Reactive resizing mode?");
+	Info.SubText = FText::FromString("Source control is enabled: Suggested to disable comment resizing and rely on Blueprint Assist formatting");
 #else
-	FNotificationInfo Info(FText::FromString("[AutoSizeComments] Source control is enabled: Apply Reactive resizing mode?"));
+	FNotificationInfo Info(FText::FromString("[AutoSizeComments] Source control is enabled: Suggested to disable comment resizing and rely on Blueprint Assist formatting"));
 #endif
 	Info.bUseSuccessFailIcons = false;
 	Info.ExpireDuration = 0.0f;
@@ -67,9 +67,9 @@ void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
 	{
 		UAutoSizeCommentsSettings* ASCSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
 		ASCSettings->Modify();
-		ASCSettings->ResizingMode = EASCResizingMode::Reactive;
+		ASCSettings->ResizingMode = EASCResizingMode::Disabled;
 		ASCSettings->SaveConfig();
-		UE_LOG(LogAutoSizeComments, Log, TEXT("Set 'Resizing Mode' to 'EASCResizingMode::Reactive'"));
+		UE_LOG(LogAutoSizeComments, Log, TEXT("Set 'Resizing Mode' to 'EASCResizingMode::Disabled'"));
 
 		if (SourceControlNotification.IsValid())
 		{
@@ -119,7 +119,8 @@ bool FAutoSizeCommentsNotifications::ShouldShowSourceControlNotification()
 {
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 	return !SourceControlNotification.IsValid() &&
-		ASCSettings->ResizingMode != EASCResizingMode::Reactive &&
+		FModuleManager::Get().IsModuleLoaded("BlueprintAssist") && 
+		ASCSettings->ResizingMode != EASCResizingMode::Disabled &&
 		!ASCSettings->bSuppressSourceControlNotification;
 }
 
