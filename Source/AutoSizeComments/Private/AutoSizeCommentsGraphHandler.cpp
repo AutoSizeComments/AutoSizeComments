@@ -618,27 +618,28 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 
 void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTransactionObjectEvent& Event)
 {
-	if (Event.GetEventType() != ETransactionObjectEventType::UndoRedo && Event.GetEventType() != ETransactionObjectEventType::Finalized)
+	if (!Object)
 	{
 		return;
 	}
 
-	if (Event.GetEventType() == ETransactionObjectEventType::Finalized)
+	// we are probably currently dragging a node around so don't update now
+	if (FSlateApplication::Get().GetModifierKeys().IsAltDown())
 	{
-		// we are probably currently dragging a node around so don't update now
-		if (FSlateApplication::Get().GetModifierKeys().IsAltDown())
-		{
-			return;
-		}
+		return;
 	}
 
-	if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
+	if (Event.GetEventType() == ETransactionObjectEventType::UndoRedo ||
+		Event.GetEventType() == ETransactionObjectEventType::Finalized)
 	{
-		if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Cast<UEdGraphNode_Comment>(Node)))
+		if (GetDefault<UAutoSizeCommentsSettings>()->ResizingMode == EASCResizingMode::Always ||
+			GetDefault<UAutoSizeCommentsSettings>()->ResizingMode == EASCResizingMode::Reactive)
 		{
-			ASCComment->bWasCopyPasted = true;
+			if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
+			{
+				GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
+			}
 		}
-		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
 	}
 }
 
@@ -667,9 +668,11 @@ void FAutoSizeCommentGraphHandler::UpdateContainingComments(TWeakObjectPtr<UEdGr
 	Graph->GetNodesOfClass<UEdGraphNode_Comment>(Comments);
 	for (UEdGraphNode_Comment* Comment : Comments)
 	{
-		if (Comment->GetNodesUnderComment().Contains(Node))
+		if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Comment))
 		{
-			if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Comment))
+			TArray<UEdGraphNode*> NodesUnderComment;
+			FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(ASCComment, NodesUnderComment);
+			if (NodesUnderComment.Contains(Node))
 			{
 				ASCComment->ResizeToFit();
 			}
