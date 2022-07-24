@@ -16,8 +16,8 @@ enum class EASCResizingMode : uint8
 	/** Resize to containing nodes on tick */
 	Always UMETA(DisplayName = "Always"),
 
-	/** Resize when detecting containing a node change (position / size) */
-	Reactive UMETA(DisplayName = "Reactive"),
+	/** Resize when we detect a containing node moves or changes size */
+	Reactive UMETA(DisplayName = "Reactive (Experimental)"),
 
 	/** Never resize */
 	Disabled UMETA(DisplayName = "Disabled"),
