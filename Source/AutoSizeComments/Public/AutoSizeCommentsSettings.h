@@ -109,6 +109,22 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Styles)
 	TArray<FPresetCommentStyle> PresetStyles;
 
+	/** Always hide the comment bubble */
+	UPROPERTY(EditAnywhere, config, Category = CommentBubble)
+	bool bHideCommentBubble;
+
+	/** Set default values for comment bubble */
+	UPROPERTY(EditAnywhere, config, Category = CommentBubble)
+	bool bEnableCommentBubbleDefaults;
+
+	/** Default value for "Color Bubble" */
+	UPROPERTY(EditAnywhere, config, Category = CommentBubble, meta = (EditCondition = "bEnableCommentBubbleDefaults"))
+	bool bDefaultColorCommentBubble;
+
+	/** Default value for "Show Bubble When Zoomed" */
+	UPROPERTY(EditAnywhere, config, Category = CommentBubble, meta = (EditCondition = "bEnableCommentBubbleDefaults"))
+	bool bDefaultShowBubbleWhenZoomed;
+
 	/** The auto resizing behavior for comments (always: on tick | reactive: upon detecting node movement) */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	EASCResizingMode ResizingMode;
@@ -144,18 +160,6 @@ public:
 	/** The speed at which empty comment boxes move */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	float EmptyCommentBoxSpeed;
-
-	/** Globally set "Color Bubble" for every comment box that is created or loaded */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
-	bool bEnableGlobalSettings;
-
-	/** Globally set "Color Bubble" for every comment box that is created or loaded */
-	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bEnableGlobalSettings"))
-	bool bGlobalColorBubble;
-
-	/** Globally set "Show Bubble When Zoomed" for every comment box that is created or loaded */
-	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bEnableGlobalSettings"))
-	bool bGlobalShowBubbleWhenZoomed;
 
 	/** If enabled, nodes inside comments will be saved to a cache file */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
@@ -248,10 +252,6 @@ public:
 	/** Hide controls at the bottom of the comment box */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideCommentBoxControls;
-
-	/** Hide the comment bubble */
-	UPROPERTY(EditAnywhere, config, Category = Controls)
-	bool bHideCommentBubble;
 
 	/** Hide the corner points (resize still enabled) */
 	UPROPERTY(EditAnywhere, config, Category = Controls)

@@ -35,9 +35,10 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bAggressivelyUseDefaultColor = false;
 	bMoveEmptyCommentBoxes = false;
 	EmptyCommentBoxSpeed = 10;
-	bEnableGlobalSettings = true;
-	bGlobalColorBubble = false;
-	bGlobalShowBubbleWhenZoomed = true;
+	bHideCommentBubble = false;
+	bEnableCommentBubbleDefaults = false;
+	bDefaultColorCommentBubble = false;
+	bDefaultShowBubbleWhenZoomed = true;
 	bSaveCommentNodeDataToFile = true;
 	bSaveCommentDataOnSavingGraph = true;
 	bSaveCommentDataOnExit = true;
@@ -63,7 +64,6 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bHideCommentBoxControls = false;
 	bHidePresets = false;
 	bHideRandomizeButton = false;
-	bHideCommentBubble = false;
 	bHideCornerPoints = false;
 
 	bEnableFixForSortDepthIssue = false;

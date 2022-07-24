@@ -45,14 +45,6 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 		CommentNode->FontSize = ASCSettings->DefaultFontSize;
 	}
 
-	if (ASCSettings->bEnableGlobalSettings)
-	{
-		CommentNode->bColorCommentBubble = ASCSettings->bGlobalColorBubble;
-		CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings->bGlobalShowBubbleWhenZoomed;
-		CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
-		CommentNode->SetMakeCommentBubbleVisible(ASCSettings->bGlobalShowBubbleWhenZoomed);
-	}
-
 	bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible;
 	bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
 
@@ -116,6 +108,20 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 	else if (CommentNode->CommentColor == FLinearColor::White)
 	{
 		CommentNode->CommentColor = DefaultColor;
+	}
+}
+
+void SAutoSizeCommentsGraphNode::InitializeCommentBubbleSettings()
+{
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+
+	if (ASCSettings->bEnableCommentBubbleDefaults)
+	{
+		CommentNode->bColorCommentBubble = ASCSettings->bDefaultColorCommentBubble;
+		CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings->bDefaultShowBubbleWhenZoomed;
+		CommentNode->bCommentBubblePinned = ASCSettings->bDefaultShowBubbleWhenZoomed;
+		CommentNode->SetMakeCommentBubbleVisible(ASCSettings->bDefaultShowBubbleWhenZoomed);
+		bRequireUpdate = true;
 	}
 }
 
@@ -371,8 +377,6 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		UserSize.Y = CommentNode->NodeHeight;
 	}
 
-	bool bRequireUpdate = false;
-
 	UpdateRefreshDelay();
 
 	if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
@@ -436,43 +440,20 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		CachedWidth = CurrentWidth;
 	}
 
-	// Update global color bubble and bubble visibility
-	if (ASCSettings->bEnableGlobalSettings)
+	// Otherwise update when cached values have changed
+	if (bCachedBubbleVisibility != CommentNode->bCommentBubbleVisible_InDetailsPanel)
 	{
-		if (CommentNode->bColorCommentBubble != ASCSettings->bGlobalColorBubble)
+		bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible_InDetailsPanel;
+		if (CommentBubble.IsValid())
 		{
-			bRequireUpdate = true;
-			CommentNode->bColorCommentBubble = ASCSettings->bGlobalColorBubble;
-		}
-
-		if (CommentNode->bCommentBubbleVisible_InDetailsPanel != ASCSettings->bGlobalShowBubbleWhenZoomed)
-		{
-			CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings->bGlobalShowBubbleWhenZoomed;
-			CommentNode->bCommentBubblePinned = ASCSettings->bGlobalShowBubbleWhenZoomed;
-			CommentNode->SetMakeCommentBubbleVisible(ASCSettings->bGlobalShowBubbleWhenZoomed);
-
-			if (CommentBubble.IsValid())
-			{
-				CommentBubble->UpdateBubble();
-			}
+			CommentBubble->UpdateBubble();
 		}
 	}
-	else // Otherwise update when cached values have changed
-	{
-		if (bCachedBubbleVisibility != CommentNode->bCommentBubbleVisible_InDetailsPanel)
-		{
-			bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible_InDetailsPanel;
-			if (CommentBubble.IsValid())
-			{
-				CommentBubble->UpdateBubble();
-			}
-		}
 
-		if (bCachedColorCommentBubble != CommentNode->bColorCommentBubble)
-		{
-			bRequireUpdate = true;
-			bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
-		}
+	if (bCachedColorCommentBubble != CommentNode->bColorCommentBubble)
+	{
+		bRequireUpdate = true;
+		bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
 	}
 
 	// Update cached font size
@@ -489,6 +470,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 	if (bRequireUpdate)
 	{
 		UpdateGraphNode();
+		bRequireUpdate = false;
 	}
 
 	UpdateColors(InDeltaTime);
@@ -754,6 +736,7 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		if (!CommentData.HasBeenInitialized())
 		{
 			CommentData.SetInitialized(true);
+			InitializeCommentBubbleSettings();
 		}
 	}
 }

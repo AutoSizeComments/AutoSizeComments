@@ -50,6 +50,8 @@ public:
 
 	bool bWasCopyPasted = false;
 
+	bool bRequireUpdate = false;
+
 #if ASC_UE_VERSION_OR_LATER(4, 27)
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 #else
@@ -160,6 +162,7 @@ private:
 	void CreateColorControls();
 
 	void InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, bool bIsPresetStyle, bool bIsHeaderComment);
+	void InitializeCommentBubbleSettings();
 
 	FVector2D UserSize;
 
