@@ -365,6 +365,12 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
+	if (ASCSettings->ResizingMode == EASCResizingMode::Disabled)
+	{
+		UserSize.X = CommentNode->NodeWidth;
+		UserSize.Y = CommentNode->NodeHeight;
+	}
+
 	bool bRequireUpdate = false;
 
 	UpdateRefreshDelay();
