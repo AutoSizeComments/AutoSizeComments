@@ -526,6 +526,26 @@ void FAutoSizeCommentGraphHandler::OnNodeAdded(const FEdGraphEditAction& Action)
 
 void FAutoSizeCommentGraphHandler::OnNodeDeleted(const FEdGraphEditAction& Action)
 {
+	// remove any deleted nodes from their containing comments
+	if (Action.Graph)
+	{
+		TArray<UEdGraphNode_Comment*> Comments;
+		Action.Graph->GetNodesOfClass<UEdGraphNode_Comment>(Comments);
+
+		// is there a better way of converting this set of const ptrs to non-const ptrs?
+		TSet<UObject*> NodeToRemove;
+		for (const UEdGraphNode* Node : Action.Nodes)
+		{
+			NodeToRemove.Add(const_cast<UEdGraphNode*>(Node));
+		}
+
+		for (UEdGraphNode_Comment* Comment : Comments)
+		{
+			FASCUtils::RemoveNodesFromComment(Comment, NodeToRemove);
+		}
+	}
+
+	// reset unrelated nodes for deleted comments
 	bool bResetUnrelatedNodes = false;
 	for (const UEdGraphNode* Node : Action.Nodes)
 	{
