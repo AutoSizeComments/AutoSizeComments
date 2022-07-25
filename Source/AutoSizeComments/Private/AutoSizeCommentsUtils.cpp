@@ -283,6 +283,11 @@ bool FASCUtils::RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet
 		return false;
 	}
 
+	if (NodesToRemove.Num() == 0)
+	{
+		return false;
+	}
+
 	bool bDidRemoveAnything = false;
 	const FCommentNodeSet NodesUnderComment = Comment->GetNodesUnderComment();
 
