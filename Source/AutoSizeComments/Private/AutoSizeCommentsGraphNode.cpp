@@ -1215,6 +1215,11 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGrap
 
 		const auto OtherMainNodes = OtherComment->GetNodesUnderComment().FilterByPredicate(IsMajorNode);
 
+		if (OtherMainNodes.Num() == 0)
+		{
+			continue;
+		}
+
 		// check if all nodes in the other comment box are within our comment box AND we are not inside the other comment already
 		const bool bAllNodesContainedUnderSelf = !OtherMainNodes.ContainsByPredicate([&OurMainNodes](UObject* NodeUnderOther)
 		{
