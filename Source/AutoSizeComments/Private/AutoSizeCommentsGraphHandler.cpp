@@ -274,7 +274,7 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 
 		if (ASCGraphNode->IsHeaderComment())
 		{
-			return;
+			continue;
 		}
 
 		ASCGraphNodes.Add(ASCGraphNode);
