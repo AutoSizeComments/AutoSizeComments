@@ -222,7 +222,7 @@ public:
 	FSlateRect GetNodeBounds(UEdGraphNode* Node);
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> GetOtherCommentNodes();
 	TArray<UEdGraphNode_Comment*> GetParentComments() const;
-	void UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>& OldParentComments);
+	void UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>* OldParentComments, const TArray<UObject*>* OldCommentContains);
 	void UpdateExistingCommentNodes();
 	bool AnySelectedNodes();
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);

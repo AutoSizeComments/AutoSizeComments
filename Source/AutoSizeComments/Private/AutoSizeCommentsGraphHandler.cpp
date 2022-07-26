@@ -262,10 +262,13 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 		}
 	}
 
-	TMap<TSharedPtr<SAutoSizeCommentsGraphNode>, TArray<UEdGraphNode_Comment*>> OldParentComments;
-	TArray<TSharedPtr<SAutoSizeCommentsGraphNode>> ASCGraphNodes;
+	TMap<TSharedPtr<SAutoSizeCommentsGraphNode>, const TArray<UObject*>> OldCommentContains;
+	TMap<UEdGraphNode_Comment*, TArray<UEdGraphNode_Comment*>> OldParentMap;
 
-	// gather asc graph nodes and store the parent comments for later
+	TArray<TSharedPtr<SAutoSizeCommentsGraphNode>> ASCGraphNodes;
+	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> ChangedGraphNodes; 
+
+	// gather asc graph nodes and store the comment data for later
 	for (UEdGraphNode_Comment* CommentNode : CommentNodes)
 	{
 		TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode);
@@ -280,7 +283,16 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 		}
 
 		ASCGraphNodes.Add(ASCGraphNode);
-		OldParentComments.Add(ASCGraphNode, ASCGraphNode->GetParentComments());
+
+		OldCommentContains.Add(ASCGraphNode, CommentNode->GetNodesUnderComment());
+
+		for (UObject* ContainedObj : CommentNode->GetNodesUnderComment())
+		{
+			if (UEdGraphNode_Comment* ContainedComment = Cast<UEdGraphNode_Comment>(ContainedObj))
+			{
+				OldParentMap.FindOrAdd(ContainedComment).Add(CommentNode);
+			}
+		}
 	}
 
 	// update their containing nodes
@@ -293,6 +305,7 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 		if (SelectedNodes.Contains(CommentNode))
 		{
 			ASCGraphNode->RefreshNodesInsideComment(AltCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenPressingAlt, false);
+			ChangedGraphNodes.Add(ASCGraphNode);
 		}
 		else
 		{
@@ -323,15 +336,17 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 			{
 				CommentNode->ClearNodesUnderComment();
 				ASCGraphNode->AddAllNodesUnderComment(NewSelection.Array(), false);
-				OldParentComments.Add(ASCGraphNode, ASCGraphNode->GetParentComments());
+				ChangedGraphNodes.Add(ASCGraphNode);
 			}
 		}
 	}
 
 	// update existing comment nodes using the parent comments stored earlier 
-	for (auto Kvp : OldParentComments)
+	for (TSharedPtr<SAutoSizeCommentsGraphNode> GraphNode : ChangedGraphNodes)
 	{
-		Kvp.Key->UpdateExistingCommentNodes(Kvp.Value);
+		const TArray<UEdGraphNode_Comment*>* OldParents = OldParentMap.Find(GraphNode->GetCommentNodeObj());
+		const TArray<UObject*>* OldContains = OldCommentContains.Find(GraphNode);
+		GraphNode->UpdateExistingCommentNodes(OldParents, OldContains);
 	}
 
 	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([&]

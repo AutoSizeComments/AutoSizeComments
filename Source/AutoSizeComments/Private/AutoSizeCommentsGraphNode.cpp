@@ -1205,11 +1205,10 @@ float SAutoSizeCommentsGraphNode::GetTitleBarHeight() const
 
 void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 {
-	UpdateExistingCommentNodes(GetParentComments());
+	UpdateExistingCommentNodes(nullptr, nullptr);
 }
 
-
-void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>& OldParentComments)
+void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>* OldParentComments, const TArray<UObject*>* OldCommentContains)
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes"), STAT_ASC_UpdateExistingCommentNodes, STATGROUP_AutoSizeComments);
 
@@ -1218,8 +1217,10 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGrap
 
 	TArray<UObject*> OurMainNodes = CommentNode->GetNodesUnderComment().FilterByPredicate(IsMajorNode);
 
+	TArray<UEdGraphNode_Comment*> CurrentParentComments = GetParentComments();
+
 	// Remove ourselves from our parent comments, as we will be adding ourselves later if required
-	for (UEdGraphNode_Comment* ParentComment : GetParentComments())
+	for (UEdGraphNode_Comment* ParentComment : CurrentParentComments)
 	{
 		TSet<UObject*> NodesToRemove = { CommentNode };
 		FASCUtils::RemoveNodesFromComment(ParentComment, NodesToRemove);
@@ -1254,10 +1255,20 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGrap
 			return !OurMainNodes.Contains(NodeUnderOther);
 		});
 
+		bool bDontAddSameSet;
+
 		// Check if we should add the comment if the same main node set
-		const bool bPreviouslyWasParent = OldParentComments.Contains(OtherComment);
-		const bool bWeAreFreshNode = OldParentComments.Num() == 0;
-		const bool bDontAddSameSet = OurMainNodes.Num() == OtherMainNodes.Num() && (bPreviouslyWasParent || bWeAreFreshNode);
+		if (OldParentComments && OldCommentContains)
+		{
+			const bool bPreviouslyWasParent = OldParentComments->Contains(OtherComment);
+			const bool bWeAreFreshNode = OldParentComments->Num() == 0 && OldCommentContains->Num() == 0;
+			bDontAddSameSet = OurMainNodes.Num() == OtherMainNodes.Num() && (bPreviouslyWasParent || bWeAreFreshNode);
+		}
+		else
+		{
+			const bool bPreviouslyWasParent = CurrentParentComments.Contains(OtherComment);
+			bDontAddSameSet = OurMainNodes.Num() == OtherMainNodes.Num() && bPreviouslyWasParent;
+		}
 
 		// we contain all of the other comment, add the other comment (unless we already contain it)
 		if (bAllNodesContainedUnderSelf && !bDontAddSameSet)
