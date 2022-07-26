@@ -2071,11 +2071,6 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(const TSharedPtr<SGraphNode> OtherGr
 		return false;
 	}
 
-	if (CommentNode->GetNodesUnderComment().Contains(GraphObject))
-	{
-		return false;
-	}
-
 	if ((bIgnoreKnots || GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodes) && Cast<UK2Node_Knot>(GraphObject) != nullptr)
 	{
 		return false;
