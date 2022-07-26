@@ -1713,15 +1713,15 @@ TArray<UEdGraphNode_Comment*> SAutoSizeCommentsGraphNode::GetParentComments() co
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::GetParentComments"), STAT_ASC_GetParentComments, STATGROUP_AutoSizeComments);
 	TArray<UEdGraphNode_Comment*> ParentComments;
-	TArray<UEdGraphNode_Comment*> CommentNodes;
-	UEdGraphNode_Comment* Comment = GetCommentNodeObj();
-	Comment->GetGraph()->GetNodesOfClass(CommentNodes);
 
-	for (auto OtherComment : CommentNodes)
+	for (UEdGraphNode* OtherNode : CommentNode->GetGraph()->Nodes)
 	{
-		if (OtherComment != Comment && OtherComment->GetNodesUnderComment().Contains(Comment))
+		if (auto OtherComment = Cast<UEdGraphNode_Comment>(OtherNode))
 		{
-			ParentComments.Add(OtherComment);
+			if (OtherComment != CommentNode && OtherComment->GetNodesUnderComment().Contains(CommentNode))
+			{
+				ParentComments.Add(OtherComment);
+			}
 		}
 	}
 
