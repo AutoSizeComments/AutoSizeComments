@@ -1239,11 +1239,6 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGrap
 			continue;
 		}
 
-		if (OtherComment->GetNodesUnderComment().Num() == 0)
-		{
-			continue;
-		}
-
 		const auto OtherMainNodes = OtherComment->GetNodesUnderComment().FilterByPredicate(IsMajorNode);
 
 		if (OtherMainNodes.Num() == 0)
@@ -1257,10 +1252,13 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGrap
 			return !OurMainNodes.Contains(NodeUnderOther);
 		});
 
-		const bool bAlreadyHasParentAndSameSet = OldParentComments.Contains(OtherComment) && OurMainNodes.Num() == OtherMainNodes.Num();
+		// Check if we should add the comment if the same main node set
+		const bool bPreviouslyWasParent = OldParentComments.Contains(OtherComment);
+		const bool bWeAreFreshNode = OldParentComments.Num() == 0;
+		const bool bDontAddSameSet = OurMainNodes.Num() == OtherMainNodes.Num() && (bPreviouslyWasParent || bWeAreFreshNode);
 
 		// we contain all of the other comment, add the other comment (unless we already contain it)
-		if (bAllNodesContainedUnderSelf && !bAlreadyHasParentAndSameSet)
+		if (bAllNodesContainedUnderSelf && !bDontAddSameSet)
 		{
 			// add the other comment into ourself
 			FASCUtils::AddNodeIntoComment(CommentNode, OtherComment);
