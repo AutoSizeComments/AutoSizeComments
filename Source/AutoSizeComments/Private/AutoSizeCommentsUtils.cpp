@@ -286,7 +286,7 @@ bool FASCUtils::DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraph
 
 				if (UEdGraphNode_Comment* NextComment = Cast<UEdGraphNode_Comment>(Node))
 				{
-					if (DoesCommentContainComment(NextComment, Other))
+					if (DoesCommentContainComment_Recursive(NextComment, Other, Visited))
 					{
 						return true;
 					}
