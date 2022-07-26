@@ -33,6 +33,8 @@ struct FASCUtils
 
 	static TSharedPtr<SWidget> GetParentWidgetOfType(TSharedPtr<SWidget> Widget, const FString& ParentType);
 
+	static bool DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraphNode_Comment* Other);
+
 	// ~~ Logic that modifies nodes under comment
 	static void ClearCommentNodes(UEdGraphNode_Comment* Comment, bool bUpdateCache = true);
 	static bool RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NodesToRemove, bool bUpdateCache = true);

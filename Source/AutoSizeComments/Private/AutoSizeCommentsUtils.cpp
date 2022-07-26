@@ -261,6 +261,44 @@ TSharedPtr<SWidget> FASCUtils::GetParentWidgetOfType(
 	return nullptr;
 }
 
+bool FASCUtils::DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraphNode_Comment* Other)
+{
+	struct FLocal
+	{
+		static bool DoesCommentContainComment_Recursive(UEdGraphNode_Comment* Source, UEdGraphNode_Comment* Other, TSet<UEdGraphNode*>& Visited)
+		{
+			if (Visited.Contains(Source))
+			{
+				return false;
+			}
+
+			Visited.Add(Source);
+
+
+			for (UObject* Node : Source->GetNodesUnderComment())
+			{
+				if (Node == Other)
+				{
+					return true;
+				}
+
+				if (UEdGraphNode_Comment* NextComment = Cast<UEdGraphNode_Comment>(Node))
+				{
+					if (DoesCommentContainComment(NextComment, Other))
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+	};
+
+	TSet<UEdGraphNode*> Visited;
+	return FLocal::DoesCommentContainComment_Recursive(Source, Other, Visited);
+}
+
 void FASCUtils::ClearCommentNodes(UEdGraphNode_Comment* Comment, bool bUpdateCache)
 {
 	if (!Comment)
@@ -325,9 +363,19 @@ bool FASCUtils::AddNodeIntoComment(UEdGraphNode_Comment* Comment, UObject* NewNo
 		return false;
 	}
 
+	// don't add duplicates
 	if (Comment->GetNodesUnderComment().Contains(NewNode))
 	{
 		return false;
+	}
+
+	// don't add comment if the comment contains us
+	if (UEdGraphNode_Comment* NewComment = Cast<UEdGraphNode_Comment>(NewNode))
+	{
+		if (DoesCommentContainComment(NewComment, Comment))
+		{
+			return false;
+		}
 	}
 
 	Comment->AddNodeUnderComment(NewNode);
