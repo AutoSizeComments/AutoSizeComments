@@ -229,6 +229,8 @@ void FAutoSizeCommentGraphHandler::RefreshGraphVisualRefresh(TWeakPtr<SGraphPane
 
 void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FAutoSizeCommentGraphHandler::ProcessAltReleased"), STAT_ASC_ProcessAltReleased, STATGROUP_AutoSizeComments);
+
 	if (!GraphPanel)
 	{
 		return;

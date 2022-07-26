@@ -1,6 +1,7 @@
 #include "AutoSizeCommentsUtils.h"
 
 #include "AutoSizeCommentsCacheFile.h"
+#include "AutoSizeCommentsGraphNode.h"
 #include "EdGraphNode_Comment.h"
 #include "SGraphPanel.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -263,6 +264,7 @@ TSharedPtr<SWidget> FASCUtils::GetParentWidgetOfType(
 
 bool FASCUtils::DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraphNode_Comment* Other)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::DoesCommentContainComment"), STAT_ASC_DoesCommentContainComment, STATGROUP_AutoSizeComments);
 	struct FLocal
 	{
 		static bool DoesCommentContainComment_Recursive(UEdGraphNode_Comment* Source, UEdGraphNode_Comment* Other, TSet<UEdGraphNode*>& Visited)
@@ -301,6 +303,7 @@ bool FASCUtils::DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraph
 
 void FASCUtils::ClearCommentNodes(UEdGraphNode_Comment* Comment, bool bUpdateCache)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::ClearCommentNodes"), STAT_ASC_ClearCommentNodes, STATGROUP_AutoSizeComments);
 	if (!Comment)
 	{
 		return;
@@ -316,6 +319,7 @@ void FASCUtils::ClearCommentNodes(UEdGraphNode_Comment* Comment, bool bUpdateCac
 
 bool FASCUtils::RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NodesToRemove, bool bUpdateCache)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::RemoveNodesFromComment"), STAT_ASC_RemoveNodesFromComment, STATGROUP_AutoSizeComments);
 	if (!Comment)
 	{
 		return false;
@@ -358,6 +362,7 @@ bool FASCUtils::RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet
 
 bool FASCUtils::AddNodeIntoComment(UEdGraphNode_Comment* Comment, UObject* NewNode, bool bUpdateCache)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::AddNodeIntoComment"), STAT_ASC_AddNodeIntoComment, STATGROUP_AutoSizeComments);
 	if (!Comment || !NewNode)
 	{
 		return false;
@@ -390,6 +395,7 @@ bool FASCUtils::AddNodeIntoComment(UEdGraphNode_Comment* Comment, UObject* NewNo
 
 bool FASCUtils::AddNodesIntoComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NewNodes, bool bUpdateCache)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::AddNodesIntoComment"), STAT_ASC_AddNodesIntoComment, STATGROUP_AutoSizeComments);
 	if (!Comment)
 	{
 		return false;

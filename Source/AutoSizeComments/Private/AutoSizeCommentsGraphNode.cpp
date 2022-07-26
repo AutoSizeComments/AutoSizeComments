@@ -1211,6 +1211,8 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
 
 void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>& OldParentComments)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes"), STAT_ASC_UpdateExistingCommentNodes, STATGROUP_AutoSizeComments);
+
 	// Get list of all other comment nodes
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> OtherCommentNodes = GetOtherCommentNodes();
 
@@ -1709,6 +1711,7 @@ TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> SAutoSizeCommentsGraphNode::GetOthe
 
 TArray<UEdGraphNode_Comment*> SAutoSizeCommentsGraphNode::GetParentComments() const
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::GetParentComments"), STAT_ASC_GetParentComments, STATGROUP_AutoSizeComments);
 	TArray<UEdGraphNode_Comment*> ParentComments;
 	TArray<UEdGraphNode_Comment*> CommentNodes;
 	UEdGraphNode_Comment* Comment = GetCommentNodeObj();
