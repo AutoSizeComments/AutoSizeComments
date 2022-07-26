@@ -371,6 +371,10 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		return;
 	}
 
+	// We need to call this on tick since there are quite a few methods of deleting
+	// nodes without any callbacks (undo, collapse to function / macro...)
+	RemoveInvalidNodes();
+
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
 	if (ASCSettings->ResizingMode == EASCResizingMode::Disabled)
@@ -1024,6 +1028,31 @@ bool SAutoSizeCommentsGraphNode::IsValidGraphPanel(TSharedPtr<SGraphPanel> Graph
 	return true;
 }
 
+void SAutoSizeCommentsGraphNode::RemoveInvalidNodes()
+{
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::RemoveInvalidNodes"), STAT_ASC_RemoveInvalidNodes, STATGROUP_AutoSizeComments);
+	const TArray<UObject*>& UnfilteredNodesUnderComment = CommentNode->GetNodesUnderComment();
+
+	const TArray<UEdGraphNode*>& GraphNodes = GetOwnerPanel()->GetGraphObj()->Nodes;
+
+	// Remove all invalid objects
+	TSet<UObject*> InvalidObjects;
+	for (UObject* Obj : UnfilteredNodesUnderComment)
+	{
+		// Make sure that we haven't somehow added ourselves
+		check(Obj != CommentNode);
+
+		// If a node gets deleted it can still stay inside the comment box
+		// So checks if the node is still on the graph
+		if (!GraphNodes.Contains(Obj))
+		{
+			InvalidObjects.Add(Obj);
+		}
+	}
+
+	FASCUtils::RemoveNodesFromComment(CommentNode, InvalidObjects);
+}
+
 bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes()
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
@@ -1332,27 +1361,7 @@ FASCCommentData& SAutoSizeCommentsGraphNode::GetCommentData() const
 
 void SAutoSizeCommentsGraphNode::ResizeToFit()
 {
-	// Resize the node
-	TArray<UObject*> UnfilteredNodesUnderComment = CommentNode->GetNodesUnderComment();
-
-	const TArray<UEdGraphNode*>& GraphNodes = GetOwnerPanel()->GetGraphObj()->Nodes;
-
-	// Remove all invalid objects
-	TSet<UObject*> InvalidObjects;
-	for (UObject* Obj : UnfilteredNodesUnderComment)
-	{
-		// Make sure that we haven't somehow added ourselves
-		check(Obj != CommentNode);
-
-		// If a node gets deleted it can still stay inside the comment box
-		// So checks if the node is still on the graph
-		if (!GraphNodes.Contains(Obj))
-		{
-			InvalidObjects.Add(Obj);
-		}
-	}
-
-	FASCUtils::RemoveNodesFromComment(CommentNode, InvalidObjects);
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::ResizeToFit"), STAT_ASC_ResizeToFit, STATGROUP_AutoSizeComments);
 
 	// resize to fit the bounds of the nodes under the comment
 	if (CommentNode->GetNodesUnderComment().Num() > 0)
