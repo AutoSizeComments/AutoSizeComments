@@ -359,6 +359,8 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDoubleClick(const FGeometry& InM
 
 void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::Tick"), STAT_ASC_Tick, STATGROUP_AutoSizeComments);
+
 	if (!bInitialized)
 	{
 		return;

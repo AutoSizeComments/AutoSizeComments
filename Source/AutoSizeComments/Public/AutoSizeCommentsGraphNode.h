@@ -13,6 +13,8 @@ struct FASCCommentData;
 struct FPresetCommentStyle;
 class UEdGraphNode_Comment;
 
+DECLARE_STATS_GROUP(TEXT("AutoSizeComments"), STATGROUP_AutoSizeComments, STATCAT_Advanced);
+
 /**
  * Auto resizing comment node
  */
