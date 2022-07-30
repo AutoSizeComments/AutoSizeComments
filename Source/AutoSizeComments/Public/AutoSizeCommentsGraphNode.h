@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AutoSizeCommentsMacros.h"
+#include "AutoSIzeCommentsMacros.h"
 #include "SGraphNode.h"
 
 enum class ECommentCollisionMethod : uint8;

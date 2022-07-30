@@ -10,7 +10,7 @@
 #include "EdGraphNode_Comment.h"
 #include "AssetRegistry/Public/AssetRegistryModule.h"
 #include "AssetRegistry/Public/AssetRegistryState.h"
-#include "Core/Public/HAL/PlatformFilemanager.h"
+#include "Core/Public/HAL/PlatformFileManager.h"
 #include "Core/Public/Misc/CoreDelegates.h"
 #include "Core/Public/Misc/FileHelper.h"
 #include "EdGraph/EdGraph.h"

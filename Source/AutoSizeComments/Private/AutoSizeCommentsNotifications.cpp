@@ -2,7 +2,7 @@
 
 #include "AutoSizeCommentsNotifications.h"
 
-#include "AutoSizeCommentsMacros.h"
+#include "AutoSIzeCommentsMacros.h"
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
 #include "ISourceControlModule.h"
