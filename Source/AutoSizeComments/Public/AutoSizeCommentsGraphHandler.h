@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "AutoSIzeCommentsMacros.h"
+#include "AutoSizeCommentsMacros.h"
 #include "AutoSizeCommentsNodeChangeData.h"
 
 class UEdGraphNode_Comment;
