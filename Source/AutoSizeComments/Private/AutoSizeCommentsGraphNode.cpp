@@ -363,6 +363,9 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 	if (!bInitialized)
 	{
+		// if we are not initialized we are most likely a preview node, pull size from the comment 
+		UserSize.X = CommentNode->NodeWidth;
+		UserSize.Y = CommentNode->NodeHeight;
 		return;
 	}
 
