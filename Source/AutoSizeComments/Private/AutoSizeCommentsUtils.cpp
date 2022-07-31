@@ -262,6 +262,35 @@ TSharedPtr<SWidget> FASCUtils::GetParentWidgetOfType(
 	return nullptr;
 }
 
+TSharedPtr<SWidget> FASCUtils::GetParentWidgetOfTypes(TSharedPtr<SWidget> Widget, const TArray<FString>& ParentTypes)
+{
+	if (!Widget.IsValid())
+	{
+		return nullptr;
+	}
+
+	for (const FString& Type : ParentTypes)
+	{
+		if (IsWidgetOfType(Widget, Type))
+		{
+			return Widget;
+		}
+	}
+
+	if (!Widget->IsParentValid())
+	{
+		return nullptr;
+	}
+
+	TSharedPtr<SWidget> ReturnWidget = GetParentWidgetOfTypes(Widget->GetParentWidget(), ParentTypes);
+	if (ReturnWidget.IsValid())
+	{
+		return ReturnWidget;
+	}
+
+	return nullptr;
+}
+
 bool FASCUtils::DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraphNode_Comment* Other)
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::DoesCommentContainComment"), STAT_ASC_DoesCommentContainComment, STATGROUP_AutoSizeComments);

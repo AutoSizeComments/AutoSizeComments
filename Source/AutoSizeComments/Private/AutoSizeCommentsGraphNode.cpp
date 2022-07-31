@@ -700,7 +700,13 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 
 void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes)
 {
-	TSharedPtr<SGraphNode> NodeWidget = GetOwnerPanel()->GetNodeWidgetFromGuid(GetCommentNodeObj()->NodeGuid);
+	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
+	if (!CommentNode || !OwnerPanel)
+	{
+		return;
+	}
+
+	TSharedPtr<SGraphNode> NodeWidget = OwnerPanel->GetNodeWidgetFromGuid(CommentNode->NodeGuid);
 	if (NodeWidget != AsShared())
 	{
 		return;
@@ -1020,7 +1026,8 @@ bool SAutoSizeCommentsGraphNode::IsValidGraphPanel(TSharedPtr<SGraphPanel> Graph
 		return false;
 	}
 
-	if (FASCUtils::GetParentWidgetOfType(GraphPanel, "SBlueprintDiff"))
+	static TArray<FString> InvalidTypes = { "SBlueprintDiff", "SGraphPreviewer" };
+	if (FASCUtils::GetParentWidgetOfTypes(GraphPanel, InvalidTypes))
 	{
 		return false;
 	}
