@@ -162,15 +162,15 @@ public:
 	float EmptyCommentBoxSpeed;
 
 	/** If enabled, nodes inside comments will be saved to a cache file */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
+	UPROPERTY(EditAnywhere, config, Category = CommentCache)
 	bool bSaveCommentNodeDataToFile;
 
 	/** If enabled, nodes will be saved to file when the graph is saved */
-	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
+	UPROPERTY(EditAnywhere, config, Category = CommentCache, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
 	bool bSaveCommentDataOnSavingGraph;
 
 	/** If enabled, nodes will be saved to file when the program is exited */
-	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
+	UPROPERTY(EditAnywhere, config, Category = CommentCache, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
 	bool bSaveCommentDataOnExit;
 
 	/** Commments will detect and add nodes are underneath on creation */

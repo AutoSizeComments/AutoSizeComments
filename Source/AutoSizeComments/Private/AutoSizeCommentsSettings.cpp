@@ -78,14 +78,22 @@ TSharedRef<IDetailCustomization> FASCSettingsDetails::MakeInstance()
 }
 void FASCSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	IDetailCategoryBuilder& GeneralCategory = DetailBuilder.EditCategory("Misc");
+	IDetailCategoryBuilder& GeneralCategory = DetailBuilder.EditCategory("CommentCache");
 	auto& SizeCache = FAutoSizeCommentsCacheFile::Get();
 
 	const FString CachePath = SizeCache.GetCachePath(true);
 
 	const auto DeleteSizeCache = [&SizeCache]()
 	{
-		SizeCache.DeleteCache();
+		static FText Title = FText::FromString("Clear comment cache");
+		static FText Message = FText::FromString("Are you sure you want to delete the comment cache?");
+
+		const EAppReturnType::Type Result = FMessageDialog::Open(EAppMsgType::YesNo, Message, &Title);
+		if (Result == EAppReturnType::Yes)
+		{
+			SizeCache.DeleteCache();
+		}
+
 		return FReply::Handled();
 	};
 
