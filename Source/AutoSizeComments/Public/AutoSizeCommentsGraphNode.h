@@ -166,6 +166,8 @@ private:
 	void InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, bool bIsPresetStyle, bool bIsHeaderComment);
 	void InitializeCommentBubbleSettings();
 
+	bool AreControlsEnabled() const;
+
 	FVector2D UserSize;
 
 	bool bHasSetNodesUnderComment = false;
@@ -208,6 +210,8 @@ private:
 	TSharedPtr<SButton> ToggleHeaderButton;
 	TSharedPtr<SHorizontalBox> ColorControls;
 	TSharedPtr<SHorizontalBox> CommentControls;
+
+	bool bAreControlsEnabled = false;
 
 public:
 	/** Update the nodes */

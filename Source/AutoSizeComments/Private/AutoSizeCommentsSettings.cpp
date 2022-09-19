@@ -45,6 +45,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bDetectNodesContainedForNewComments = true;
 	ResizeChord = FInputChord(EKeys::LeftMouseButton, EModifierKey::Shift);
 	ResizeCollisionMethod = ECommentCollisionMethod::Contained;
+	EnableCommentControlsKey = FInputChord();
 	AltCollisionMethod = ECommentCollisionMethod::Intersect;
 	bSnapToGridWhileResizing = false;
 	bIgnoreKnotNodes = false;

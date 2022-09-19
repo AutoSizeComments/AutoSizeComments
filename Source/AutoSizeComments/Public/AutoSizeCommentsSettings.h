@@ -181,6 +181,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	FInputChord ResizeChord;
 
+	/** Input key to enable comment controls */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	FInputChord EnableCommentControlsKey;
+
 	/** Collision method to use when resizing comment nodes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	ECommentCollisionMethod ResizeCollisionMethod;

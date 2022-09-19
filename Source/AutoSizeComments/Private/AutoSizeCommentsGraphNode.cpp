@@ -4,6 +4,7 @@
 
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphHandler.h"
+#include "AutoSizeCommentsInputProcessor.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
@@ -374,11 +375,13 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		return;
 	}
 
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+
+	bAreControlsEnabled = FAutoSizeCommentsInputProcessor::Get().IsInputChordDown(ASCSettings->EnableCommentControlsKey);
+
 	// We need to call this on tick since there are quite a few methods of deleting
 	// nodes without any callbacks (undo, collapse to function / macro...)
 	RemoveInvalidNodes();
-
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
 	if (ASCSettings->ResizingMode == EASCResizingMode::Disabled)
 	{
@@ -539,6 +542,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked)
 		.ContentPadding(FMargin(2, 2))
+		.IsEnabled(this, &SAutoSizeCommentsGraphNode::AreControlsEnabled)
 		.ToolTipText(FText::FromString("Toggle between a header node and a resizing node"))
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
@@ -1102,7 +1106,9 @@ void SAutoSizeCommentsGraphNode::UpdateColors(const float InDeltaTime)
 {
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
-	if (IsHovered())
+	const bool bIsCommentControlsKeyDown = ASCSettings->EnableCommentControlsKey.Key.IsValid() && bAreControlsEnabled;
+
+	if (bIsCommentControlsKeyDown || (!ASCSettings->EnableCommentControlsKey.Key.IsValid() && IsHovered()))
 	{
 		if (OpacityValue < 1.f)
 		{
@@ -1543,6 +1549,7 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked)
 		.ContentPadding(FMargin(2, 2))
+		.IsEnabled(this, &SAutoSizeCommentsGraphNode::AreControlsEnabled)
 		.ToolTipText(FText::FromString("Replace with selected nodes"))
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
@@ -1560,6 +1567,7 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleAddButtonClicked)
 		.ContentPadding(FMargin(2, 2))
+		.IsEnabled(this, &SAutoSizeCommentsGraphNode::AreControlsEnabled)
 		.ToolTipText(FText::FromString("Add selected nodes"))
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
@@ -1578,6 +1586,7 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked)
 		.ContentPadding(FMargin(2, 2))
+		.IsEnabled(this, &SAutoSizeCommentsGraphNode::AreControlsEnabled)
 		.ToolTipText(FText::FromString("Remove selected nodes"))
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
@@ -1596,6 +1605,7 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleClearButtonClicked)
 		.ContentPadding(FMargin(2, 2))
+		.IsEnabled(this, &SAutoSizeCommentsGraphNode::AreControlsEnabled)
 		.ToolTipText(FText::FromString("Clear all nodes"))
 		[
 			SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
@@ -1635,6 +1645,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 				.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 				.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleResizeButtonClicked)
 				.ContentPadding(FMargin(2, 2))
+				.IsEnabled(this, &SAutoSizeCommentsGraphNode::AreControlsEnabled)
 				.ToolTipText(FText::FromString("Resize to containing nodes"))
 				[
 					SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(12).HeightOverride(12)
@@ -1665,6 +1676,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 					.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetPresetColor, ColorWithoutOpacity)
 					.OnClicked(this, &SAutoSizeCommentsGraphNode::HandlePresetButtonClicked, Preset)
 					.ContentPadding(FMargin(2, 2))
+					.IsEnabled(this, &SAutoSizeCommentsGraphNode::AreControlsEnabled)
 					.ToolTipText(FText::FromString("Set preset color"))
 					[
 						SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
@@ -1682,6 +1694,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 				.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 				.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked)
 				.ContentPadding(FMargin(2, 2))
+				.IsEnabled(this, &SAutoSizeCommentsGraphNode::AreControlsEnabled)
 				.ToolTipText(FText::FromString("Randomize the color of the comment box"))
 				[
 					SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center).WidthOverride(16).HeightOverride(16)
@@ -1938,6 +1951,11 @@ void SAutoSizeCommentsGraphNode::ResetNodesUnrelated()
 		}
 	}
 #endif
+}
+
+bool SAutoSizeCommentsGraphNode::AreControlsEnabled() const
+{
+	return !GetDefault<UAutoSizeCommentsSettings>()->EnableCommentControlsKey.Key.IsValid() || bAreControlsEnabled;
 }
 
 bool SAutoSizeCommentsGraphNode::IsPresetStyle()
