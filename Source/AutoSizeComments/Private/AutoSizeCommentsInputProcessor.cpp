@@ -27,6 +27,11 @@ void FAutoSizeCommentsInputProcessor::Cleanup()
 	}
 }
 
+FAutoSizeCommentsInputProcessor& FAutoSizeCommentsInputProcessor::Get()
+{
+	return *Instance;
+}
+
 bool FAutoSizeCommentsInputProcessor::HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)
 {
 	if (GetDefault<UAutoSizeCommentsSettings>()->bSelectNodeWhenClickingOnPin)
@@ -65,4 +70,28 @@ bool FAutoSizeCommentsInputProcessor::HandleMouseButtonDownEvent(FSlateApplicati
 	}
 
 	return false;
+}
+
+bool FAutoSizeCommentsInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
+{
+	KeysDown.Add(InKeyEvent.GetKey());
+	return false;
+}
+
+bool FAutoSizeCommentsInputProcessor::HandleKeyUpEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
+{
+	KeysDown.Remove(InKeyEvent.GetKey());
+	return false;
+}
+
+bool FAutoSizeCommentsInputProcessor::IsKeyDown(const FKey& Key)
+{
+	return KeysDown.Contains(Key);
+}
+
+bool FAutoSizeCommentsInputProcessor::IsInputChordDown(const FInputChord& Chord)
+{
+	const FModifierKeysState ModKeysState = FSlateApplication::Get().GetModifierKeys();
+	const bool AreModifiersDown = ModKeysState.AreModifersDown(EModifierKey::FromBools(Chord.bCtrl, Chord.bAlt, Chord.bShift, Chord.bCmd));
+	return KeysDown.Contains(Chord.Key) && AreModifiersDown;
 }
