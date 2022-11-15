@@ -11,12 +11,16 @@ struct FASCPinChangeData
 	bool bPinLinked;
 	bool bPinHidden;
 	FString PinValue;
+	FText PinTextValue;
+	FString PinObject;
 
 	FASCPinChangeData() = default;
 
 	void UpdatePin(UEdGraphPin* Pin);
 
 	bool HasPinChanged(UEdGraphPin* Pin);
+
+	FString GetPinDefaultObjectName(UEdGraphPin* Pin) const;
 };
 
 
