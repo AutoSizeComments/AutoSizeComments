@@ -3,6 +3,7 @@
 #include "AutoSizeCommentsSettings.h"
 
 #include "AutoSizeCommentsCacheFile.h"
+#include "AutoSizeCommentsMacros.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
@@ -103,7 +104,7 @@ void FASCSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 		[
 			SNew(STextBlock)
 			.Text(FText::FromString("Clear comment cache"))
-			.Font(FEditorStyle::GetFontStyle(TEXT("PropertyWindow.NormalFont")))
+			.Font(ASC_GET_FONT_STYLE(TEXT("PropertyWindow.NormalFont")))
 		]
 		.ValueContent()
 		[

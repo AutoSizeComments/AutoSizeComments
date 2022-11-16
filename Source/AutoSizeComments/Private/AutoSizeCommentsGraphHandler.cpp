@@ -16,6 +16,10 @@
 #include "UObject/ObjectSaveContext.h"
 #endif
 
+#if ASC_UE_VERSION_OR_LATER(5, 1)
+#include "Misc/TransactionObjectEvent.h"
+#endif
+
 FAutoSizeCommentGraphHandler& FAutoSizeCommentGraphHandler::Get()
 {
 	return TLazySingleton<FAutoSizeCommentGraphHandler>::Get();

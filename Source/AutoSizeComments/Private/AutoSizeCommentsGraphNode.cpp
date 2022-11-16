@@ -506,8 +506,12 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	FGraphNodeMetaData TagMeta(TEXT("Graphnode"));
 	PopulateMetaTag(&TagMeta);
 
-	CommentStyle = FEditorStyle::Get().GetWidgetStyle<FInlineEditableTextBlockStyle>("Graph.CommentBlock.TitleInlineEditableText");
+	CommentStyle = ASC_STYLE_CLASS::Get().GetWidgetStyle<FInlineEditableTextBlockStyle>("Graph.CommentBlock.TitleInlineEditableText");
+#if ASC_UE_VERSION_OR_LATER(5, 1)
+	CommentStyle.EditableTextBoxStyle.TextStyle.Font.Size = CommentNode->FontSize;
+#else
 	CommentStyle.EditableTextBoxStyle.Font.Size = CommentNode->FontSize;
+#endif
 	CommentStyle.TextStyle.Font.Size = CommentNode->FontSize;
 	CachedFontSize = CommentNode->FontSize;
 
@@ -538,7 +542,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	// Create the toggle header button
 	ToggleHeaderButton = SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonStyle(ASC_STYLE_CLASS::Get(), "NoBorder")
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked)
 		.ContentPadding(FMargin(2, 2))
@@ -549,7 +553,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			[
 				SNew(STextBlock)
 				.Text(FText::FromString(FString("H")))
-				.Font(FEditorStyle::GetFontStyle("BoldFont"))
+				.Font(ASC_GET_FONT_STYLE("BoldFont"))
 				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
 			]
 		];
@@ -558,7 +562,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	{
 		return SNew(SBox).WidthOverride(16).HeightOverride(16).Visibility(EVisibility::Visible)
 		[
-			SNew(SBorder).BorderImage(FEditorStyle::GetBrush("Tutorials.Border"))
+			SNew(SBorder).BorderImage(ASC_STYLE_CLASS::Get().GetBrush("Tutorials.Border"))
 		];
 	};
 
@@ -618,7 +622,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill).AttachWidget(CommentControls.ToSharedRef());
 		}
 
-		BottomHBox->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
+		BottomHBox->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(ASC_STYLE_CLASS::Get().GetBrush("NoBorder")));
 
 		if (!bHideCornerPoints)
 		{
@@ -628,7 +632,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 	// Create the title bar
 	SAssignNew(TitleBar, SBorder)
-		.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleBackground"))
+		.BorderImage(ASC_STYLE_CLASS::Get().GetBrush("Graph.Node.TitleBackground"))
 		.BorderBackgroundColor(this, &SAutoSizeCommentsGraphNode::GetCommentTitleBarColor)
 		.HAlign(HAlign_Fill).VAlign(VAlign_Top)
 		[
@@ -648,7 +652,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	{
 		MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(ColorControls.ToSharedRef());
 	}
-	MainVBox->AddSlot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
+	MainVBox->AddSlot().FillHeight(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(ASC_STYLE_CLASS::Get().GetBrush("NoBorder")));
 
 	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Bottom).AttachWidget(BottomHBox);
 
@@ -656,7 +660,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	GetOrAddSlot(ENodeZone::Center).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 	[
 		SNew(SBorder)
-		.BorderImage(FEditorStyle::GetBrush("Kismet.Comment.Background"))
+		.BorderImage(ASC_STYLE_CLASS::Get().GetBrush("Kismet.Comment.Background"))
 		.ColorAndOpacity(FLinearColor::White)
 		.BorderBackgroundColor(this, &SAutoSizeCommentsGraphNode::GetCommentBodyColor)
 		.AddMetaData<FGraphNodeMetaData>(TagMeta)
@@ -1545,7 +1549,7 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 {
 	// Create the replace button
 	TSharedRef<SButton> ReplaceButton = SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonStyle(ASC_STYLE_CLASS::Get(), "NoBorder")
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked)
 		.ContentPadding(FMargin(2, 2))
@@ -1556,14 +1560,14 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 			[
 				SNew(STextBlock)
 				.Text(FText::FromString(FString("R")))
-				.Font(FEditorStyle::GetFontStyle("BoldFont"))
+				.Font(ASC_GET_FONT_STYLE("BoldFont"))
 				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
 			]
 		];
 
 	// Create the add button
 	TSharedRef<SButton> AddButton = SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonStyle(ASC_STYLE_CLASS::Get(), "NoBorder")
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleAddButtonClicked)
 		.ContentPadding(FMargin(2, 2))
@@ -1582,7 +1586,7 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 
 	// Create the remove button
 	TSharedRef<SButton> RemoveButton = SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonStyle(ASC_STYLE_CLASS::Get(), "NoBorder")
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked)
 		.ContentPadding(FMargin(2, 2))
@@ -1601,7 +1605,7 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 
 	// Create the clear button
 	TSharedRef<SButton> ClearButton = SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+		.ButtonStyle(ASC_STYLE_CLASS::Get(), "NoBorder")
 		.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 		.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleClearButtonClicked)
 		.ContentPadding(FMargin(2, 2))
@@ -1612,7 +1616,7 @@ void SAutoSizeCommentsGraphNode::CreateCommentControls()
 			[
 				SNew(STextBlock)
 				.Text(FText::FromString(FString("C")))
-				.Font(FEditorStyle::GetFontStyle("BoldFont"))
+				.Font(ASC_GET_FONT_STYLE("BoldFont"))
 				.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
 			]
 		];
@@ -1641,7 +1645,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 		{
 			// Create the resize button
 			ResizeButton = SNew(SButton)
-				.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+				.ButtonStyle(ASC_STYLE_CLASS::Get(), "NoBorder")
 				.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 				.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleResizeButtonClicked)
 				.ContentPadding(FMargin(2, 2))
@@ -1652,14 +1656,14 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 					[
 						SNew(SImage)
 						.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
-						.Image(FEditorStyle::GetBrush("Icons.Refresh"))
+						.Image(ASC_STYLE_CLASS::Get().GetBrush("Icons.Refresh"))
 					]
 				];
 
 			ColorControls->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Center).Padding(4.0f, 0.0f, 0.0f, 0.0f).AttachWidget(ResizeButton.ToSharedRef());
 		}
 
-		ColorControls->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(FEditorStyle::GetBrush("NoBorder")));
+		ColorControls->AddSlot().FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Fill).AttachWidget(SNew(SBorder).BorderImage(ASC_STYLE_CLASS::Get().GetBrush("NoBorder")));
 
 		auto Buttons = SNew(SHorizontalBox);
 		ColorControls->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Fill).AttachWidget(Buttons);
@@ -1672,7 +1676,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 				ColorWithoutOpacity.A = 1;
 
 				TSharedRef<SButton> Button = SNew(SButton)
-					.ButtonStyle(FEditorStyle::Get(), "RoundButton")
+					.ButtonStyle(ASC_STYLE_CLASS::Get(), "RoundButton")
 					.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetPresetColor, ColorWithoutOpacity)
 					.OnClicked(this, &SAutoSizeCommentsGraphNode::HandlePresetButtonClicked, Preset)
 					.ContentPadding(FMargin(2, 2))
@@ -1690,7 +1694,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 		{
 			// Create the random color button
 			TSharedRef<SButton> RandomColorButton = SNew(SButton)
-				.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+				.ButtonStyle(ASC_STYLE_CLASS::Get(), "NoBorder")
 				.ButtonColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsColor)
 				.OnClicked(this, &SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked)
 				.ContentPadding(FMargin(2, 2))
@@ -1701,7 +1705,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 					[
 						SNew(STextBlock)
 						.Text(FText::FromString(FString("?")))
-						.Font(FEditorStyle::GetFontStyle("BoldFont"))
+						.Font(ASC_GET_FONT_STYLE("BoldFont"))
 						.ColorAndOpacity(this, &SAutoSizeCommentsGraphNode::GetCommentControlsTextColor)
 					]
 				];
