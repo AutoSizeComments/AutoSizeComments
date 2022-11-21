@@ -8,6 +8,7 @@
 #include "AutoSizeCommentsInputProcessor.h"
 #include "AutoSizeCommentsNotifications.h"
 #include "AutoSizeCommentsSettings.h"
+#include "AutoSizeCommentsStyle.h"
 #include "ISettingsModule.h"
 
 #define LOCTEXT_NAMESPACE "FAutoSizeCommentsModule"
@@ -52,6 +53,8 @@ void FAutoSizeCommentsModule::OnPostEngineInit()
 	FAutoSizeCommentsInputProcessor::Create();
 
 	FAutoSizeCommentsNotifications::Get().Initialize();
+
+	FASCStyle::Initialize();
 }
 
 void FAutoSizeCommentsModule::ShutdownModule()
@@ -79,6 +82,8 @@ void FAutoSizeCommentsModule::ShutdownModule()
 	FAutoSizeCommentGraphHandler::Get().UnbindDelegates();
 
 	FAutoSizeCommentsInputProcessor::Cleanup();
+
+	FASCStyle::Shutdown();
 #endif
 }
 

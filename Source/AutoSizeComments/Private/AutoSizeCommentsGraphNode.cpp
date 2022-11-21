@@ -7,6 +7,7 @@
 #include "AutoSizeCommentsInputProcessor.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
+#include "AutoSizeCommentsStyle.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "GraphEditorSettings.h"
@@ -562,7 +563,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	{
 		return SNew(SBox).WidthOverride(16).HeightOverride(16).Visibility(EVisibility::Visible)
 		[
-			SNew(SBorder).BorderImage(ASC_STYLE_CLASS::Get().GetBrush("Tutorials.Border"))
+			SNew(SBorder).BorderImage(FASCStyle::Get().GetBrush("ASC.AnchorBox"))
 		];
 	};
 
