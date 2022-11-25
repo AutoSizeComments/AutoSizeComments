@@ -12,7 +12,7 @@
   "SupportURL": "https://forums.unrealengine.com/community/released-projects/1540542",
   "CanContainContent": false,
   "IsBetaVersion": false,
-  "Installed": true,
+  "Installed": false,
   "Modules": [
     {
       "Name": "AutoSizeComments",
