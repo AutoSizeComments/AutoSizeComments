@@ -14,10 +14,12 @@ public:
 	static void TearDown();
 
 	void Initialize();
+	void Shutdown();
 
 protected:
 	// ~~ Source control related
 	TWeakPtr<SNotificationItem> SourceControlNotification;
+	FDelegateHandle SourceControlNotificationDelegate;
 	void ShowSourceControlNotification();
 	void HandleSourceControlProviderChanged(ISourceControlProvider& OldSourceControlProvider, ISourceControlProvider& NewControlProvider);
 	bool ShouldShowSourceControlNotification();

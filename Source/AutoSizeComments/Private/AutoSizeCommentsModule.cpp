@@ -83,6 +83,8 @@ void FAutoSizeCommentsModule::ShutdownModule()
 
 	FAutoSizeCommentsInputProcessor::Cleanup();
 
+	FAutoSizeCommentsNotifications::Get().Shutdown();
+
 	FASCStyle::Shutdown();
 #endif
 }

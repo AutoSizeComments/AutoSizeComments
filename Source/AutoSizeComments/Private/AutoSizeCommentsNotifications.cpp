@@ -28,11 +28,19 @@ void FAutoSizeCommentsNotifications::Initialize()
 	}
 	else
 	{
-		ISourceControlModule::Get().RegisterProviderChanged(FSourceControlProviderChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged));
+		SourceControlNotificationDelegate = ISourceControlModule::Get().RegisterProviderChanged(FSourceControlProviderChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged));
 	}
 
 	// We don't need this right now but leaving this here in case we do in the future
 	// ShowBlueprintAssistNotification();
+}
+
+void FAutoSizeCommentsNotifications::Shutdown()
+{
+	if (SourceControlNotificationDelegate.IsValid())
+	{
+		ISourceControlModule::Get().UnregisterProviderChanged(SourceControlNotificationDelegate);
+	}
 }
 
 void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
@@ -139,6 +147,11 @@ void FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged(ISourceC
 bool FAutoSizeCommentsNotifications::ShouldShowSourceControlNotification()
 {
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	if (!ASCSettings)
+	{
+		return false;
+	}
+
 	return !SourceControlNotification.IsValid() &&
 		ASCSettings->ResizingMode == EASCResizingMode::Always &&
 		!ASCSettings->bSuppressSourceControlNotification;
