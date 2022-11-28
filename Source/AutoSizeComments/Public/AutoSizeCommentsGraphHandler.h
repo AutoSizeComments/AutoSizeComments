@@ -64,7 +64,7 @@ private:
 
 	void UpdateNodeUnrelatedState();
 
-	void OnNodeAdded(const FEdGraphEditAction& Action);
+	void OnNodeAdded(TWeakObjectPtr<UEdGraphNode> NewNodePtr);
 
 	void OnNodeDeleted(const FEdGraphEditAction& Action);
 

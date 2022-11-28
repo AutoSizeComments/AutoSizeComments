@@ -9,6 +9,7 @@
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "GraphEditAction.h"
+#include "K2Node_Knot.h"
 #include "SGraphPanel.h"
 #include "Misc/LazySingleton.h"
 
@@ -89,7 +90,15 @@ void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Acti
 {
 	if ((Action.Action & GRAPHACTION_AddNode) != 0)
 	{
-		OnNodeAdded(Action);
+		// only handle single node added 
+		if (Action.Nodes.Num() == 1)
+		{
+			UEdGraphNode* NewNode = const_cast<UEdGraphNode*>(Action.Nodes.Array()[0]);
+
+			// delay 1 tick as some nodes do not have their pins setup correctly on creation
+			GEditor->GetTimerManager()->SetTimerForNextTick(
+				FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::OnNodeAdded, TWeakObjectPtr<UEdGraphNode>(NewNode)));
+		}
 	}
 	else if ((Action.Action & GRAPHACTION_RemoveNode) != 0)
 	{
@@ -512,37 +521,57 @@ void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
 	}
 }
 
-void FAutoSizeCommentGraphHandler::OnNodeAdded(const FEdGraphEditAction& Action)
+void FAutoSizeCommentGraphHandler::OnNodeAdded(TWeakObjectPtr<UEdGraphNode> NewNodePtr)
 {
-	if (Action.Nodes.Num() != 1)
+	if (!NewNodePtr.IsValid())
 	{
 		return;
 	}
 
-	UEdGraphNode* NewNode = const_cast<UEdGraphNode*>(Action.Nodes.Array()[0]);
+	UEdGraphNode* NewNode = NewNodePtr.Get();
+	UEdGraphNode* SelectedNode = nullptr;
 
+	// get the owner panel from the first ASCComment
 	TArray<UEdGraphNode_Comment*> Comments;
 	NewNode->GetGraph()->GetNodesOfClassEx<UEdGraphNode_Comment>(Comments);
-	if (Comments.Num() == 0)
+
+	if (Comments.Num() > 0)
+	{
+		if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Comments[0]))
+		{
+			if (TSharedPtr<SGraphPanel> OwnerPanel = ASCComment->GetOwnerPanel())
+			{
+				if (OwnerPanel->SelectionManager.SelectedNodes.Num() == 1)
+				{
+					// get the selected node from the owner panel
+					SelectedNode = Cast<UEdGraphNode>(OwnerPanel->SelectionManager.SelectedNodes.Array()[0]);
+				}
+			}
+		}
+	}
+
+	// handle knot nodes differently: since they can be created by double
+	// clicking they may not have a previous selected node, instead check the first input pin
+	if (!SelectedNode)
+	{
+		if (UK2Node_Knot* NewKnot = Cast<UK2Node_Knot>(NewNode))
+		{
+			if (UEdGraphPin* KnotInputPin = NewKnot->GetInputPin())
+			{
+				if (KnotInputPin->LinkedTo.Num() > 0)
+				{
+					SelectedNode = KnotInputPin->LinkedTo[0]->GetOwningNode();
+				}
+			}
+		}
+	}
+
+	if (!SelectedNode)
 	{
 		return;
 	}
 
-	TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Comments[0]);
-	if (!ASCComment.IsValid())
-	{
-		return;
-	}
-
-	TSharedPtr<SGraphPanel> OwnerPanel = ASCComment->GetOwnerPanel();
-	if (!OwnerPanel || OwnerPanel->SelectionManager.SelectedNodes.Num() != 1)
-	{
-		return;
-	}
-
-	UEdGraphNode* SelectedNode = Cast<UEdGraphNode>(OwnerPanel->SelectionManager.SelectedNodes.Array()[0]);
-
-	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes, TWeakObjectPtr<UEdGraphNode>(NewNode), TWeakObjectPtr<UEdGraphNode>(SelectedNode)));
+	AutoInsertIntoCommentNodes(NewNode, SelectedNode);
 }
 
 void FAutoSizeCommentGraphHandler::OnNodeDeleted(const FEdGraphEditAction& Action)
