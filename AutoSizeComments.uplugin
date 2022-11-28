@@ -7,11 +7,10 @@
   "Category": "Editor",
   "CreatedBy": "fpwong",
   "CreatedByURL": "https://fpwong.github.io/",
-  "DocsURL": "",
+  "DocsURL": "https://github.com/fpwong/AutoSizeComments/wiki",
   "MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/ae89a2c4ab384de0a3f213b23de324f3",
   "SupportURL": "https://forums.unrealengine.com/community/released-projects/1540542",
   "CanContainContent": false,
-  "IsBetaVersion": false,
   "Installed": false,
   "Modules": [
     {
