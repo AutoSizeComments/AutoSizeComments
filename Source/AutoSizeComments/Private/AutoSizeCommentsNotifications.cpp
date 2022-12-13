@@ -22,13 +22,19 @@ void FAutoSizeCommentsNotifications::TearDown()
 
 void FAutoSizeCommentsNotifications::Initialize()
 {
-	 if (ISourceControlModule::Get().IsEnabled())
+	ISourceControlModule* SourceControlModule = GetSourceControlModule();
+	if (!SourceControlModule)
+	{
+		return;
+	}
+
+	 if (SourceControlModule->IsEnabled())
 	{
 		ShowSourceControlNotification();
 	}
 	else
 	{
-		SourceControlNotificationDelegate = ISourceControlModule::Get().RegisterProviderChanged(FSourceControlProviderChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged));
+		SourceControlNotificationDelegate = SourceControlModule->RegisterProviderChanged(FSourceControlProviderChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged));
 	}
 
 	// We don't need this right now but leaving this here in case we do in the future
@@ -39,7 +45,10 @@ void FAutoSizeCommentsNotifications::Shutdown()
 {
 	if (SourceControlNotificationDelegate.IsValid())
 	{
-		ISourceControlModule::Get().UnregisterProviderChanged(SourceControlNotificationDelegate);
+		if (ISourceControlModule* SourceControlModule = GetSourceControlModule())
+		{
+			SourceControlModule->UnregisterProviderChanged(SourceControlNotificationDelegate);
+		}
 	}
 }
 
@@ -243,4 +252,9 @@ void FAutoSizeCommentsNotifications::ShowBlueprintAssistNotification()
 
 	BlueprintAssistNotification = FSlateNotificationManager::Get().AddNotification(Info);
 	BlueprintAssistNotification.Pin()->SetCompletionState(SNotificationItem::CS_Pending);
+}
+
+ISourceControlModule* FAutoSizeCommentsNotifications::GetSourceControlModule()
+{
+	return FModuleManager::GetModulePtr<ISourceControlModule>("SourceControl");
 }

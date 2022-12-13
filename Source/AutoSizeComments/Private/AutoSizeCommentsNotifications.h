@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Misc/LazySingleton.h"
 
+class ISourceControlModule;
 class ISourceControlProvider;
 
 class AUTOSIZECOMMENTS_API FAutoSizeCommentsNotifications
@@ -29,4 +30,6 @@ protected:
 	TWeakPtr<SNotificationItem> BlueprintAssistNotification;
 	void ShowBlueprintAssistNotification();
 	// ~~ Blueprint Assist related
+
+	ISourceControlModule* GetSourceControlModule(); 
 };
