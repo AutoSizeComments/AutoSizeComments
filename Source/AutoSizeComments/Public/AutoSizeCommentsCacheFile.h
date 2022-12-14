@@ -88,7 +88,10 @@ public:
 
 	FASCGraphData& GetGraphData(UEdGraph* Graph);
 
+	FString GetProjectCachePath(bool bFullPath = false);
+	FString GetPluginCachePath(bool bFullPath = false);
 	FString GetCachePath(bool bFullPath = false);
+	FString GetAlternateCachePath(bool bFullPath = false);
 
 	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 

@@ -11,6 +11,16 @@
 #include "AutoSizeCommentsSettings.generated.h"
 
 UENUM()
+enum class EASCCacheSaveLocation : uint8
+{
+	/** Save to PluginFolder/ASCCache/PROJECT_ID.json */
+	Plugin UMETA(DisplayName = "Plugin"),
+
+	/** Save to ProjectFolder/Saved/AutoSizeComments/AutoSizeCommentsCache.json */
+	Project UMETA(DisplayName = "Project"),
+};
+
+UENUM()
 enum class EASCResizingMode : uint8
 {
 	/** Resize to containing nodes on tick */
@@ -160,6 +170,10 @@ public:
 	/** The speed at which empty comment boxes move */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	float EmptyCommentBoxSpeed;
+
+	/** Choose cache save location: project or plugin folder */
+	UPROPERTY(EditAnywhere, config, Category = CommentCache)
+	EASCCacheSaveLocation CacheSaveLocation;
 
 	/** If enabled, nodes inside comments will be saved to a cache file */
 	UPROPERTY(EditAnywhere, config, Category = CommentCache)

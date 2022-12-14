@@ -53,11 +53,12 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 
 	bHasLoaded = true;
 
-	const auto CachePath = GetCachePath();
+	const FString CachePath = GetCachePath();
+	const FString OldCachePath = GetAlternateCachePath();
 
+	FString FileData;
 	if (FPlatformFileManager::Get().GetPlatformFile().FileExists(*CachePath))
 	{
-		FString FileData;
 		FFileHelper::LoadFileToString(FileData, *CachePath);
 
 		if (FJsonObjectConverter::JsonObjectStringToUStruct(FileData, &CacheData, 0, 0))
@@ -67,6 +68,19 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 		else
 		{
 			UE_LOG(LogAutoSizeComments, Log, TEXT("Failed to load auto size comments cache: %s"), *GetCachePath(true));
+		}
+	}
+	else
+	{
+		FFileHelper::LoadFileToString(FileData, *OldCachePath);
+
+		if (FJsonObjectConverter::JsonObjectStringToUStruct(FileData, &CacheData, 0, 0))
+		{
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Loaded auto size comments cache from old cache path: %s"), *GetAlternateCachePath(true));
+		}
+		else
+		{
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Failed to load auto size comments cache from old cache path: %s"), *GetAlternateCachePath(true));
 		}
 	}
 
@@ -92,22 +106,24 @@ void FAutoSizeCommentsCacheFile::SaveCache()
 	FJsonObjectConverter::UStructToJsonObjectString(CacheData, JsonAsString);
 	FFileHelper::SaveStringToFile(JsonAsString, *CachePath);
 	const double TimeTaken = (FPlatformTime::Seconds() - StartTime) * 1000.0f;
-	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved node cache to %s took %6.2fms"), *GetCachePath(true), TimeTaken);
+	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved cache to %s took %6.2fms"), *GetCachePath(true), TimeTaken);
 }
 
 void FAutoSizeCommentsCacheFile::DeleteCache()
 {
-	FString CachePath = GetCachePath();
+	const FString ProjectCachePath = GetProjectCachePath();
+	const FString PluginCachePath = GetPluginCachePath();
 
 	CacheData.PackageData.Reset();
 
-	if (FPlatformFileManager::Get().GetPlatformFile().DeleteFile(*CachePath))
+	if (FPlatformFileManager::Get().GetPlatformFile().DeleteFile(*ProjectCachePath))
 	{
-		UE_LOG(LogAutoSizeComments, Log, TEXT("Deleted cache file at %s"), *GetCachePath(true));
+		UE_LOG(LogAutoSizeComments, Log, TEXT("Deleted project cache file at %s"), *GetCachePath(true));
 	}
-	else
+
+	if (FPlatformFileManager::Get().GetPlatformFile().DeleteFile(*PluginCachePath))
 	{
-		UE_LOG(LogAutoSizeComments, Log, TEXT("Delete cache failed: Cache file does not exist or is read-only %s"), *GetCachePath(true));
+		UE_LOG(LogAutoSizeComments, Log, TEXT("Deleted plugin cache file at %s"), *GetCachePath(true));
 	}
 }
 
@@ -212,7 +228,12 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 	return PackageData.GraphData.FindOrAdd(Graph->GraphGuid);
 }
 
-FString FAutoSizeCommentsCacheFile::GetCachePath(bool bFullPath)
+FString FAutoSizeCommentsCacheFile::GetProjectCachePath(bool bFullPath)
+{
+	return FPaths::ProjectDir() / TEXT("Saved") / TEXT("AutoSizeComments") / TEXT("AutoSizeCommentsCache.json");
+}
+
+FString FAutoSizeCommentsCacheFile::GetPluginCachePath(bool bFullPath)
 {
 	FString PluginDir = IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir();
 
@@ -225,6 +246,18 @@ FString FAutoSizeCommentsCacheFile::GetCachePath(bool bFullPath)
 	const FGuid& ProjectID = ProjectSettings->ProjectID;
 
 	return PluginDir + "/ASCCache/" + ProjectID.ToString() + ".json";
+}
+
+FString FAutoSizeCommentsCacheFile::GetCachePath(bool bFullPath)
+{
+	const bool bIsProject = GetDefault<UAutoSizeCommentsSettings>()->CacheSaveLocation == EASCCacheSaveLocation::Project;
+	return bIsProject ? GetProjectCachePath(bFullPath) : GetPluginCachePath(bFullPath);
+}
+
+FString FAutoSizeCommentsCacheFile::GetAlternateCachePath(bool bFullPath)
+{
+	const bool bIsProject = GetDefault<UAutoSizeCommentsSettings>()->CacheSaveLocation == EASCCacheSaveLocation::Project;
+	return bIsProject ? GetPluginCachePath(bFullPath) : GetProjectCachePath(bFullPath);
 }
 
 bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment)
