@@ -88,7 +88,7 @@ void FAutoSizeCommentGraphHandler::BindToGraph(UEdGraph* Graph)
 
 void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Action)
 {
-	if ((Action.Action & GRAPHACTION_AddNode) != 0)
+	if ((Action.Action & GRAPHACTION_AddNode) != 0 && Action.bUserInvoked)
 	{
 		// only handle single node added 
 		if (Action.Nodes.Num() == 1)
