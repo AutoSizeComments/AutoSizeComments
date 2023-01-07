@@ -28,7 +28,7 @@ void FAutoSizeCommentsNotifications::Initialize()
 		return;
 	}
 
-	 if (SourceControlModule->IsEnabled())
+	if (SourceControlModule->IsEnabled())
 	{
 		ShowSourceControlNotification();
 	}
@@ -147,7 +147,7 @@ void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
 
 void FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged(ISourceControlProvider& OldSourceControlProvider, ISourceControlProvider& NewControlProvider)
 {
-	if (ShouldShowSourceControlNotification() && NewControlProvider.GetName() != TEXT("None"))
+	if (GIsRunning && NewControlProvider.GetName() != TEXT("None") && ShouldShowSourceControlNotification())
 	{
 		ShowSourceControlNotification();
 	}
