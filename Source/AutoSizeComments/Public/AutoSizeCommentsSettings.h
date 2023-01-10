@@ -175,6 +175,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	TEnumAsByte<ETextJustify::Type> CommentTextAlignment;
 
+	/** If enabled, add any containing node's comment bubble to the comment bounds */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bUseCommentBubbleBounds;
+
 	/** If enabled, empty comment boxes will move out of the way of other comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bMoveEmptyCommentBoxes;

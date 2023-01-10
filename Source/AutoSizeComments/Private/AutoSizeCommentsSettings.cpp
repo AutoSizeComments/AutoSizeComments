@@ -34,6 +34,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	DefaultCommentColor = FLinearColor::White;
 	HeaderStyle.Color = FLinearColor::Gray;
 	bAggressivelyUseDefaultColor = false;
+	bUseCommentBubbleBounds = true;
 	bMoveEmptyCommentBoxes = false;
 	EmptyCommentBoxSpeed = 10;
 	bHideCommentBubble = false;

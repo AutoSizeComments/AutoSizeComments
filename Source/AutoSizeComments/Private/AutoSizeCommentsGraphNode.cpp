@@ -2181,21 +2181,28 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 	}
 
 	FVector2D Pos(Node->NodePosX, Node->NodePosY);
-
 	FVector2D Size(300, 150);
 
-	auto LocalGraphNode = FASCUtils::GetGraphNode(GetOwnerPanel(), Node);
+	TSharedPtr<SGraphNode> LocalGraphNode = FASCUtils::GetGraphNode(GetOwnerPanel(), Node);
 	if (LocalGraphNode.IsValid())
 	{
 		Pos = LocalGraphNode->GetPosition();
 		Size = LocalGraphNode->GetDesiredSize();
 
-		if (CommentBubble.IsValid() && CommentBubble->IsBubbleVisible())
+		if (GetDefault<UAutoSizeCommentsSettings>()->bUseCommentBubbleBounds && Node->bCommentBubbleVisible)
 		{
-			FVector2D CommentBubbleSize = CommentBubble->GetSize();
+			if (FNodeSlot* CommentSlot = LocalGraphNode->GetSlot(ENodeZone::TopCenter))
+			{
+				TSharedPtr<SCommentBubble> LocalCommentBubble = StaticCastSharedRef<SCommentBubble>(CommentSlot->GetWidget());
 
-			Pos.Y -= CommentBubbleSize.Y;
-			Size.Y += CommentBubbleSize.Y;
+				if (LocalCommentBubble.IsValid() && LocalCommentBubble->IsBubbleVisible())
+				{
+					FVector2D CommentBubbleSize = LocalCommentBubble->GetSize();
+					Pos.Y -= CommentBubbleSize.Y;
+					Size.Y += CommentBubbleSize.Y;
+					Size.X = FMath::Max(Size.X, CommentBubbleSize.X);
+				}
+			}
 		}
 	}
 
