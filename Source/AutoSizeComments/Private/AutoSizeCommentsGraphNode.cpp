@@ -1422,12 +1422,10 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 		const FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, TopPadding, Padding.X, BottomPadding));
 
 		const float TitleBarHeight = GetTitleBarHeight();
-		const float CommentBubbleHeight = CommentBubble.IsValid() && CommentBubble->IsBubbleVisible() ? CommentBubble->GetDesiredSize().Y : 0;
 
 		// check if size has changed
 		FVector2D CurrSize = Bounds.GetSize();
 		CurrSize.Y += TitleBarHeight;
-		CurrSize.Y -= CommentBubbleHeight;
 
 		if (!UserSize.Equals(CurrSize, .1f))
 		{
@@ -1437,7 +1435,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 
 		// check if location has changed
 		FVector2D DesiredPos = Bounds.GetTopLeft();
-		DesiredPos.Y -= TitleBarHeight - CommentBubbleHeight;
+		DesiredPos.Y -= TitleBarHeight;
 
 		// move to desired pos
 		if (!GetPosition().Equals(DesiredPos, .1f))
