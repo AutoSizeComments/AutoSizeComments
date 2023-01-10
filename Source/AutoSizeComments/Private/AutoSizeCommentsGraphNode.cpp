@@ -94,22 +94,32 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 	}
 
 	// Set comment color
-	FLinearColor DefaultColor = ASCSettings->DefaultCommentColor;
+	const FLinearColor& ASCDefaultColor = ASCSettings->DefaultCommentColor;
+	const FLinearColor& EditorDefaultColor = GetDefault<UGraphEditorSettings>()->DefaultCommentNodeTitleColor;
 
-	if (ASCSettings->bUseRandomColor)
+	switch (ASCSettings->DefaultCommentColorMethod)
 	{
-		if (CommentNode->CommentColor == DefaultColor || CommentNode->CommentColor == FLinearColor::White) // only randomize if the node has the default color
+		case EASCDefaultCommentColorMethod::Random:
 		{
-			RandomizeColor();
+			// only randomize if the node has the default color
+			if (CommentNode->CommentColor == ASCDefaultColor || CommentNode->CommentColor == EditorDefaultColor)
+			{
+				RandomizeColor();
+			}
+
+			break;
 		}
-	}
-	else if (ASCSettings->bAggressivelyUseDefaultColor)
-	{
-		CommentNode->CommentColor = DefaultColor;
-	}
-	else if (CommentNode->CommentColor == FLinearColor::White)
-	{
-		CommentNode->CommentColor = DefaultColor;
+		case EASCDefaultCommentColorMethod::Default:
+		{
+			// use the ASC default color
+			if (ASCSettings->bAggressivelyUseDefaultColor || CommentNode->CommentColor == EditorDefaultColor)
+			{
+				CommentNode->CommentColor = ASCDefaultColor;
+			}
+
+			break;
+		}
+		default: ;
 	}
 }
 
@@ -1870,7 +1880,7 @@ void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue)
 	else  // undo header style
 	{
 		const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-		if (ASCSettings->bUseRandomColor)
+		if (ASCSettings->DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
 		{
 			RandomizeColor();
 		}

@@ -55,6 +55,19 @@ enum class EASCAutoInsertComment : uint8
 	Surrounded UMETA(DisplayName = "Surrounded"),
 };
 
+UENUM()
+enum class EASCDefaultCommentColorMethod : uint8
+{
+	/** Use the default engine comment color */
+	None UMETA(DisplayName = "None"),
+
+	/** Use a random color when spawning the comment */
+	Random UMETA(DisplayName = "Random"),
+
+	/** Use the plugin color `DefaultCommentColor` when spawning the comment */
+	Default UMETA(DisplayName = "Default"),
+};
+
 USTRUCT()
 struct FPresetCommentStyle
 {
@@ -83,33 +96,32 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = FontSize)
 	bool bUseDefaultFontSize;
 
+	UPROPERTY(EditAnywhere, Config, Category = Color)
+	EASCDefaultCommentColorMethod DefaultCommentColorMethod;
+
 	/** If Use Random Color is not enabled, comment boxes will spawn with this default color */
-	UPROPERTY(EditAnywhere, config, Category = Color)
+	UPROPERTY(EditAnywhere, config, Category = Color, meta=(EditCondition="DefaultCommentColorMethod==EASCDefaultCommentColorMethod::Default", EditConditionHides))
 	FLinearColor DefaultCommentColor;
 
-	/** If enabled, comment boxes will spawn with a random color. If disabled, use default color */
-	UPROPERTY(EditAnywhere, config, Category = Color)
-	bool bUseRandomColor;
+	/** Set all comments on the graph to the default color */
+	UPROPERTY(EditAnywhere, config, Category = Color, meta=(EditCondition="DefaultCommentColorMethod==EASCDefaultCommentColorMethod::Default", EditConditionHides))
+	bool bAggressivelyUseDefaultColor;
 
 	/** Opacity used for the random color */
-	UPROPERTY(EditAnywhere, config, Category = Color)
+	UPROPERTY(EditAnywhere, config, Category = Color, meta=(EditCondition="DefaultCommentColorMethod==EASCDefaultCommentColorMethod::Random", EditConditionHides))
 	float RandomColorOpacity;
 
 	/** If enabled, select a random color from predefined list */
-	UPROPERTY(EditAnywhere, config, Category = Color)
+	UPROPERTY(EditAnywhere, config, Category = Color, meta=(EditCondition="DefaultCommentColorMethod==EASCDefaultCommentColorMethod::Random", EditConditionHides))
 	bool bUseRandomColorFromList;
 
 	/** If UseRandomColorFromList is enabled, new comments will select a color from one of these */
-	UPROPERTY(EditAnywhere, config, Category = Color, meta = (EditCondition = "bUseRandomColorFromList"))
+	UPROPERTY(EditAnywhere, config, Category = Color, meta = (EditCondition = "bUseRandomColorFromList && DefaultCommentColorMethod==EASCDefaultCommentColorMethod::Random", EditConditionHides))
 	TArray<FLinearColor> PredefinedRandomColorList;
 
 	/** Minimum opacity for comment box controls when not hovered */
 	UPROPERTY(EditAnywhere, config, Category = Color)
 	float MinimumControlOpacity;
-
-	/** Set all nodes in the graph to the default color */
-	UPROPERTY(EditAnywhere, config, Category = Color)
-	bool bAggressivelyUseDefaultColor;
 
 	/** Style for header comment boxes */
 	UPROPERTY(EditAnywhere, config, Category = Styles)
