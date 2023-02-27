@@ -33,6 +33,22 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	MinimumControlOpacity = 0.f;
 	DefaultCommentColor = FLinearColor::White;
 	HeaderStyle.Color = FLinearColor::Gray;
+
+	// define tagged preset
+	{
+		FPresetCommentStyle TodoPreset;
+		TodoPreset.Color = FColor(0, 255, 255);
+		TaggedPresets.Add("@TODO", TodoPreset);
+
+		FPresetCommentStyle FixmePreset;
+		FixmePreset.Color = FColor::Red;
+		TaggedPresets.Add("@FIXME", FixmePreset);
+
+		FPresetCommentStyle InfoPreset;
+		InfoPreset.Color = FColor::White;
+		InfoPreset.bSetHeader = true;
+		TaggedPresets.Add("@INFO", InfoPreset);
+	}
 	bAggressivelyUseDefaultColor = false;
 	bUseCommentBubbleBounds = true;
 	bMoveEmptyCommentBoxes = false;

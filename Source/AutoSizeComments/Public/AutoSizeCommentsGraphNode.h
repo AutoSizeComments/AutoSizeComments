@@ -110,6 +110,9 @@ public:
 	void ResizeToFit();
 
 	void ApplyHeaderStyle();
+	void ApplyPresetStyle(const FPresetCommentStyle& Style);
+
+	void OnTitleChanged(const FString& OldTitle, const FString& NewTitle);
 
 protected:
 	//~ Begin SGraphNode Interface
@@ -166,6 +169,7 @@ private:
 
 	void InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, bool bIsPresetStyle, bool bIsHeaderComment);
 	void InitializeCommentBubbleSettings();
+	void ApplyDefaultCommentColorMethod();
 
 	bool AreControlsEnabled() const;
 
@@ -215,6 +219,7 @@ private:
 	bool bAreControlsEnabled = false;
 
 	FName CachedGraphClassName;
+	FString OldNodeTitle;
 
 public:
 	/** Update the nodes */
@@ -243,7 +248,7 @@ public:
 
 	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
 
-	void SetIsHeader(bool bNewValue);
+	void SetIsHeader(bool bNewValue, bool bUpdateStyle);
 	bool IsHeaderComment() const;
 	bool IsPresetStyle();
 

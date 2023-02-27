@@ -39,6 +39,8 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 		}
 	}
 
+	CachedCommentTitle = GetNodeComment();
+
 	// check if we are a header comment
 	bIsHeader = GetCommentData().IsHeader();
 
@@ -125,6 +127,25 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 				CommentNode->CommentColor = ASCDefaultColor;
 			}
 
+			break;
+		}
+		default: ;
+	}
+}
+
+void SAutoSizeCommentsGraphNode::ApplyDefaultCommentColorMethod()
+{
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	switch (ASCSettings->DefaultCommentColorMethod)
+	{
+		case EASCDefaultCommentColorMethod::Random:
+		{
+			RandomizeColor();
+			break;
+		}
+		case EASCDefaultCommentColorMethod::Default:
+		{
+			CommentNode->CommentColor = ASCSettings->DefaultCommentColor;
 			break;
 		}
 		default: ;
@@ -467,6 +488,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 	const FString CurrentCommentTitle = GetNodeComment();
 	if (CurrentCommentTitle != CachedCommentTitle)
 	{
+		OnTitleChanged(CachedCommentTitle, CurrentCommentTitle);
 		CachedCommentTitle = CurrentCommentTitle;
 	}
 
@@ -954,7 +976,7 @@ FReply SAutoSizeCommentsGraphNode::HandleResizeButtonClicked()
 
 FReply SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked()
 {
-	SetIsHeader(!bIsHeader);
+	SetIsHeader(!bIsHeader, true);
 	return FReply::Handled();
 }
 
@@ -971,8 +993,7 @@ FReply SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked()
 
 FReply SAutoSizeCommentsGraphNode::HandlePresetButtonClicked(const FPresetCommentStyle Style)
 {
-	CommentNode->CommentColor = Style.Color;
-	CommentNode->FontSize = Style.FontSize;
+	ApplyPresetStyle(Style);
 	return FReply::Handled();
 }
 
@@ -1487,6 +1508,47 @@ void SAutoSizeCommentsGraphNode::ApplyHeaderStyle()
 	CommentNode->FontSize = Style.FontSize;
 }
 
+void SAutoSizeCommentsGraphNode::ApplyPresetStyle(const FPresetCommentStyle& Style)
+{
+	CommentNode->CommentColor = Style.Color;
+	CommentNode->FontSize = Style.FontSize;
+
+	SetIsHeader(Style.bSetHeader, false);
+}
+
+void SAutoSizeCommentsGraphNode::OnTitleChanged(const FString& OldTitle, const FString& NewTitle)
+{
+	// apply the preset style if the title starts with the correct prefix
+	bool bMatchesPreset = false;
+	for (const auto& Elem : GetDefault<UAutoSizeCommentsSettings>()->TaggedPresets)
+	{
+		if (NewTitle.StartsWith(Elem.Key))
+		{
+			ApplyPresetStyle(Elem.Value);
+			bMatchesPreset = true;
+		}
+	}
+
+	if (!bMatchesPreset)
+	{
+		// randomize our color if the old title was an auto applied preset
+		bool bShouldResetColor = false;
+		for (const auto& Elem : GetDefault<UAutoSizeCommentsSettings>()->TaggedPresets)
+		{
+			if (OldTitle.StartsWith(Elem.Key))
+			{
+				bShouldResetColor = true;
+				break;
+			}
+		}
+
+		if (bShouldResetColor)
+		{
+			ApplyDefaultCommentColorMethod();
+		}
+	}
+}
+
 void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 {
 	TArray<UObject*> UnderComment = CommentNode->GetNodesUnderComment();
@@ -1876,33 +1938,42 @@ EASCAnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 	return EASCAnchorPoint::None;
 }
 
-void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue)
+void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue, bool bUpdateStyle)
 {
+	// do nothing if we are already a header
+	if (bIsHeader == bNewValue)
+	{
+		return;
+	}
+
 	bIsHeader = bNewValue;
 
 	// update the comment data
 	FASCCommentData& CommentData = GetCommentData();
 	CommentData.SetHeader(bNewValue);
 
-	if (bIsHeader) // apply header style
+	if (bUpdateStyle)
 	{
-		ApplyHeaderStyle();
-		FASCUtils::ClearCommentNodes(CommentNode);
-	}
-	else  // undo header style
-	{
-		const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-		if (ASCSettings->DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
+		if (bIsHeader) // apply header style
 		{
-			RandomizeColor();
+			ApplyHeaderStyle();
+			FASCUtils::ClearCommentNodes(CommentNode);
 		}
-		else
+		else // undo header style
 		{
-			CommentNode->CommentColor = ASCSettings->DefaultCommentColor;
-		}
+			const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+			if (ASCSettings->DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
+			{
+				RandomizeColor();
+			}
+			else
+			{
+				CommentNode->CommentColor = ASCSettings->DefaultCommentColor;
+			}
 
-		CommentNode->FontSize = ASCSettings->DefaultFontSize;
-		AdjustMinSize(UserSize);
+			CommentNode->FontSize = ASCSettings->DefaultFontSize;
+			AdjustMinSize(UserSize);
+		}
 	}
 
 	UpdateGraphNode();

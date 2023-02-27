@@ -78,6 +78,9 @@ struct FPresetCommentStyle
 
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	int FontSize = 18;
+
+	UPROPERTY(EditAnywhere, config, Category = Default)
+	bool bSetHeader = false;
 };
 
 USTRUCT()
@@ -139,6 +142,10 @@ public:
 	/** Preset styles (each style will have its own button on the comment box) */
 	UPROPERTY(EditAnywhere, config, Category = Styles)
 	TArray<FPresetCommentStyle> PresetStyles;
+
+	/** Preset style that will apply if the title starts with the according prefix */
+	UPROPERTY(EditAnywhere, config, Category = Styles)
+	TMap<FString, FPresetCommentStyle> TaggedPresets;
 
 	/** Always hide the comment bubble */
 	UPROPERTY(EditAnywhere, config, Category = CommentBubble)
