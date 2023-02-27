@@ -482,6 +482,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 	if (IsHeaderComment())
 	{
 		UserSize.Y = GetTitleBarHeight();
+		CommentNode->NodeHeight = UserSize.Y;
 	}
 
 	// Update cached title
@@ -1973,6 +1974,7 @@ void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue, bool bUpdateStyle)
 
 			CommentNode->FontSize = ASCSettings->DefaultFontSize;
 			AdjustMinSize(UserSize);
+			CommentNode->ResizeNode(UserSize);
 		}
 	}
 
