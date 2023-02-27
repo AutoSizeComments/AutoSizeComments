@@ -6,6 +6,7 @@
 #include "AutoSizeCommentsMacros.h"
 #include "SGraphNode.h"
 
+enum class EASCResizingMode : uint8;
 enum class ECommentCollisionMethod : uint8;
 class SCommentBubble;
 class UAutoSizeCommentsSettings;
@@ -213,6 +214,8 @@ private:
 
 	bool bAreControlsEnabled = false;
 
+	FName CachedGraphClassName;
+
 public:
 	/** Update the nodes */
 	void UpdateRefreshDelay();
@@ -273,4 +276,6 @@ public:
 	bool IsNodeUnrelated() const;
 	void SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf = true);
 	void ResetNodesUnrelated();
+
+	EASCResizingMode GetResizingMode() const;
 };

@@ -240,6 +240,24 @@ void FAutoSizeCommentGraphHandler::RefreshGraphVisualRefresh(TWeakPtr<SGraphPane
 	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda(UpdateGraphPanel, GraphPanel));
 }
 
+EASCResizingMode FAutoSizeCommentGraphHandler::GetResizingMode(UEdGraph* Graph) const
+{
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+
+	if (Graph)
+	{
+		if (UClass* Class = Graph->GetClass())
+		{
+			if (const FASCGraphSettings* GraphSettings = ASCSettings->GraphSettingsOverride.Find(Class->GetFName()))
+			{
+				return GraphSettings->ResizingMode;
+			}
+		}
+	}
+
+	return ASCSettings->ResizingMode;
+}
+
 void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel)
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FAutoSizeCommentGraphHandler::ProcessAltReleased"), STAT_ASC_ProcessAltReleased, STATGROUP_AutoSizeComments);
@@ -682,14 +700,14 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 	if (Event.GetEventType() == ETransactionObjectEventType::UndoRedo ||
 		Event.GetEventType() == ETransactionObjectEventType::Finalized)
 	{
-		if (GetDefault<UAutoSizeCommentsSettings>()->ResizingMode == EASCResizingMode::Always ||
-			GetDefault<UAutoSizeCommentsSettings>()->ResizingMode == EASCResizingMode::Reactive)
+		if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
 		{
-			if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
+			if (GetResizingMode(Node->GetGraph()) != EASCResizingMode::Disabled)
 			{
 				GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
 			}
 		}
+		
 	}
 }
 

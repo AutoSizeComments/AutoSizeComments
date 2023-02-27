@@ -80,6 +80,15 @@ struct FPresetCommentStyle
 	int FontSize = 18;
 };
 
+USTRUCT()
+struct FASCGraphSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, config)
+	EASCResizingMode ResizingMode;
+};
+
 UCLASS(config = EditorPerProjectUserSettings)
 class AUTOSIZECOMMENTS_API UAutoSizeCommentsSettings final : public UObject
 {
@@ -258,6 +267,10 @@ public:
 	/** Do not use ASC node for these graphs, turn on DebugClass_ASC and open graph to find graph class name */
 	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	TArray<FString> IgnoredGraphs;
+
+	/** Override settings (resizing mode) for these graph types */
+	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay, meta=(ForceInlineRow))
+	TMap<FName, FASCGraphSettings> GraphSettingsOverride;
 
 	/** Hide prompt for suggested settings with Blueprint Assist plugin */
 	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)

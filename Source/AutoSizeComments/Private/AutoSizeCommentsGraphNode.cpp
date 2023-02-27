@@ -31,6 +31,14 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 	CommentNode = Cast<UEdGraphNode_Comment>(InNode);
 
+	if (UEdGraph* Graph = InNode->GetGraph())
+	{
+		if (UClass* GraphClass = Graph->GetClass())
+		{
+			CachedGraphClassName = GraphClass->GetFName();
+		}
+	}
+
 	// check if we are a header comment
 	bIsHeader = GetCommentData().IsHeader();
 
@@ -394,7 +402,9 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 	// nodes without any callbacks (undo, collapse to function / macro...)
 	RemoveInvalidNodes();
 
-	if (ASCSettings->ResizingMode == EASCResizingMode::Disabled)
+	const EASCResizingMode ResizingMode = GetResizingMode();
+
+	if (ResizingMode == EASCResizingMode::Disabled)
 	{
 		UserSize.X = CommentNode->NodeWidth;
 		UserSize.Y = CommentNode->NodeHeight;
@@ -420,11 +430,11 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 				OnAltReleased();
 			}
 
-			if (ASCSettings->ResizingMode == EASCResizingMode::Always)
+			if (ResizingMode == EASCResizingMode::Always)
 			{
 				ResizeToFit();
 			}
-			else if (ASCSettings->ResizingMode == EASCResizingMode::Reactive &&
+			else if (ResizingMode == EASCResizingMode::Reactive &&
 				FAutoSizeCommentGraphHandler::Get().HasCommentChanged(CommentNode))
 			{
 				FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
@@ -1650,7 +1660,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 
 	if (!IsHeaderComment()) // header comments don't need color presets
 	{
-		if (!ASCSettings->bHideResizeButton && ASCSettings->ResizingMode != EASCResizingMode::Always)
+		if (!ASCSettings->bHideResizeButton && GetResizingMode() != EASCResizingMode::Always)
 		{
 			// Create the resize button
 			ResizeButton = SNew(SButton)
@@ -1964,6 +1974,17 @@ void SAutoSizeCommentsGraphNode::ResetNodesUnrelated()
 		}
 	}
 #endif
+}
+
+EASCResizingMode SAutoSizeCommentsGraphNode::GetResizingMode() const
+{
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	if (const FASCGraphSettings* GraphSettings = ASCSettings->GraphSettingsOverride.Find(CachedGraphClassName))
+	{
+		return GraphSettings->ResizingMode;
+	}
+
+	return ASCSettings->ResizingMode;
 }
 
 bool SAutoSizeCommentsGraphNode::AreControlsEnabled() const

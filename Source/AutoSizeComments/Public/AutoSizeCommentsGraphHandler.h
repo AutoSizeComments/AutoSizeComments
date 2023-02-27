@@ -5,6 +5,7 @@
 #include "AutoSizeCommentsMacros.h"
 #include "AutoSizeCommentsNodeChangeData.h"
 
+enum class EASCResizingMode : uint8;
 class UEdGraphNode_Comment;
 class SGraphPanel;
 
@@ -81,4 +82,6 @@ private:
 	void UpdateContainingComments(TWeakObjectPtr<UEdGraphNode> Node);
 
 	void RefreshGraphVisualRefresh(TWeakPtr<SGraphPanel> GraphPanel);
+
+	EASCResizingMode GetResizingMode(UEdGraph* Graph) const;
 };
