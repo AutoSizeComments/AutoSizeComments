@@ -88,7 +88,7 @@ struct FASCGraphSettings
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, config)
+	UPROPERTY(EditAnywhere, config, Category = Default)
 	EASCResizingMode ResizingMode;
 };
 
