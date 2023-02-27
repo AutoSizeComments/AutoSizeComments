@@ -206,7 +206,11 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 							if (!NodeFilter.Find(PanelGraphNode))
 							{
 								NodeFilter.Add(PanelGraphNode);
+#if ASC_UE_VERSION_OR_LATER(4, 27)
+								Node->Modify(bMarkDirty);
+#else
 								Node->Modify();
+#endif
 								Node->NodePosX += PositionDelta.X;
 								Node->NodePosY += PositionDelta.Y;
 							}
