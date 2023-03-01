@@ -85,6 +85,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bHideCornerPoints = false;
 
 	bEnableFixForSortDepthIssue = false;
+	bStoreCacheDataInPackageMetaData = false;
 
 	bDebugGraph_ASC = false;
 	bDisablePackageCleanup = false;

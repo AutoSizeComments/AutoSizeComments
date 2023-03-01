@@ -21,6 +21,8 @@
 #include "Misc/LazySingleton.h"
 #include "Projects/Public/Interfaces/IPluginManager.h"
 
+static FName NAME_ASC_GRAPH_DATA = FName("ASCGraphData");
+
 FAutoSizeCommentsCacheFile& FAutoSizeCommentsCacheFile::Get()
 {
 	return TLazySingleton<FAutoSizeCommentsCacheFile>::Get();
@@ -225,7 +227,84 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 
 	FASCPackageData& PackageData = CacheData.PackageData.FindOrAdd(Package->GetFName());
 
+	FASCGraphData& GraphData = PackageData.GraphData.FindOrAdd(Graph->GraphGuid);
+
+	if (!GraphData.bTriedLoadingMetaData)
+	{
+		LoadGraphDataFromPackageMetaData(Graph, GraphData);
+	}
+
 	return PackageData.GraphData.FindOrAdd(Graph->GraphGuid);
+}
+
+void FAutoSizeCommentsCacheFile::SaveGraphDataToPackageMetaData(UEdGraph* Graph)
+{
+	if (!Graph)
+	{
+		return;
+	}
+
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bStoreCacheDataInPackageMetaData)
+	{
+		return;
+	}
+
+	if (UPackage* AssetPackage = Graph->GetPackage())
+	{
+		if (UMetaData* MetaData = AssetPackage->GetMetaData())
+		{
+			FASCGraphData& GraphData = GetGraphData(Graph);
+
+			GraphData.CleanupGraph(Graph);
+			
+			FString GraphDataAsString;
+			if (FJsonObjectConverter::UStructToJsonObjectString(GraphData, GraphDataAsString))
+			{
+				MetaData->SetValue(Graph, NAME_ASC_GRAPH_DATA, *GraphDataAsString);
+			}
+		}
+	}
+}
+
+bool FAutoSizeCommentsCacheFile::LoadGraphDataFromPackageMetaData(UEdGraph* Graph, FASCGraphData& GraphData)
+{
+	if (!Graph)
+	{
+		return false;
+	}
+
+	if (!GetDefault<UAutoSizeCommentsSettings>()->bStoreCacheDataInPackageMetaData)
+	{
+		return false;
+	}
+
+	if (UPackage* AssetPackage = Graph->GetPackage())
+	{
+		if (UMetaData* MetaData = AssetPackage->GetMetaData())
+		{
+			if (const FString* GraphDataAsString = MetaData->FindValue(Graph, NAME_ASC_GRAPH_DATA))
+			{
+				if (FJsonObjectConverter::JsonObjectStringToUStruct(*GraphDataAsString, &GraphData, 0, 0))
+				{
+					GraphData.bTriedLoadingMetaData = true;
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+void FAutoSizeCommentsCacheFile::ClearPackageMetaData(UEdGraph* Graph)
+{
+	if (UPackage* AssetPackage = Graph->GetPackage())
+	{
+		if (UMetaData* MetaData = AssetPackage->GetMetaData())
+		{
+			MetaData->RemoveValue(Graph, NAME_ASC_GRAPH_DATA);
+		}
+	}
 }
 
 FString FAutoSizeCommentsCacheFile::GetProjectCachePath(bool bFullPath)

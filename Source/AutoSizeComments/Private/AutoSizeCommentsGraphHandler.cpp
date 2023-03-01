@@ -681,6 +681,17 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 			bPendingSave = true;
 			GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::SaveSizeCache));
 		}
+
+		if (GetDefault<UAutoSizeCommentsSettings>()->bStoreCacheDataInPackageMetaData)
+		{
+			// we should do this now since this will edit the package
+			FAutoSizeCommentsCacheFile::Get().SaveGraphDataToPackageMetaData(Graph);
+		}
+		else
+		{
+			// make sure we aren't storing old data if we disable this setting after using it for a while
+			FAutoSizeCommentsCacheFile::Get().ClearPackageMetaData(Graph);
+		}
 	}
 }
 

@@ -42,6 +42,8 @@ struct AUTOSIZECOMMENTS_API FASCGraphData
 	UPROPERTY()
 	TMap<FGuid, FASCCommentData> CommentData; // node guid -> comment data
 
+	bool bTriedLoadingMetaData = false;
+
 	void CleanupGraph(UEdGraph* Graph);
 };
 
@@ -87,6 +89,10 @@ public:
 	void UpdateNodesUnderComment(UEdGraphNode_Comment* Comment);
 
 	FASCGraphData& GetGraphData(UEdGraph* Graph);
+
+	void SaveGraphDataToPackageMetaData(UEdGraph* Graph);
+	bool LoadGraphDataFromPackageMetaData(UEdGraph* Graph, FASCGraphData& GraphData);
+	void ClearPackageMetaData(UEdGraph* Graph);
 
 	FString GetProjectCachePath(bool bFullPath = false);
 	FString GetPluginCachePath(bool bFullPath = false);
