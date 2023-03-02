@@ -89,7 +89,7 @@ struct FASCGraphSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, config, Category = Default)
-	EASCResizingMode ResizingMode;
+	EASCResizingMode ResizingMode = EASCResizingMode::Always;
 };
 
 UCLASS(config = EditorPerProjectUserSettings)
