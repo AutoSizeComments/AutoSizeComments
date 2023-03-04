@@ -5,7 +5,6 @@
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
-#include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -20,6 +19,7 @@
 #include "JsonUtilities/Public/JsonObjectConverter.h"
 #include "Misc/LazySingleton.h"
 #include "Projects/Public/Interfaces/IPluginManager.h"
+#include "UObject/MetaData.h"
 
 static FName NAME_ASC_GRAPH_DATA = FName("ASCGraphData");
 
