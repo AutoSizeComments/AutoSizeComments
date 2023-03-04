@@ -234,7 +234,7 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 		LoadGraphDataFromPackageMetaData(Graph, GraphData);
 	}
 
-	return PackageData.GraphData.FindOrAdd(Graph->GraphGuid);
+	return GraphData;
 }
 
 void FAutoSizeCommentsCacheFile::SaveGraphDataToPackageMetaData(UEdGraph* Graph)
