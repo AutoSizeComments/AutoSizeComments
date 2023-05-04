@@ -792,16 +792,14 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 
 		FAutoSizeCommentGraphHandler::Get().RegisterActiveGraphPanel(GetOwnerPanel());
 
-		if (!FAutoSizeCommentGraphHandler::Get().HasCommentChanged(CommentNode))
-		{
-			FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
-		}
-
 		// if we failed to register the comment (since it has already been registered) do nothing
 		if (FAutoSizeCommentGraphHandler::Get().RegisterComment(CommentNode))
 		{
 			InitializeNodesUnderComment(InitialSelectedNodes);
 		}
+
+		// make sure to init change state after setting the nodes under comments
+		FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
 
 		FASCCommentData& CommentData = GetCommentData();
 		if (!CommentData.HasBeenInitialized())
