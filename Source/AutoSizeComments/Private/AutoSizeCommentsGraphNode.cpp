@@ -421,7 +421,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
-	bAreControlsEnabled = FAutoSizeCommentsInputProcessor::Get().IsInputChordDown(ASCSettings->EnableCommentControlsKey);
+	bAreControlsEnabled = !AreResizeModifiersDown() && (!GetDefault<UAutoSizeCommentsSettings>()->EnableCommentControlsKey.Key.IsValid() || bAreControlsEnabled);
 
 	// We need to call this on tick since there are quite a few methods of deleting
 	// nodes without any callbacks (undo, collapse to function / macro...)
@@ -1892,11 +1892,25 @@ EASCAnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 		return EASCAnchorPoint::None;
 	}
 
-	const float SidePadding = 10.f;
-	const float Top = AnchorSize;
-	const float Left = AnchorSize;
-	const float Right = Size.X - AnchorSize;
-	const float Bottom = Size.Y - AnchorSize;
+	// scale the anchor size by the graph zoom
+	float AnchorSizeScale = 1.0f;
+	if (OwnerGraphPanelPtr.IsValid())
+	{
+		const float GraphZoom = OwnerGraphPanelPtr.Pin()->GetZoomAmount();
+		if (GraphZoom > 0.0f)
+		{
+			AnchorSizeScale = FMath::Clamp(1.0f / GraphZoom, 1.0f, 4.0f);
+		}
+	}
+
+	const float CornerAnchorSize = GetDefault<UAutoSizeCommentsSettings>()->ResizeCornerAnchorSize * AnchorSizeScale;
+	const float SideAnchorSize = GetDefault<UAutoSizeCommentsSettings>()->ResizeSidePadding * AnchorSizeScale;
+
+	const float SidePadding = SideAnchorSize;
+	const float Top = CornerAnchorSize;
+	const float Left = CornerAnchorSize;
+	const float Right = Size.X - CornerAnchorSize;
+	const float Bottom = Size.Y - CornerAnchorSize;
 
 	if (!IsHeaderComment()) // header comments should only have anchor points to resize left and right
 	{
@@ -2064,7 +2078,7 @@ EASCResizingMode SAutoSizeCommentsGraphNode::GetResizingMode() const
 
 bool SAutoSizeCommentsGraphNode::AreControlsEnabled() const
 {
-	return !GetDefault<UAutoSizeCommentsSettings>()->EnableCommentControlsKey.Key.IsValid() || bAreControlsEnabled;
+	return bAreControlsEnabled;
 }
 
 bool SAutoSizeCommentsGraphNode::IsPresetStyle()

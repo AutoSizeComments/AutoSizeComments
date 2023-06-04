@@ -49,7 +49,6 @@ public:
 	bool bUserIsDragging = false;
 
 	EASCAnchorPoint CachedAnchorPoint = EASCAnchorPoint::None;
-	float AnchorSize = 40.f;
 
 	bool bWasCopyPasted = false;
 

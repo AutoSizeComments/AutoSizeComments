@@ -287,6 +287,14 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	bool bSuppressSourceControlNotification;
 
+	/** Size of the corner resizing anchors */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	float ResizeCornerAnchorSize;
+
+	/** Padding to activate resizing on the side of a comment */
+	UPROPERTY(EditAnywhere, config, Category = Controls)
+	float ResizeSidePadding;
+
 	/** Hide the resize button */
 	UPROPERTY(EditAnywhere, config, Category = Controls)
 	bool bHideResizeButton;
