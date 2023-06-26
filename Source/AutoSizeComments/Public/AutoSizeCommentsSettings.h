@@ -218,6 +218,10 @@ public:
 	/** If enabled, nodes will be saved to file when the program is exited */
 	UPROPERTY(EditAnywhere, config, Category = CommentCache, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
 	bool bSaveCommentDataOnExit;
+	
+	/** If enabled, cache file JSON text will be made more human-readable, but increases file size */
+	UPROPERTY(EditAnywhere, config, Category = CommentCache, AdvancedDisplay, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
+	bool bPrettyPrintCommentCacheJSON;
 
 	/** Commments will detect and add nodes are underneath on creation */
 	UPROPERTY(EditAnywhere, config, Category = Misc)

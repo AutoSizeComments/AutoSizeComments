@@ -105,7 +105,7 @@ void FAutoSizeCommentsCacheFile::SaveCache()
 
 	// Write data to file
 	FString JsonAsString;
-	FJsonObjectConverter::UStructToJsonObjectString(CacheData, JsonAsString);
+	FJsonObjectConverter::UStructToJsonObjectString(CacheData, JsonAsString, 0, 0, 0, nullptr, GetDefault<UAutoSizeCommentsSettings>()->bPrettyPrintCommentCacheJSON);
 	FFileHelper::SaveStringToFile(JsonAsString, *CachePath);
 	const double TimeTaken = (FPlatformTime::Seconds() - StartTime) * 1000.0f;
 	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved cache to %s took %6.2fms"), *GetCachePath(true), TimeTaken);

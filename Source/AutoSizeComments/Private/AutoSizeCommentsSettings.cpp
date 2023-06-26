@@ -61,6 +61,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bSaveCommentNodeDataToFile = true;
 	bSaveCommentDataOnSavingGraph = true;
 	bSaveCommentDataOnExit = true;
+	bPrettyPrintCommentCacheJSON = false;
 	bDetectNodesContainedForNewComments = true;
 	ResizeChord = FInputChord(EKeys::LeftMouseButton, EModifierKey::Shift);
 	ResizeCollisionMethod = ECommentCollisionMethod::Contained;
