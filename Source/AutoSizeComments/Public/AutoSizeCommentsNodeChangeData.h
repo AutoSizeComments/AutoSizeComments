@@ -38,10 +38,11 @@ class FASCNodeChangeData
 	TMap<FGuid, FASCPinChangeData> PinChangeData;
 	bool bCommentBubblePinned;
 	FString NodeTitle;
-	TEnumAsByte<ENodeAdvancedPins::Type> AdvancedPinDisplay;
+	bool AdvancedPinDisplay;
 	ENodeEnabledState NodeEnabledState;
 	int32 NodeX;
 	int32 NodeY;
+	FName DelegateFunctionName;
 
 public:
 	FASCNodeChangeData() = default;

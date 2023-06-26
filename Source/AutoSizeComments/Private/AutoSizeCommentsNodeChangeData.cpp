@@ -4,6 +4,7 @@
 
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
+#include "K2Node_CreateDelegate.h"
 
 void FASCPinChangeData::UpdatePin(UEdGraphPin* Pin)
 {
@@ -63,12 +64,17 @@ void FASCNodeChangeData::UpdateNode(UEdGraphNode* Node)
 		PinChangeData.FindOrAdd(Pin->PinId).UpdatePin(Pin);
 	}
 
-	AdvancedPinDisplay = Node->AdvancedPinDisplay;
-	NodeTitle = FASCUtils::GetNodeName(Node);
+	AdvancedPinDisplay = Node->AdvancedPinDisplay == ENodeAdvancedPins::Shown;
+	NodeTitle = Node->GetNodeTitle(ENodeTitleType::FullTitle).ToString();
 	bCommentBubblePinned = Node->bCommentBubblePinned;
 	NodeEnabledState = Node->GetDesiredEnabledState();
 	NodeX = Node->NodePosX;
 	NodeY = Node->NodePosY;
+
+	if (UK2Node_CreateDelegate* Delegate = Cast<UK2Node_CreateDelegate>(Node))
+	{
+		DelegateFunctionName = Delegate->GetFunctionName();
+	}
 }
 
 bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
@@ -104,12 +110,12 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 		return true;
 	}
 
-	if (AdvancedPinDisplay != Node->AdvancedPinDisplay)
+	if (AdvancedPinDisplay != (Node->AdvancedPinDisplay == ENodeAdvancedPins::Shown))
 	{
 		return true;
 	}
 
-	if (NodeTitle != FASCUtils::GetNodeName(Node))
+	if (NodeTitle != Node->GetNodeTitle(ENodeTitleType::FullTitle).ToString())
 	{
 		return true;
 	}
@@ -122,6 +128,14 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 	if (NodeEnabledState != Node->GetDesiredEnabledState())
 	{
 		return true;
+	}
+
+	if (UK2Node_CreateDelegate* Delegate = Cast<UK2Node_CreateDelegate>(Node))
+	{
+		if (DelegateFunctionName != Delegate->GetFunctionName())
+		{
+			return true;
+		}
 	}
 
 	return false;
