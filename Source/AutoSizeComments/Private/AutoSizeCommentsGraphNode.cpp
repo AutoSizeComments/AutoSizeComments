@@ -798,8 +798,11 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 			InitializeNodesUnderComment(InitialSelectedNodes);
 		}
 
-		// make sure to init change state after setting the nodes under comments
-		FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
+		// make sure to init change state after setting the nodes under comments (if we don't have a state aleady)
+		if (!FAutoSizeCommentGraphHandler::Get().HasCommentChangeState(CommentNode))
+		{
+			FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
+		}
 
 		FASCCommentData& CommentData = GetCommentData();
 		if (!CommentData.HasBeenInitialized())

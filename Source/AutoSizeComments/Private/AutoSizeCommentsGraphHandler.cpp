@@ -414,15 +414,28 @@ void FAutoSizeCommentGraphHandler::UpdateCommentChangeState(UEdGraphNode_Comment
 		return;
 	}
 
-	FASCGraphHandlerData& GraphData = GraphDatas.FindOrAdd(Comment->GetGraph());
-	GraphData.CommentChangeData.FindOrAdd(Comment).UpdateComment(Comment);
+	FASCGraphHandlerData& GraphData = GraphDatas.FindOrAdd(Graph);
+	GraphData.CommentChangeData.FindOrAdd(Comment->NodeGuid).UpdateComment(Comment);
+}
+
+bool FAutoSizeCommentGraphHandler::HasCommentChangeState(UEdGraphNode_Comment* Comment) const
+{
+	if (UEdGraph* Graph = Comment->GetGraph())
+	{
+		if (const FASCGraphHandlerData* GraphData = GraphDatas.Find(Graph))
+		{
+			return GraphData->CommentChangeData.Contains(Comment->NodeGuid);
+		}
+	}
+
+	return false;
 }
 
 bool FAutoSizeCommentGraphHandler::HasCommentChanged(UEdGraphNode_Comment* Comment)
 {
 	if (FASCGraphHandlerData* GraphData = GraphDatas.Find(Comment->GetGraph()))
 	{
-		if (FASCCommentChangeData* CommentChangeData = GraphData->CommentChangeData.Find(Comment))
+		if (FASCCommentChangeData* CommentChangeData = GraphData->CommentChangeData.Find(Comment->NodeGuid))
 		{
 			return CommentChangeData->HasCommentChanged(Comment);
 		}

@@ -15,7 +15,7 @@ struct FASCGraphHandlerData
 	TArray<TWeakObjectPtr<UEdGraphNode_Comment>> LastSelectionSet;
 	FDelegateHandle OnGraphChangedHandle;
 
-	TMap<TWeakObjectPtr<UEdGraphNode_Comment>, FASCCommentChangeData> CommentChangeData;
+	TMap<FGuid, FASCCommentChangeData> CommentChangeData;
 };
 
 class FAutoSizeCommentGraphHandler
@@ -42,6 +42,7 @@ public:
 	bool RegisterComment(UEdGraphNode_Comment* Comment);
 
 	void UpdateCommentChangeState(UEdGraphNode_Comment* Comment);
+	bool HasCommentChangeState(UEdGraphNode_Comment* Comment) const;
 	bool HasCommentChanged(UEdGraphNode_Comment* Comment);
 
 private:
