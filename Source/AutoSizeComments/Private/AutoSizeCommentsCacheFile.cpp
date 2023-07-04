@@ -94,6 +94,12 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 
 void FAutoSizeCommentsCacheFile::SaveCache()
 {
+	// Don't save the cache while cooking 
+	if (GIsCookerLoadingPackage)
+	{
+		return;
+	}
+
 	if (!GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentNodeDataToFile)
 	{
 		return;
