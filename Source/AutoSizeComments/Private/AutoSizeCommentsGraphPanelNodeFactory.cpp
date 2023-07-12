@@ -8,10 +8,15 @@
 
 TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class UEdGraphNode* InNode) const
 {
+	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+
+	if (ASCSettings->bDisableASCGraphNode)
+	{
+		return nullptr;
+	}
+
 	if (Cast<UEdGraphNode_Comment>(InNode))
 	{
-		const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-
 		if (UEdGraph* Graph = InNode->GetGraph())
 		{
 			if (UClass* GraphClass = Graph->GetClass())

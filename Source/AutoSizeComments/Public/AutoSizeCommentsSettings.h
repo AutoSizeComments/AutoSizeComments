@@ -337,6 +337,10 @@ public:
 
 	UPROPERTY(EditAnywhere, config, Category = Debug)
 	bool bDisablePackageCleanup;
+
+	/** Use the default Unreal comment node */
+	UPROPERTY(EditAnywhere, config, Category = Debug)
+	bool bDisableASCGraphNode;
 };
 
 class FASCSettingsDetails final : public IDetailCustomization
