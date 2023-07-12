@@ -273,7 +273,7 @@ public:
 	static bool IsHeaderComment(UEdGraphNode_Comment* OtherComment);
 
 	FKey GetResizeKey() const;
-	bool AreResizeModifiersDown() const;
+	bool AreResizeModifiersDown(bool bDownIfNoModifiers = true) const;
 
 	bool IsSingleSelectedNode() const;
 

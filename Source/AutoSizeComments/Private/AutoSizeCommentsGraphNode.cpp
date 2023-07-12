@@ -421,7 +421,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
 
-	bAreControlsEnabled = !AreResizeModifiersDown() && (!GetDefault<UAutoSizeCommentsSettings>()->EnableCommentControlsKey.Key.IsValid() || bAreControlsEnabled);
+	bAreControlsEnabled = !AreResizeModifiersDown(false) && (!GetDefault<UAutoSizeCommentsSettings>()->EnableCommentControlsKey.Key.IsValid() || bAreControlsEnabled);
 
 	// We need to call this on tick since there are quite a few methods of deleting
 	// nodes without any callbacks (undo, collapse to function / macro...)
@@ -2008,14 +2008,19 @@ bool SAutoSizeCommentsGraphNode::IsHeaderComment(UEdGraphNode_Comment* OtherComm
 
 FKey SAutoSizeCommentsGraphNode::GetResizeKey() const
 {
-	const FInputChord ResizeChord = GetDefault<UAutoSizeCommentsSettings>()->ResizeChord;
-	return ResizeChord.Key;
+	return GetDefault<UAutoSizeCommentsSettings>()->ResizeChord.Key;
 }
 
-bool SAutoSizeCommentsGraphNode::AreResizeModifiersDown() const
+bool SAutoSizeCommentsGraphNode::AreResizeModifiersDown(bool bDownIfNoModifiers) const
 {
 	const FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 	const FInputChord ResizeChord = GetDefault<UAutoSizeCommentsSettings>()->ResizeChord;
+
+	if (!ResizeChord.HasAnyModifierKeys())
+	{
+		return bDownIfNoModifiers;
+	}
+
 	return KeysState.AreModifersDown(EModifierKey::FromBools(ResizeChord.bCtrl, ResizeChord.bAlt, ResizeChord.bShift, ResizeChord.bCmd));
 }
 
