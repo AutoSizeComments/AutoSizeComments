@@ -108,10 +108,14 @@ void FASCSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 
 	const auto DeleteSizeCache = [&SizeCache]()
 	{
-		static FText Title = FText::FromString("Clear comment cache");
-		static FText Message = FText::FromString("Are you sure you want to delete the comment cache?");
+		static FText Title = INVTEXT("Clear comment cache");
+		static FText Message = INVTEXT("Are you sure you want to delete the comment cache?");
 
+#if ASC_UE_VERSION_OR_LATER(5, 3)
+		const EAppReturnType::Type Result = FMessageDialog::Open(EAppMsgType::YesNo, Message, Title);
+#else
 		const EAppReturnType::Type Result = FMessageDialog::Open(EAppMsgType::YesNo, Message, &Title);
+#endif
 		if (Result == EAppReturnType::Yes)
 		{
 			SizeCache.DeleteCache();
@@ -120,11 +124,11 @@ void FASCSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 		return FReply::Handled();
 	};
 
-	GeneralCategory.AddCustomRow(FText::FromString("Clear comment cache"))
+	GeneralCategory.AddCustomRow(INVTEXT("Clear comment cache"))
 		.NameContent()
 		[
 			SNew(STextBlock)
-			.Text(FText::FromString("Clear comment cache"))
+			.Text(INVTEXT("Clear comment cache"))
 			.Font(ASC_GET_FONT_STYLE(TEXT("PropertyWindow.NormalFont")))
 		]
 		.ValueContent()
@@ -133,7 +137,7 @@ void FASCSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 			+ SHorizontalBox::Slot().Padding(5).AutoWidth()
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Clear comment cache"))
+				.Text(INVTEXT("Clear comment cache"))
 				.ToolTipText(FText::FromString(FString::Printf(TEXT("Delete comment cache file located at: %s"), *CachePath)))
 				.OnClicked_Lambda(DeleteSizeCache)
 			]
