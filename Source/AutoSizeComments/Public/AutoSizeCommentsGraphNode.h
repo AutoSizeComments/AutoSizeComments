@@ -166,7 +166,7 @@ private:
 	void CreateCommentControls();
 	void CreateColorControls();
 
-	void InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, bool bIsPresetStyle, bool bIsHeaderComment);
+	void InitializeColor(const UAutoSizeCommentsSettings& ASCSettings, bool bIsPresetStyle, bool bIsHeaderComment);
 	void InitializeCommentBubbleSettings();
 	void ApplyDefaultCommentColorMethod();
 

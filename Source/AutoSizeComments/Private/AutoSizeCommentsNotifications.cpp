@@ -102,10 +102,10 @@ void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
 
 	const auto OnApply = FSimpleDelegate::CreateLambda([&SourceControlNotification = SourceControlNotification, SuggestedResizingMode]
 	{
-		UAutoSizeCommentsSettings* ASCSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
-		ASCSettings->Modify();
-		ASCSettings->ResizingMode = SuggestedResizingMode;
-		ASCSettings->SaveConfig();
+		UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::GetMutable();
+		ASCSettings.Modify();
+		ASCSettings.ResizingMode = SuggestedResizingMode;
+		ASCSettings.SaveConfig();
 		FString ResizeModeStr = SuggestedResizingMode == EASCResizingMode::Disabled ? "EASCResizingMode::Disabled" : "EASCResizingMode::Reactive";
 		UE_LOG(LogAutoSizeComments, Log, TEXT("Set 'Resizing Mode' to '%s'"), *ResizeModeStr);
 
@@ -133,10 +133,10 @@ void FAutoSizeCommentsNotifications::ShowSourceControlNotification()
 
 	Info.CheckBoxStateChanged = FOnCheckStateChanged::CreateStatic([](ECheckBoxState NewState)
 	{
-		UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
-		MutableSettings->Modify();
-		MutableSettings->bSuppressSourceControlNotification = (NewState == ECheckBoxState::Checked);
-		MutableSettings->SaveConfig();
+		UAutoSizeCommentsSettings& MutableSettings = UAutoSizeCommentsSettings::GetMutable();
+		MutableSettings.Modify();
+		MutableSettings.bSuppressSourceControlNotification = (NewState == ECheckBoxState::Checked);
+		MutableSettings.SaveConfig();
 	});
 
 	Info.CheckBoxText = FText::FromString(TEXT("Do not show again"));
@@ -155,15 +155,11 @@ void FAutoSizeCommentsNotifications::HandleSourceControlProviderChanged(ISourceC
 
 bool FAutoSizeCommentsNotifications::ShouldShowSourceControlNotification()
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-	if (!ASCSettings)
-	{
-		return false;
-	}
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
 	return !SourceControlNotification.IsValid() &&
-		ASCSettings->ResizingMode == EASCResizingMode::Always &&
-		!ASCSettings->bSuppressSourceControlNotification;
+		ASCSettings.ResizingMode == EASCResizingMode::Always &&
+		!ASCSettings.bSuppressSourceControlNotification;
 }
 
 void FAutoSizeCommentsNotifications::ShowBlueprintAssistNotification()
@@ -173,8 +169,8 @@ void FAutoSizeCommentsNotifications::ShowBlueprintAssistNotification()
 		return;
 	}
 
-	UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
-	if (MutableSettings->bSuppressSuggestedSettings)
+	UAutoSizeCommentsSettings& MutableSettings = UAutoSizeCommentsSettings::GetMutable();
+	if (MutableSettings.bSuppressSuggestedSettings)
 	{
 		return;
 	}
@@ -214,10 +210,10 @@ void FAutoSizeCommentsNotifications::ShowBlueprintAssistNotification()
 	{
 		const auto ApplySettings = FSimpleDelegate::CreateLambda([&BlueprintAssistNotification = BlueprintAssistNotification]
 		{
-			UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
-			MutableSettings->Modify();
-			MutableSettings->bIgnoreKnotNodesWhenPressingAlt = true;
-			MutableSettings->SaveConfig();
+			UAutoSizeCommentsSettings& MutableSettings = UAutoSizeCommentsSettings::GetMutable();
+			MutableSettings.Modify();
+			MutableSettings.bIgnoreKnotNodesWhenPressingAlt = true;
+			MutableSettings.SaveConfig();
 
 			UE_LOG(LogAutoSizeComments, Log, TEXT("Applied suggested settings for Blueprint Assist Module"));
 
@@ -236,16 +232,16 @@ void FAutoSizeCommentsNotifications::ShowBlueprintAssistNotification()
 	}
 
 	Info.CheckBoxState = ECheckBoxState::Checked;
-	MutableSettings->Modify();
-	MutableSettings->bSuppressSuggestedSettings = true;
-	MutableSettings->SaveConfig();
+	MutableSettings.Modify();
+	MutableSettings.bSuppressSuggestedSettings = true;
+	MutableSettings.SaveConfig();
 
 	Info.CheckBoxStateChanged = FOnCheckStateChanged::CreateStatic([](ECheckBoxState NewState)
 	{
-		UAutoSizeCommentsSettings* MutableSettings = GetMutableDefault<UAutoSizeCommentsSettings>();
-		MutableSettings->Modify();
-		MutableSettings->bSuppressSuggestedSettings = (NewState == ECheckBoxState::Checked);
-		MutableSettings->SaveConfig();
+		UAutoSizeCommentsSettings& MutableSettings = UAutoSizeCommentsSettings::GetMutable();
+		MutableSettings.Modify();
+		MutableSettings.bSuppressSuggestedSettings = (NewState == ECheckBoxState::Checked);
+		MutableSettings.SaveConfig();
 	});
 
 	Info.CheckBoxText = FText::FromString(TEXT("Do not show again"));

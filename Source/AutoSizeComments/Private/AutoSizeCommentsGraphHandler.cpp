@@ -108,7 +108,7 @@ void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Acti
 
 void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEdGraphNode> NewNode, TWeakObjectPtr<UEdGraphNode> LastSelectedNode)
 {
-	EASCAutoInsertComment AutoInsertStyle = GetDefault<UAutoSizeCommentsSettings>()->AutoInsertComment;
+	EASCAutoInsertComment AutoInsertStyle = UAutoSizeCommentsSettings::Get().AutoInsertComment;
 	if (AutoInsertStyle == EASCAutoInsertComment::Never)
 	{
 		return;
@@ -242,20 +242,20 @@ void FAutoSizeCommentGraphHandler::RefreshGraphVisualRefresh(TWeakPtr<SGraphPane
 
 EASCResizingMode FAutoSizeCommentGraphHandler::GetResizingMode(UEdGraph* Graph) const
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
 	if (Graph)
 	{
 		if (UClass* Class = Graph->GetClass())
 		{
-			if (const FASCGraphSettings* GraphSettings = ASCSettings->GraphSettingsOverride.Find(Class->GetFName()))
+			if (const FASCGraphSettings* GraphSettings = ASCSettings.GraphSettingsOverride.Find(Class->GetFName()))
 			{
 				return GraphSettings->ResizingMode;
 			}
 		}
 	}
 
-	return ASCSettings->ResizingMode;
+	return ASCSettings.ResizingMode;
 }
 
 void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel)
@@ -331,11 +331,11 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 	{
 		UEdGraphNode_Comment* CommentNode = ASCGraphNode->GetCommentNodeObj();
 
-		const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
+		const ECommentCollisionMethod& AltCollisionMethod = UAutoSizeCommentsSettings::Get().AltCollisionMethod;
 
 		if (SelectedNodes.Contains(CommentNode))
 		{
-			ASCGraphNode->RefreshNodesInsideComment(AltCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenPressingAlt, false);
+			ASCGraphNode->RefreshNodesInsideComment(AltCollisionMethod, UAutoSizeCommentsSettings::Get().bIgnoreKnotNodesWhenPressingAlt, false);
 			ChangedGraphNodes.Add(ASCGraphNode);
 		}
 		else
@@ -453,7 +453,7 @@ bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 
 void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
 {
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bHighlightContainingNodesOnSelection)
+	if (!UAutoSizeCommentsSettings::Get().bHighlightContainingNodesOnSelection)
 	{
 		return;
 	}
@@ -677,7 +677,7 @@ void FAutoSizeCommentGraphHandler::OnObjectPreSave(UObject* Object, FObjectPreSa
 
 void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 {
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentDataOnSavingGraph)
+	if (!UAutoSizeCommentsSettings::Get().bSaveCommentDataOnSavingGraph)
 	{
 		return;
 	}
@@ -706,7 +706,7 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 			GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::SaveSizeCache));
 		}
 
-		if (GetDefault<UAutoSizeCommentsSettings>()->bStoreCacheDataInPackageMetaData)
+		if (UAutoSizeCommentsSettings::Get().bStoreCacheDataInPackageMetaData)
 		{
 			// we should do this now since this will edit the package
 			FAutoSizeCommentsCacheFile::Get().SaveGraphDataToPackageMetaData(Graph);

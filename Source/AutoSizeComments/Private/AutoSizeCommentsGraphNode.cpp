@@ -44,7 +44,7 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	// check if we are a header comment
 	bIsHeader = GetCommentData().IsHeader();
 
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
 	const bool bIsPresetStyle = IsPresetStyle();
 
@@ -52,16 +52,16 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	InitializeColor(ASCSettings, bIsPresetStyle, bIsHeader);
 
 	// use default font
-	if (ASCSettings->bUseDefaultFontSize && !bIsHeader && !bIsPresetStyle)
+	if (ASCSettings.bUseDefaultFontSize && !bIsHeader && !bIsPresetStyle)
 	{
-		CommentNode->FontSize = ASCSettings->DefaultFontSize;
+		CommentNode->FontSize = ASCSettings.DefaultFontSize;
 	}
 
 	bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible;
 	bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
 
 	// Set widget colors
-	OpacityValue = ASCSettings->MinimumControlOpacity;
+	OpacityValue = ASCSettings.MinimumControlOpacity;
 	CommentControlsTextColor = FLinearColor(1, 1, 1, OpacityValue);
 	CommentControlsColor = FLinearColor(CommentNode->CommentColor.R, CommentNode->CommentColor.G, CommentNode->CommentColor.B, OpacityValue);
 
@@ -89,7 +89,7 @@ void SAutoSizeCommentsGraphNode::OnDeleted()
 {
 }
 
-void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings* ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
+void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings& ASCSettings, const bool bIsPresetStyle, const bool bIsHeaderComment)
 {
 	if (bIsHeaderComment)
 	{
@@ -104,10 +104,10 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 	}
 
 	// Set comment color
-	const FLinearColor& ASCDefaultColor = ASCSettings->DefaultCommentColor;
+	const FLinearColor& ASCDefaultColor = ASCSettings.DefaultCommentColor;
 	const FLinearColor& EditorDefaultColor = GetDefault<UGraphEditorSettings>()->DefaultCommentNodeTitleColor;
 
-	switch (ASCSettings->DefaultCommentColorMethod)
+	switch (ASCSettings.DefaultCommentColorMethod)
 	{
 		case EASCDefaultCommentColorMethod::Random:
 		{
@@ -122,7 +122,7 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 		case EASCDefaultCommentColorMethod::Default:
 		{
 			// use the ASC default color
-			if (ASCSettings->bAggressivelyUseDefaultColor || CommentNode->CommentColor == EditorDefaultColor)
+			if (ASCSettings.bAggressivelyUseDefaultColor || CommentNode->CommentColor == EditorDefaultColor)
 			{
 				CommentNode->CommentColor = ASCDefaultColor;
 			}
@@ -135,8 +135,8 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 
 void SAutoSizeCommentsGraphNode::ApplyDefaultCommentColorMethod()
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-	switch (ASCSettings->DefaultCommentColorMethod)
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
+	switch (ASCSettings.DefaultCommentColorMethod)
 	{
 		case EASCDefaultCommentColorMethod::Random:
 		{
@@ -145,7 +145,7 @@ void SAutoSizeCommentsGraphNode::ApplyDefaultCommentColorMethod()
 		}
 		case EASCDefaultCommentColorMethod::Default:
 		{
-			CommentNode->CommentColor = ASCSettings->DefaultCommentColor;
+			CommentNode->CommentColor = ASCSettings.DefaultCommentColor;
 			break;
 		}
 		default: ;
@@ -154,14 +154,14 @@ void SAutoSizeCommentsGraphNode::ApplyDefaultCommentColorMethod()
 
 void SAutoSizeCommentsGraphNode::InitializeCommentBubbleSettings()
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
-	if (ASCSettings->bEnableCommentBubbleDefaults)
+	if (ASCSettings.bEnableCommentBubbleDefaults)
 	{
-		CommentNode->bColorCommentBubble = ASCSettings->bDefaultColorCommentBubble;
-		CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings->bDefaultShowBubbleWhenZoomed;
-		CommentNode->bCommentBubblePinned = ASCSettings->bDefaultShowBubbleWhenZoomed;
-		CommentNode->SetMakeCommentBubbleVisible(ASCSettings->bDefaultShowBubbleWhenZoomed);
+		CommentNode->bColorCommentBubble = ASCSettings.bDefaultColorCommentBubble;
+		CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings.bDefaultShowBubbleWhenZoomed;
+		CommentNode->bCommentBubblePinned = ASCSettings.bDefaultShowBubbleWhenZoomed;
+		CommentNode->SetMakeCommentBubbleVisible(ASCSettings.bDefaultShowBubbleWhenZoomed);
 		bRequireUpdate = true;
 	}
 }
@@ -175,7 +175,7 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 	/** Copied from SGraphNodeComment::MoveTo */
 	if (!bIsMoving)
 	{
-		if (GetDefault<UAutoSizeCommentsSettings>()->bRefreshContainingNodesOnMove)
+		if (UAutoSizeCommentsSettings::Get().bRefreshContainingNodesOnMove)
 		{
 			RefreshNodesInsideComment(ECommentCollisionMethod::Contained);
 			bIsMoving = true;
@@ -194,7 +194,7 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 
-	const ECommentCollisionMethod AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
+	const ECommentCollisionMethod AltCollisionMethod = UAutoSizeCommentsSettings::Get().AltCollisionMethod;
 	if (KeysState.IsAltDown() && AltCollisionMethod != ECommentCollisionMethod::Disabled)
 	{
 		// still update collision when we alt-control drag
@@ -272,7 +272,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 		const FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
 		if (CanBeSelected(MousePositionInNode))
 		{
-			if (GetDefault<UAutoSizeCommentsSettings>()->bRefreshContainingNodesOnMove)
+			if (UAutoSizeCommentsSettings::Get().bRefreshContainingNodesOnMove)
 			{
 				bIsMoving = false;
 			}
@@ -288,7 +288,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, 
 	{
 		bUserIsDragging = false;
 		CachedAnchorPoint = EASCAnchorPoint::None;
-		RefreshNodesInsideComment(GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod, GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodesWhenResizing);
+		RefreshNodesInsideComment(UAutoSizeCommentsSettings::Get().ResizeCollisionMethod, UAutoSizeCommentsSettings::Get().bIgnoreKnotNodesWhenResizing);
 
 		ResetNodesUnrelated();
 
@@ -345,7 +345,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 
 		AdjustMinSize(NewSize);
 
-		if (GetDefault<UAutoSizeCommentsSettings>()->bSnapToGridWhileResizing)
+		if (UAutoSizeCommentsSettings::Get().bSnapToGridWhileResizing)
 		{
 			SnapVectorToGrid(NewSize);
 		}
@@ -371,7 +371,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 
 #if ASC_UE_VERSION_OR_LATER(4, 23)
 		TArray<UEdGraphNode*> Nodes;
-		QueryNodesUnderComment(Nodes, GetDefault<UAutoSizeCommentsSettings>()->ResizeCollisionMethod);
+		QueryNodesUnderComment(Nodes, UAutoSizeCommentsSettings::Get().ResizeCollisionMethod);
 		SetNodesRelated(Nodes);
 #endif
 	}
@@ -419,9 +419,9 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		return;
 	}
 
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
-	bAreControlsEnabled = !AreResizeModifiersDown(false) && (!GetDefault<UAutoSizeCommentsSettings>()->EnableCommentControlsKey.Key.IsValid() || bAreControlsEnabled);
+	bAreControlsEnabled = !AreResizeModifiersDown(false) && (!UAutoSizeCommentsSettings::Get().EnableCommentControlsKey.Key.IsValid() || bAreControlsEnabled);
 
 	// We need to call this on tick since there are quite a few methods of deleting
 	// nodes without any callbacks (undo, collapse to function / macro...)
@@ -444,7 +444,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		const bool bIsAltDown = KeysState.IsAltDown();
 		if (!bIsAltDown)
 		{
-			const ECommentCollisionMethod& AltCollisionMethod = GetDefault<UAutoSizeCommentsSettings>()->AltCollisionMethod;
+			const ECommentCollisionMethod& AltCollisionMethod = UAutoSizeCommentsSettings::Get().AltCollisionMethod;
 
 			// still update collision when we alt-control drag
 			const bool bUseAltCollision = AltCollisionMethod != ECommentCollisionMethod::Disabled;
@@ -522,7 +522,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		bRequireUpdate = true;
 	}
 
-	if (CachedNumPresets != ASCSettings->PresetStyles.Num())
+	if (CachedNumPresets != ASCSettings.PresetStyles.Num())
 	{
 		bRequireUpdate = true;
 	}
@@ -538,7 +538,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
 	// No pins in a comment box
 	InputPins.Empty();
@@ -564,7 +564,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	CachedFontSize = CommentNode->FontSize;
 
 	// Create comment bubble
-	if (!ASCSettings->bHideCommentBubble)
+	if (!ASCSettings.bHideCommentBubble)
 	{
 		CommentBubble = SNew(SCommentBubble)
 			.GraphNode(GraphNode)
@@ -614,13 +614,13 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		];
 	};
 
-	const bool bHideCornerPoints = ASCSettings->bHideCornerPoints;
+	const bool bHideCornerPoints = ASCSettings.bHideCornerPoints;
 
 	CreateCommentControls();
 
 	CreateColorControls();
 
-	ETextJustify::Type CommentTextAlignment = ASCSettings->CommentTextAlignment;
+	ETextJustify::Type CommentTextAlignment = ASCSettings.CommentTextAlignment;
 
 	TSharedRef<SInlineEditableTextBlock> CommentTextBlock = SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 		.Style(&CommentStyle)
@@ -643,10 +643,10 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Top).AttachWidget(MakeAnchorBox());
 	}
 
-	FMargin CommentTextPadding = ASCSettings->CommentTextPadding;
+	FMargin CommentTextPadding = ASCSettings.CommentTextPadding;
 	TopHBox->AddSlot().Padding(CommentTextPadding).FillWidth(1).HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(CommentTextBlock);
 
-	if (!ASCSettings->bHideHeaderButton)
+	if (!ASCSettings.bHideHeaderButton)
 	{
 		TopHBox->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Top).AttachWidget(ToggleHeaderButton.ToSharedRef());
 	}
@@ -665,7 +665,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Bottom).AttachWidget(MakeAnchorBox());
 		}
 
-		if (!ASCSettings->bHideCommentBoxControls)
+		if (!ASCSettings.bHideCommentBoxControls)
 		{
 			BottomHBox->AddSlot().AutoWidth().HAlign(HAlign_Left).VAlign(VAlign_Fill).AttachWidget(CommentControls.ToSharedRef());
 		}
@@ -687,7 +687,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			TopHBox
 		];
 
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bDisableTooltip)
+	if (!UAutoSizeCommentsSettings::Get().bDisableTooltip)
 	{
 		TitleBar->SetToolTipText(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip));
 	}
@@ -696,7 +696,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	auto MainVBox = SNew(SVerticalBox);
 	MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(TitleBar.ToSharedRef());
 	MainVBox->AddSlot().AutoHeight().Padding(1.0f).AttachWidget(ErrorReporting->AsWidget());
-	if (!IsHeaderComment() && (!ASCSettings->bHidePresets || !GetDefault<UAutoSizeCommentsSettings>()->bHideRandomizeButton))
+	if (!IsHeaderComment() && (!ASCSettings.bHidePresets || !UAutoSizeCommentsSettings::Get().bHideRandomizeButton))
 	{
 		MainVBox->AddSlot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Top).AttachWidget(ColorControls.ToSharedRef());
 	}
@@ -868,14 +868,14 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 	}
 
 	// add all selected nodes
-	if (SelectedNodes.Num() > 0 && !GetDefault<UAutoSizeCommentsSettings>()->bIgnoreSelectedNodesOnCreation)
+	if (SelectedNodes.Num() > 0 && !UAutoSizeCommentsSettings::Get().bIgnoreSelectedNodesOnCreation)
 	{
 		AddAllNodesUnderComment(SelectedNodes);
 		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &SAutoSizeCommentsGraphNode::ResizeToFit));
 		return;
 	}
 
-	if (GetDefault<UAutoSizeCommentsSettings>()->bDetectNodesContainedForNewComments)
+	if (UAutoSizeCommentsSettings::Get().bDetectNodesContainedForNewComments)
 	{
 		// Refresh the nodes under the comment
 		RefreshNodesDelay = 2;
@@ -1156,11 +1156,11 @@ bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes()
 
 void SAutoSizeCommentsGraphNode::UpdateColors(const float InDeltaTime)
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
-	const bool bIsCommentControlsKeyDown = ASCSettings->EnableCommentControlsKey.Key.IsValid() && bAreControlsEnabled;
+	const bool bIsCommentControlsKeyDown = ASCSettings.EnableCommentControlsKey.Key.IsValid() && bAreControlsEnabled;
 
-	if (bIsCommentControlsKeyDown || (!ASCSettings->EnableCommentControlsKey.Key.IsValid() && IsHovered()))
+	if (bIsCommentControlsKeyDown || (!ASCSettings.EnableCommentControlsKey.Key.IsValid() && IsHovered()))
 	{
 		if (OpacityValue < 1.f)
 		{
@@ -1170,10 +1170,10 @@ void SAutoSizeCommentsGraphNode::UpdateColors(const float InDeltaTime)
 	}
 	else
 	{
-		if (OpacityValue > ASCSettings->MinimumControlOpacity)
+		if (OpacityValue > ASCSettings.MinimumControlOpacity)
 		{
 			const float FadeDownAmt = InDeltaTime * 5.f;
-			OpacityValue = FMath::Max(OpacityValue - FadeDownAmt, ASCSettings->MinimumControlOpacity);
+			OpacityValue = FMath::Max(OpacityValue - FadeDownAmt, ASCSettings.MinimumControlOpacity);
 		}
 	}
 
@@ -1220,7 +1220,7 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 
 			ResizeToFit();
 
-			if (GetDefault<UAutoSizeCommentsSettings>()->bEnableFixForSortDepthIssue)
+			if (UAutoSizeCommentsSettings::Get().bEnableFixForSortDepthIssue)
 			{
 				FAutoSizeCommentGraphHandler::Get().RequestGraphVisualRefresh(GetOwnerPanel());
 			}
@@ -1363,7 +1363,7 @@ void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGrap
 		}
 	}
 
-	if (bNeedsPurging && GetDefault<UAutoSizeCommentsSettings>()->bEnableFixForSortDepthIssue)
+	if (bNeedsPurging && UAutoSizeCommentsSettings::Get().bEnableFixForSortDepthIssue)
 	{
 		FAutoSizeCommentGraphHandler::Get().RequestGraphVisualRefresh(GetOwnerPanel());
 	}
@@ -1426,10 +1426,10 @@ FSlateColor SAutoSizeCommentsGraphNode::GetPresetColor(const FLinearColor Color)
 
 float SAutoSizeCommentsGraphNode::GetWrapAt() const
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-	const float HeaderSize = ASCSettings->bHideHeaderButton ? 0 : 20;
-	const float AnchorPointWidth = ASCSettings->bHideCornerPoints ? 0 : 32;
-	const float TextPadding = ASCSettings->CommentTextPadding.Left + ASCSettings->CommentTextPadding.Right;
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
+	const float HeaderSize = ASCSettings.bHideHeaderButton ? 0 : 20;
+	const float AnchorPointWidth = ASCSettings.bHideCornerPoints ? 0 : 32;
+	const float TextPadding = ASCSettings.CommentTextPadding.Left + ASCSettings.CommentTextPadding.Right;
 	return FMath::Max(0.f, CachedWidth - AnchorPointWidth - HeaderSize - TextPadding - 12);
 }
 
@@ -1445,16 +1445,16 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 	// resize to fit the bounds of the nodes under the comment
 	if (CommentNode->GetNodesUnderComment().Num() > 0)
 	{
-		const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+		const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
 		// get bounds and apply padding
-		const FVector2D Padding = ASCSettings->CommentNodePadding;
+		const FVector2D Padding = ASCSettings.CommentNodePadding;
 
-		const float VerticalPadding = FMath::Max(ASCSettings->MinimumVerticalPadding, Padding.Y); // ensure we can always see the buttons
+		const float VerticalPadding = FMath::Max(ASCSettings.MinimumVerticalPadding, Padding.Y); // ensure we can always see the buttons
 
-		const float TopPadding = (!ASCSettings->bHidePresets || !ASCSettings->bHideRandomizeButton) ? VerticalPadding : Padding.Y;
+		const float TopPadding = (!ASCSettings.bHidePresets || !ASCSettings.bHideRandomizeButton) ? VerticalPadding : Padding.Y;
 
-		const float BottomPadding = !ASCSettings->bHideCommentBoxControls ? VerticalPadding : Padding.Y;
+		const float BottomPadding = !ASCSettings.bHideCommentBoxControls ? VerticalPadding : Padding.Y;
 
 		const FSlateRect Bounds = GetBoundsForNodesInside().ExtendBy(FMargin(Padding.X, TopPadding, Padding.X, BottomPadding));
 
@@ -1505,7 +1505,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 
 void SAutoSizeCommentsGraphNode::ApplyHeaderStyle()
 {
-	FPresetCommentStyle Style = GetDefault<UAutoSizeCommentsSettings>()->HeaderStyle;
+	FPresetCommentStyle Style = UAutoSizeCommentsSettings::Get().HeaderStyle;
 	CommentNode->CommentColor = Style.Color;
 	CommentNode->FontSize = Style.FontSize;
 }
@@ -1522,7 +1522,7 @@ void SAutoSizeCommentsGraphNode::OnTitleChanged(const FString& OldTitle, const F
 {
 	// apply the preset style if the title starts with the correct prefix
 	bool bMatchesPreset = false;
-	for (const auto& Elem : GetDefault<UAutoSizeCommentsSettings>()->TaggedPresets)
+	for (const auto& Elem : UAutoSizeCommentsSettings::Get().TaggedPresets)
 	{
 		if (NewTitle.StartsWith(Elem.Key))
 		{
@@ -1535,7 +1535,7 @@ void SAutoSizeCommentsGraphNode::OnTitleChanged(const FString& OldTitle, const F
 	{
 		// randomize our color if the old title was an auto applied preset
 		bool bShouldResetColor = false;
-		for (const auto& Elem : GetDefault<UAutoSizeCommentsSettings>()->TaggedPresets)
+		for (const auto& Elem : UAutoSizeCommentsSettings::Get().TaggedPresets)
 		{
 			if (OldTitle.StartsWith(Elem.Key))
 			{
@@ -1572,7 +1572,7 @@ void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 	}
 
 	// if the comment node is empty, move away from other comment nodes
-	if (UnderComment.Num() == 0 && GetDefault<UAutoSizeCommentsSettings>()->bMoveEmptyCommentBoxes && !bIsSelected && !bIsContained && !IsHeaderComment())
+	if (UnderComment.Num() == 0 && UAutoSizeCommentsSettings::Get().bMoveEmptyCommentBoxes && !bIsSelected && !bIsContained && !IsHeaderComment())
 	{
 		FVector2D TotalMovement(0, 0);
 
@@ -1625,7 +1625,7 @@ void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 			TotalMovement.Y = (FMath::Rand() % 2) * 2 - 1;
 		}
 
-		TotalMovement *= GetDefault<UAutoSizeCommentsSettings>()->EmptyCommentBoxSpeed;
+		TotalMovement *= UAutoSizeCommentsSettings::Get().EmptyCommentBoxSpeed;
 
 		GraphNode->NodePosX += TotalMovement.X;
 		GraphNode->NodePosY += TotalMovement.Y;
@@ -1721,14 +1721,14 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 	// Create the color controls
 	ColorControls = SNew(SHorizontalBox);
 
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
-	const TArray<FPresetCommentStyle>& Presets = ASCSettings->PresetStyles;
+	const TArray<FPresetCommentStyle>& Presets = ASCSettings.PresetStyles;
 	CachedNumPresets = Presets.Num();
 
 	if (!IsHeaderComment()) // header comments don't need color presets
 	{
-		if (!ASCSettings->bHideResizeButton && GetResizingMode() != EASCResizingMode::Always)
+		if (!ASCSettings.bHideResizeButton && GetResizingMode() != EASCResizingMode::Always)
 		{
 			// Create the resize button
 			ResizeButton = SNew(SButton)
@@ -1755,7 +1755,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 		auto Buttons = SNew(SHorizontalBox);
 		ColorControls->AddSlot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Fill).AttachWidget(Buttons);
 
-		if (!ASCSettings->bHidePresets)
+		if (!ASCSettings.bHidePresets)
 		{
 			for (const FPresetCommentStyle& Preset : Presets)
 			{
@@ -1777,7 +1777,7 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 			}
 		}
 
-		if (!ASCSettings->bHideRandomizeButton)
+		if (!ASCSettings.bHideRandomizeButton)
 		{
 			// Create the random color button
 			TSharedRef<SButton> RandomColorButton = SNew(SButton)
@@ -1906,8 +1906,8 @@ EASCAnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 		}
 	}
 
-	const float CornerAnchorSize = GetDefault<UAutoSizeCommentsSettings>()->ResizeCornerAnchorSize * AnchorSizeScale;
-	const float SideAnchorSize = GetDefault<UAutoSizeCommentsSettings>()->ResizeSidePadding * AnchorSizeScale;
+	const float CornerAnchorSize = UAutoSizeCommentsSettings::Get().ResizeCornerAnchorSize * AnchorSizeScale;
+	const float SideAnchorSize = UAutoSizeCommentsSettings::Get().ResizeSidePadding * AnchorSizeScale;
 
 	const float SidePadding = SideAnchorSize;
 	const float Top = CornerAnchorSize;
@@ -1977,17 +1977,17 @@ void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue, bool bUpdateStyle)
 		}
 		else // undo header style
 		{
-			const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-			if (ASCSettings->DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
+			const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
+			if (ASCSettings.DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
 			{
 				RandomizeColor();
 			}
 			else
 			{
-				CommentNode->CommentColor = ASCSettings->DefaultCommentColor;
+				CommentNode->CommentColor = ASCSettings.DefaultCommentColor;
 			}
 
-			CommentNode->FontSize = ASCSettings->DefaultFontSize;
+			CommentNode->FontSize = ASCSettings.DefaultFontSize;
 			AdjustMinSize(UserSize);
 			CommentNode->ResizeNode(UserSize);
 		}
@@ -2008,13 +2008,13 @@ bool SAutoSizeCommentsGraphNode::IsHeaderComment(UEdGraphNode_Comment* OtherComm
 
 FKey SAutoSizeCommentsGraphNode::GetResizeKey() const
 {
-	return GetDefault<UAutoSizeCommentsSettings>()->ResizeChord.Key;
+	return UAutoSizeCommentsSettings::Get().ResizeChord.Key;
 }
 
 bool SAutoSizeCommentsGraphNode::AreResizeModifiersDown(bool bDownIfNoModifiers) const
 {
 	const FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
-	const FInputChord ResizeChord = GetDefault<UAutoSizeCommentsSettings>()->ResizeChord;
+	const FInputChord ResizeChord = UAutoSizeCommentsSettings::Get().ResizeChord;
 
 	if (!ResizeChord.HasAnyModifierKeys())
 	{
@@ -2075,13 +2075,13 @@ void SAutoSizeCommentsGraphNode::ResetNodesUnrelated()
 
 EASCResizingMode SAutoSizeCommentsGraphNode::GetResizingMode() const
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
-	if (const FASCGraphSettings* GraphSettings = ASCSettings->GraphSettingsOverride.Find(CachedGraphClassName))
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
+	if (const FASCGraphSettings* GraphSettings = ASCSettings.GraphSettingsOverride.Find(CachedGraphClassName))
 	{
 		return GraphSettings->ResizingMode;
 	}
 
-	return ASCSettings->ResizingMode;
+	return ASCSettings.ResizingMode;
 }
 
 bool SAutoSizeCommentsGraphNode::AreControlsEnabled() const
@@ -2091,7 +2091,7 @@ bool SAutoSizeCommentsGraphNode::AreControlsEnabled() const
 
 bool SAutoSizeCommentsGraphNode::IsPresetStyle()
 {
-	for (FPresetCommentStyle Style : GetMutableDefault<UAutoSizeCommentsSettings>()->PresetStyles)
+	for (const FPresetCommentStyle& Style : UAutoSizeCommentsSettings::Get().PresetStyles)
 	{
 		if (CommentNode->CommentColor == Style.Color && CommentNode->FontSize == Style.FontSize)
 		{
@@ -2200,20 +2200,20 @@ void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraph
 
 void SAutoSizeCommentsGraphNode::RandomizeColor()
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
-	if (ASCSettings->bUseRandomColorFromList)
+	if (ASCSettings.bUseRandomColorFromList)
 	{
-		const int RandIndex = FMath::Rand() % ASCSettings->PredefinedRandomColorList.Num();
-		if (ASCSettings->PredefinedRandomColorList.IsValidIndex(RandIndex))
+		const int RandIndex = FMath::Rand() % ASCSettings.PredefinedRandomColorList.Num();
+		if (ASCSettings.PredefinedRandomColorList.IsValidIndex(RandIndex))
 		{
-			CommentNode->CommentColor = ASCSettings->PredefinedRandomColorList[RandIndex];
+			CommentNode->CommentColor = ASCSettings.PredefinedRandomColorList[RandIndex];
 		}
 	}
 	else
 	{
 		CommentNode->CommentColor = FLinearColor::MakeRandomColor();
-		CommentNode->CommentColor.A = ASCSettings->RandomColorOpacity;
+		CommentNode->CommentColor.A = ASCSettings.RandomColorOpacity;
 	}
 }
 
@@ -2241,7 +2241,7 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(const TSharedPtr<SGraphNode> OtherGr
 		return false;
 	}
 
-	if ((bIgnoreKnots || GetDefault<UAutoSizeCommentsSettings>()->bIgnoreKnotNodes) && Cast<UK2Node_Knot>(GraphObject) != nullptr)
+	if ((bIgnoreKnots || UAutoSizeCommentsSettings::Get().bIgnoreKnotNodes) && Cast<UK2Node_Knot>(GraphObject) != nullptr)
 	{
 		return false;
 	}
@@ -2307,7 +2307,7 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 		Pos = LocalGraphNode->GetPosition();
 		Size = LocalGraphNode->GetDesiredSize();
 
-		if (GetDefault<UAutoSizeCommentsSettings>()->bUseCommentBubbleBounds && Node->bCommentBubbleVisible)
+		if (UAutoSizeCommentsSettings::Get().bUseCommentBubbleBounds && Node->bCommentBubbleVisible)
 		{
 			if (FNodeSlot* CommentSlot = LocalGraphNode->GetSlot(ENodeZone::TopCenter))
 			{

@@ -42,7 +42,7 @@ void FAutoSizeCommentsCacheFile::Init()
 
 void FAutoSizeCommentsCacheFile::LoadCache()
 {
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentNodeDataToFile)
+	if (!UAutoSizeCommentsSettings::Get().bSaveCommentNodeDataToFile)
 	{
 		return;
 	}
@@ -99,7 +99,7 @@ void FAutoSizeCommentsCacheFile::SaveCache()
 		return;
 	}
 
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentNodeDataToFile)
+	if (!UAutoSizeCommentsSettings::Get().bSaveCommentNodeDataToFile)
 	{
 		return;
 	}
@@ -110,7 +110,7 @@ void FAutoSizeCommentsCacheFile::SaveCache()
 
 	// Write data to file
 	FString JsonAsString;
-	FJsonObjectConverter::UStructToJsonObjectString(CacheData, JsonAsString, 0, 0, 0, nullptr, GetDefault<UAutoSizeCommentsSettings>()->bPrettyPrintCommentCacheJSON);
+	FJsonObjectConverter::UStructToJsonObjectString(CacheData, JsonAsString, 0, 0, 0, nullptr, UAutoSizeCommentsSettings::Get().bPrettyPrintCommentCacheJSON);
 	FFileHelper::SaveStringToFile(JsonAsString, *CachePath);
 	const double TimeTaken = (FPlatformTime::Seconds() - StartTime) * 1000.0f;
 	UE_LOG(LogAutoSizeComments, Log, TEXT("Saved cache to %s took %6.2fms"), *GetCachePath(true), TimeTaken);
@@ -136,7 +136,7 @@ void FAutoSizeCommentsCacheFile::DeleteCache()
 
 void FAutoSizeCommentsCacheFile::CleanupFiles()
 {
-	if (GetDefault<UAutoSizeCommentsSettings>()->bDisablePackageCleanup)
+	if (UAutoSizeCommentsSettings::Get().bDisablePackageCleanup)
 	{
 		return;
 	}
@@ -249,7 +249,7 @@ void FAutoSizeCommentsCacheFile::SaveGraphDataToPackageMetaData(UEdGraph* Graph)
 		return;
 	}
 
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bStoreCacheDataInPackageMetaData)
+	if (!UAutoSizeCommentsSettings::Get().bStoreCacheDataInPackageMetaData)
 	{
 		return;
 	}
@@ -278,7 +278,7 @@ bool FAutoSizeCommentsCacheFile::LoadGraphDataFromPackageMetaData(UEdGraph* Grap
 		return false;
 	}
 
-	if (!GetDefault<UAutoSizeCommentsSettings>()->bStoreCacheDataInPackageMetaData)
+	if (!UAutoSizeCommentsSettings::Get().bStoreCacheDataInPackageMetaData)
 	{
 		return false;
 	}
@@ -334,13 +334,13 @@ FString FAutoSizeCommentsCacheFile::GetPluginCachePath(bool bFullPath)
 
 FString FAutoSizeCommentsCacheFile::GetCachePath(bool bFullPath)
 {
-	const bool bIsProject = GetDefault<UAutoSizeCommentsSettings>()->CacheSaveLocation == EASCCacheSaveLocation::Project;
+	const bool bIsProject = UAutoSizeCommentsSettings::Get().CacheSaveLocation == EASCCacheSaveLocation::Project;
 	return bIsProject ? GetProjectCachePath(bFullPath) : GetPluginCachePath(bFullPath);
 }
 
 FString FAutoSizeCommentsCacheFile::GetAlternateCachePath(bool bFullPath)
 {
-	const bool bIsProject = GetDefault<UAutoSizeCommentsSettings>()->CacheSaveLocation == EASCCacheSaveLocation::Project;
+	const bool bIsProject = UAutoSizeCommentsSettings::Get().CacheSaveLocation == EASCCacheSaveLocation::Project;
 	return bIsProject ? GetPluginCachePath(bFullPath) : GetProjectCachePath(bFullPath);
 }
 
@@ -402,7 +402,7 @@ void FAutoSizeCommentsCacheFile::PrintCache()
 
 void FAutoSizeCommentsCacheFile::OnPreExit()
 {
-	if (GetDefault<UAutoSizeCommentsSettings>()->bSaveCommentDataOnExit)
+	if (UAutoSizeCommentsSettings::Get().bSaveCommentDataOnExit)
 	{
 		SaveCache();
 	}

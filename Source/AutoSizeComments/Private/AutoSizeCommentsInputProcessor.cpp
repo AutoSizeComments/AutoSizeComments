@@ -34,7 +34,7 @@ FAutoSizeCommentsInputProcessor& FAutoSizeCommentsInputProcessor::Get()
 
 bool FAutoSizeCommentsInputProcessor::HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)
 {
-	if (GetDefault<UAutoSizeCommentsSettings>()->bSelectNodeWhenClickingOnPin)
+	if (UAutoSizeCommentsSettings::Get().bSelectNodeWhenClickingOnPin)
 	{
 		// this logic is required for the auto insert comment to work correctly
 		// we need to know where a node was dragged from, so select the node when you click the pin

@@ -8,9 +8,9 @@
 
 TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class UEdGraphNode* InNode) const
 {
-	const UAutoSizeCommentsSettings* ASCSettings = GetDefault<UAutoSizeCommentsSettings>();
+	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
-	if (ASCSettings->bDisableASCGraphNode)
+	if (ASCSettings.bDisableASCGraphNode)
 	{
 		return nullptr;
 	}
@@ -23,12 +23,12 @@ TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class 
 			{
 				FString GraphClassName = GraphClass->GetName();
 
-				if (ASCSettings->bDebugGraph_ASC)
+				if (ASCSettings.bDebugGraph_ASC)
 				{
 					UE_LOG(LogAutoSizeComments, Log, TEXT("GraphClassName: <%s>"), *GraphClassName);
 				}
 
-				TArray<FString> IgnoredClasses = ASCSettings->IgnoredGraphs;
+				TArray<FString> IgnoredClasses = ASCSettings.IgnoredGraphs;
 				for (FString Ignored : IgnoredClasses)
 				{
 					if (GraphClassName == Ignored)
