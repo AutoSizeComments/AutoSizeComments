@@ -562,6 +562,17 @@ void FAutoSizeCommentGraphHandler::OnNodeAdded(TWeakObjectPtr<UEdGraphNode> NewN
 	UEdGraphNode* NewNode = NewNodePtr.Get();
 	UEdGraphNode* SelectedNode = nullptr;
 
+	if (UAutoSizeCommentsSettings::Get().bAutoRenameNewComments)
+	{
+		if (UEdGraphNode_Comment* NewComment = Cast<UEdGraphNode_Comment>(NewNode))
+		{
+			if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(NewComment))
+			{
+				ASCComment->RequestRename();
+			}
+		}
+	}
+
 	// get the owner panel from the first ASCComment
 	TArray<UEdGraphNode_Comment*> Comments;
 	NewNode->GetGraph()->GetNodesOfClassEx<UEdGraphNode_Comment>(Comments);

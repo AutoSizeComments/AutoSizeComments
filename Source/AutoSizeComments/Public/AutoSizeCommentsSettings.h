@@ -171,6 +171,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	EASCAutoInsertComment AutoInsertComment;
 
+	/** When a user places a comment, give keyboard focus to the title bar so it can be easily renamed */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bAutoRenameNewComments;
+
 	/** When you click a node's pin, also select the node (required for AutoInsertComment to function correctly) */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bSelectNodeWhenClickingOnPin;
@@ -341,6 +345,16 @@ public:
 	/** Use the default Unreal comment node */
 	UPROPERTY(EditAnywhere, config, Category = Debug)
 	bool bDisableASCGraphNode;
+
+	static FORCEINLINE const UAutoSizeCommentsSettings& Get()
+	{
+		return *GetDefault<UAutoSizeCommentsSettings>();
+	}
+
+	static FORCEINLINE UAutoSizeCommentsSettings& GetMutable()
+	{
+		return *GetMutableDefault<UAutoSizeCommentsSettings>();
+	}
 };
 
 class FASCSettingsDetails final : public IDetailCustomization
