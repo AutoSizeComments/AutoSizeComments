@@ -50,8 +50,13 @@ enum class ECommentCollisionMethod : uint8
 UENUM()
 enum class EASCAutoInsertComment : uint8
 {
+	/** Never insert new nodes into comments */
 	Never UMETA(DisplayName = "Never"),
+
+	/** Insert new nodes when a node is created from a pin */
 	Always UMETA(DisplayName = "Always"),
+
+	/** Insert new nodes when a node is created from a pin (and is surrounded by multiple nodes inside the comment) */
 	Surrounded UMETA(DisplayName = "Surrounded"),
 };
 
