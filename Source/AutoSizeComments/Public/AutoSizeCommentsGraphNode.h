@@ -134,9 +134,8 @@ protected:
 	void InitializeASCNode(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes);
 	void InitializeNodesUnderComment(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes);
 
-	bool AddInitialNodes();
-	bool AddAllSelectedNodes();
-	bool RemoveAllSelectedNodes();
+	bool AddAllSelectedNodes(bool bExpandComments = false);
+	bool RemoveAllSelectedNodes(bool bExpandComments = false);
 
 	void UpdateColors(const float InDeltaTime);
 
@@ -240,7 +239,7 @@ public:
 	void SnapVectorToGrid(FVector2D& Vector);
 	void SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
-	TArray<UEdGraphNode*> GetEdGraphNodesUnderComment(UEdGraphNode_Comment* InCommentNode) const;
+	TArray<UEdGraphNode*> GetNodesUnderComment() const;
 	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments = true);
 	bool IsValidGraphPanel(TSharedPtr<SGraphPanel> GraphPanel);
 	void RemoveInvalidNodes();
