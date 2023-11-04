@@ -87,4 +87,6 @@ private:
 	void RefreshGraphVisualRefresh(TWeakPtr<SGraphPanel> GraphPanel);
 
 	EASCResizingMode GetResizingMode(UEdGraph* Graph) const;
+
+	void CheckCacheDataError(UEdGraph* Graph);
 };

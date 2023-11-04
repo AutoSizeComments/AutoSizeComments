@@ -72,6 +72,20 @@ TArray<UEdGraphNode*> FASCUtils::GetLinkedNodes(const UEdGraphNode* Node, EEdGra
 	return Nodes.Array();
 }
 
+TArray<UEdGraphNode_Comment*> FASCUtils::GetCommentsFromGraph(UEdGraph* Graph)
+{
+	TArray<UEdGraphNode_Comment*> Comments;
+	for (UEdGraphNode* Node : Graph->Nodes)
+	{
+		if (UEdGraphNode_Comment* Comment = Cast<UEdGraphNode_Comment>(Node))
+		{
+			Comments.Add(Comment);
+		}
+	}
+
+	return Comments;
+}
+
 bool FASCUtils::HasNodeBeenDeleted(UEdGraphNode* Node)
 {
 	if (Node == nullptr)

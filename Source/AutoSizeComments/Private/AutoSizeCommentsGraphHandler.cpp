@@ -4,6 +4,7 @@
 
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphNode.h"
+#include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
@@ -11,7 +12,9 @@
 #include "GraphEditAction.h"
 #include "K2Node_Knot.h"
 #include "SGraphPanel.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "Misc/LazySingleton.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #if ASC_UE_VERSION_OR_LATER(5, 0)
 #include "UObject/ObjectSaveContext.h"
@@ -84,6 +87,8 @@ void FAutoSizeCommentGraphHandler::BindToGraph(UEdGraph* Graph)
 	GraphData.OnGraphChangedHandle = Graph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::OnGraphChanged));
 
 	GraphDatas.Add(Graph, GraphData);
+
+	CheckCacheDataError(Graph);
 }
 
 void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Action)
@@ -256,6 +261,46 @@ EASCResizingMode FAutoSizeCommentGraphHandler::GetResizingMode(UEdGraph* Graph) 
 	}
 
 	return ASCSettings.ResizingMode;
+}
+
+void FAutoSizeCommentGraphHandler::CheckCacheDataError(UEdGraph* Graph)
+{
+	FASCGraphData& GraphData = FAutoSizeCommentsCacheFile::Get().GetGraphData(Graph);
+	TArray<UEdGraphNode_Comment*> Comments = FASCUtils::GetCommentsFromGraph(Graph);
+
+	// skip if we have no comment data for this graph
+	if (GraphData.CommentData.Num() == 0)
+	{
+		return;
+	}
+
+	TSet<FGuid> OldGuids;
+	GraphData.CommentData.GetKeys(OldGuids);
+
+	TSet<FGuid> CurrentGuids;
+	for (UEdGraphNode_Comment* Comment : Comments)
+	{
+		CurrentGuids.Add(Comment->NodeGuid);
+	}
+
+	const int MissingGuids = OldGuids.Difference(CurrentGuids).Num();
+
+	// this is to check if the nodes are having their guid's refreshed somehow
+	// so if we have the same number of nodes and they are all wrong, print an error msg
+	if (OldGuids.Num() == CurrentGuids.Num() && MissingGuids == OldGuids.Num())
+	{
+		UE_LOG(LogAutoSizeComments, Error, TEXT(
+			"Graph '%s' has failed to load all comments\n"
+			"Please report issue this at: https://github.com/AutoSizeComments/AutoSizeComments/issues/13\n"
+			"Please describe any special details of your project (for example: did you just upgrade your project to a new engine version?"),
+			*Graph->GetName());
+
+		FNotificationInfo Info(INVTEXT("ASC: Graph has failed to load comments, see output log for more details"));
+		Info.ExpireDuration = 5.0f;
+		FSlateNotificationManager::Get().AddNotification(Info);
+
+		GraphData.CommentData.Empty();
+	}
 }
 
 void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel)

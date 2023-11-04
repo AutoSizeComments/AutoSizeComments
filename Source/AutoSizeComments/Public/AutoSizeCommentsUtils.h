@@ -14,6 +14,7 @@ struct FASCUtils
 	static TArray<UEdGraphPin*> GetLinkedPins(const UEdGraphNode* Node, EEdGraphPinDirection Direction = EGPD_MAX);
 
 	static TArray<UEdGraphNode*> GetLinkedNodes(const UEdGraphNode* Node, EEdGraphPinDirection Direction = EGPD_MAX);
+	static TArray<UEdGraphNode_Comment*> GetCommentsFromGraph(UEdGraph* Graph);
 
 	static bool HasNodeBeenDeleted(UEdGraphNode* Node);
 
