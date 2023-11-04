@@ -444,6 +444,24 @@ bool FAutoSizeCommentGraphHandler::HasCommentChanged(UEdGraphNode_Comment* Comme
 	return false;
 }
 
+TArray<UEdGraph*> FAutoSizeCommentGraphHandler::GetActiveGraphs()
+{
+	TArray<TWeakObjectPtr<UEdGraph>> GraphWeakPtrs;
+	GraphDatas.GetKeys(GraphWeakPtrs);
+
+	TArray<UEdGraph*> ActiveGraphs;
+
+	for (TWeakObjectPtr<UEdGraph> GraphWeakPtr : GraphWeakPtrs)
+	{
+		if (GraphWeakPtr.IsValid())
+		{
+			ActiveGraphs.Add(GraphWeakPtr.Get());
+		}
+	}
+
+	return ActiveGraphs;
+}
+
 bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 {
 	UpdateNodeUnrelatedState();

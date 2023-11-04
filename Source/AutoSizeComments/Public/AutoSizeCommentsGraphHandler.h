@@ -45,6 +45,8 @@ public:
 	bool HasCommentChangeState(UEdGraphNode_Comment* Comment) const;
 	bool HasCommentChanged(UEdGraphNode_Comment* Comment);
 
+	TArray<UEdGraph*> GetActiveGraphs();
+
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FASCGraphHandlerData> GraphDatas;
 

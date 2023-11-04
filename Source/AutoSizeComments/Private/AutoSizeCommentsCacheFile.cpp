@@ -2,6 +2,7 @@
 
 #include "AutoSizeCommentsCacheFile.h"
 
+#include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
@@ -102,6 +103,12 @@ void FAutoSizeCommentsCacheFile::SaveCache()
 	if (!UAutoSizeCommentsSettings::Get().bSaveCommentNodeDataToFile)
 	{
 		return;
+	}
+
+	for (UEdGraph* Graph : FAutoSizeCommentGraphHandler::Get().GetActiveGraphs())
+	{
+		FASCGraphData& CacheGraphData = GetGraphData(Graph);
+		CacheGraphData.CleanupGraph(Graph);
 	}
 
 	const double StartTime = FPlatformTime::Seconds();
@@ -425,7 +432,7 @@ void FASCGraphData::CleanupGraph(UEdGraph* Graph)
 		if (!CurrentNodes.Contains(CommentNode))
 		{
 			NodesToRemove.Add(CommentNode);
-			break;
+			continue;
 		}
 
 		TArray<FGuid>& ContainingNodes = Elem.Value.NodeGuids;
