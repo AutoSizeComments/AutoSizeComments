@@ -58,7 +58,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bEnableCommentBubbleDefaults = false;
 	bDefaultColorCommentBubble = false;
 	bDefaultShowBubbleWhenZoomed = true;
-	CacheSaveLocation = EASCCacheSaveLocation::Plugin;
+	CacheSaveLocation = EASCCacheSaveLocation::Project;
 	bSaveCommentNodeDataToFile = true;
 	bSaveCommentDataOnSavingGraph = true;
 	bSaveCommentDataOnExit = true;
