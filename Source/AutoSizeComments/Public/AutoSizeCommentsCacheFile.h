@@ -77,9 +77,11 @@ public:
 
 	void Init();
 
-	void LoadCache();
+	void Cleanup();
 
-	void SaveCache();
+	void LoadCacheFromFile();
+
+	void SaveCacheToFile();
 
 	void DeleteCache();
 
@@ -89,6 +91,7 @@ public:
 	void UpdateNodesUnderComment(UEdGraphNode_Comment* Comment);
 
 	FASCGraphData& GetGraphData(UEdGraph* Graph);
+	FASCPackageData* FindPackageData(UPackage* Package);
 
 	void SaveGraphDataToPackageMetaData(UEdGraph* Graph);
 	bool LoadGraphDataFromPackageMetaData(UEdGraph* Graph, FASCGraphData& GraphData);
@@ -101,11 +104,11 @@ public:
 
 	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 
-	FASCCommentData& GetCommentData(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode);
-
 	FASCCommentData& GetCommentData(UEdGraphNode* CommentNode);
 
 	void PrintCache();
+
+	void OnObjectLoaded(UObject* Obj);
 
 private:
 	bool bHasLoaded = false;

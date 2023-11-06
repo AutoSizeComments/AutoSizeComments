@@ -792,11 +792,7 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 
 		FAutoSizeCommentGraphHandler::Get().RegisterActiveGraphPanel(GetOwnerPanel());
 
-		// if we failed to register the comment (since it has already been registered) do nothing
-		if (FAutoSizeCommentGraphHandler::Get().RegisterComment(CommentNode))
-		{
-			InitializeNodesUnderComment(InitialSelectedNodes);
-		}
+		InitializeNodesUnderComment(InitialSelectedNodes);
 
 		// make sure to init change state after setting the nodes under comments (if we don't have a state aleady)
 		if (!FAutoSizeCommentGraphHandler::Get().HasCommentChangeState(CommentNode))
@@ -827,12 +823,6 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 	}
 
 	if (IsHeaderComment())
-	{
-		return;
-	}
-
-	// skip loading from cache if the comment node already contains any nodes (e.g. when reloading visuals)
-	if (CommentNode->GetNodesUnderComment().Num() > 0)
 	{
 		return;
 	}
@@ -1459,7 +1449,7 @@ float SAutoSizeCommentsGraphNode::GetWrapAt() const
 
 FASCCommentData& SAutoSizeCommentsGraphNode::GetCommentData() const
 {
-	return FAutoSizeCommentsCacheFile::Get().GetCommentData(GraphNode);
+	return FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode);
 }
 
 void SAutoSizeCommentsGraphNode::ResizeToFit()
@@ -2128,6 +2118,8 @@ bool SAutoSizeCommentsGraphNode::IsPresetStyle()
 
 bool SAutoSizeCommentsGraphNode::LoadCache()
 {
+	CommentNode->ClearNodesUnderComment();
+
 	TArray<UEdGraphNode*> OutNodesUnder;
 	if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(SharedThis(this), OutNodesUnder))
 	{

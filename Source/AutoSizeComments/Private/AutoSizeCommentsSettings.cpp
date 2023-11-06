@@ -58,8 +58,8 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bEnableCommentBubbleDefaults = false;
 	bDefaultColorCommentBubble = false;
 	bDefaultShowBubbleWhenZoomed = true;
+	CacheSaveMethod = EASCCacheSaveMethod::MetaData;
 	CacheSaveLocation = EASCCacheSaveLocation::Project;
-	bSaveCommentNodeDataToFile = true;
 	bSaveCommentDataOnSavingGraph = true;
 	bSaveCommentDataOnExit = true;
 	bPrettyPrintCommentCacheJSON = false;
@@ -89,7 +89,6 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bHideCornerPoints = false;
 
 	bEnableFixForSortDepthIssue = false;
-	bStoreCacheDataInPackageMetaData = false;
 
 	bDebugGraph_ASC = false;
 	bDisablePackageCleanup = false;

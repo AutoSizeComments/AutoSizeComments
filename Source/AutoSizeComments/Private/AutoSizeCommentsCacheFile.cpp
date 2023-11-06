@@ -35,15 +35,35 @@ void FAutoSizeCommentsCacheFile::TearDown()
 
 void FAutoSizeCommentsCacheFile::Init()
 {
-	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
-	AssetRegistry.OnFilesLoaded().AddRaw(this, &FAutoSizeCommentsCacheFile::LoadCache);
+	if (FAssetRegistryModule* AssetRegistryModule = FModuleManager::GetModulePtr<FAssetRegistryModule>(TEXT("AssetRegistry")))
+	{
+		if (IAssetRegistry* AssetRegistry = AssetRegistryModule->TryGet())
+		{
+			AssetRegistry->OnFilesLoaded().AddRaw(this, &FAutoSizeCommentsCacheFile::LoadCacheFromFile);
+		}
+	}
 
-	FCoreDelegates::OnPreExit.AddRaw(this, &FAutoSizeCommentsCacheFile::SaveCache);
+	FCoreDelegates::OnPreExit.AddRaw(this, &FAutoSizeCommentsCacheFile::SaveCacheToFile);
+	FCoreUObjectDelegates::OnAssetLoaded.AddRaw(this, &FAutoSizeCommentsCacheFile::OnObjectLoaded);
 }
 
-void FAutoSizeCommentsCacheFile::LoadCache()
+void FAutoSizeCommentsCacheFile::Cleanup()
 {
-	if (!UAutoSizeCommentsSettings::Get().bSaveCommentNodeDataToFile)
+	if (FAssetRegistryModule* AssetRegistryModule = FModuleManager::GetModulePtr<FAssetRegistryModule>(TEXT("AssetRegistry")))
+	{
+		if (IAssetRegistry* AssetRegistry = AssetRegistryModule->TryGet())
+		{
+			AssetRegistry->OnFilesLoaded().RemoveAll(this);
+		}
+	}
+
+	FCoreDelegates::OnPreExit.RemoveAll(this);
+	FCoreUObjectDelegates::OnAssetLoaded.RemoveAll(this);
+}
+
+void FAutoSizeCommentsCacheFile::LoadCacheFromFile()
+{
+	if (UAutoSizeCommentsSettings::Get().CacheSaveMethod != EASCCacheSaveMethod::File)
 	{
 		return;
 	}
@@ -92,15 +112,15 @@ void FAutoSizeCommentsCacheFile::LoadCache()
 	AssetRegistry.OnFilesLoaded().RemoveAll(this);
 }
 
-void FAutoSizeCommentsCacheFile::SaveCache()
+void FAutoSizeCommentsCacheFile::SaveCacheToFile()
 {
-	// Don't save the cache while cooking 
-	if (GIsCookerLoadingPackage)
+	if (UAutoSizeCommentsSettings::Get().CacheSaveMethod != EASCCacheSaveMethod::File)
 	{
 		return;
 	}
 
-	if (!UAutoSizeCommentsSettings::Get().bSaveCommentNodeDataToFile)
+	// Don't save the cache while cooking 
+	if (GIsCookerLoadingPackage)
 	{
 		return;
 	}
@@ -249,14 +269,19 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 	return GraphData;
 }
 
+FASCPackageData* FAutoSizeCommentsCacheFile::FindPackageData(UPackage* Package)
+{
+	return CacheData.PackageData.Find(Package->GetFName());
+}
+
 void FAutoSizeCommentsCacheFile::SaveGraphDataToPackageMetaData(UEdGraph* Graph)
 {
-	if (!Graph)
+	if (UAutoSizeCommentsSettings::Get().CacheSaveMethod != EASCCacheSaveMethod::MetaData)
 	{
 		return;
 	}
 
-	if (!UAutoSizeCommentsSettings::Get().bStoreCacheDataInPackageMetaData)
+	if (!Graph)
 	{
 		return;
 	}
@@ -268,7 +293,7 @@ void FAutoSizeCommentsCacheFile::SaveGraphDataToPackageMetaData(UEdGraph* Graph)
 			FASCGraphData& GraphData = GetGraphData(Graph);
 
 			GraphData.CleanupGraph(Graph);
-			
+
 			FString GraphDataAsString;
 			if (FJsonObjectConverter::UStructToJsonObjectString(GraphData, GraphDataAsString))
 			{
@@ -280,12 +305,12 @@ void FAutoSizeCommentsCacheFile::SaveGraphDataToPackageMetaData(UEdGraph* Graph)
 
 bool FAutoSizeCommentsCacheFile::LoadGraphDataFromPackageMetaData(UEdGraph* Graph, FASCGraphData& GraphData)
 {
-	if (!Graph)
+	if (UAutoSizeCommentsSettings::Get().CacheSaveMethod != EASCCacheSaveMethod::MetaData)
 	{
 		return false;
 	}
 
-	if (!UAutoSizeCommentsSettings::Get().bStoreCacheDataInPackageMetaData)
+	if (!Graph)
 	{
 		return false;
 	}
@@ -376,11 +401,6 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommen
 	return false;
 }
 
-FASCCommentData& FAutoSizeCommentsCacheFile::GetCommentData(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode)
-{
-	return GetCommentData(ASCNode->GetNodeObj());
-}
-
 FASCCommentData& FAutoSizeCommentsCacheFile::GetCommentData(UEdGraphNode* CommentNode)
 {
 	UEdGraph* Graph = CommentNode->GetGraph();
@@ -407,11 +427,24 @@ void FAutoSizeCommentsCacheFile::PrintCache()
 	}
 }
 
+void FAutoSizeCommentsCacheFile::OnObjectLoaded(UObject* Obj)
+{
+	// when a package is reloaded, we want to make the comment read the latest
+	// data from this cache (for when you revert commit or file)
+	if (FASCPackageData* PackageData = FindPackageData(Obj->GetPackage()))
+	{
+		for (auto& GraphData : PackageData->GraphData)
+		{
+			GraphData.Value.bTriedLoadingMetaData = false;
+		}
+	}
+}
+
 void FAutoSizeCommentsCacheFile::OnPreExit()
 {
 	if (UAutoSizeCommentsSettings::Get().bSaveCommentDataOnExit)
 	{
-		SaveCache();
+		SaveCacheToFile();
 	}
 }
 
