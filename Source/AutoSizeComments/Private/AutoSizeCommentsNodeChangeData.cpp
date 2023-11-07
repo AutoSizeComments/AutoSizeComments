@@ -12,6 +12,7 @@ void FASCPinChangeData::UpdatePin(UEdGraphPin* Pin)
 	bPinLinked = Pin->LinkedTo.Num() > 0;
 	PinValue = Pin->DefaultValue;
 	PinTextValue = Pin->DefaultTextValue;
+	PinLabel = GetPinLabel(Pin);
 	PinObject = GetPinDefaultObjectName(Pin);
 }
 
@@ -41,6 +42,11 @@ bool FASCPinChangeData::HasPinChanged(UEdGraphPin* Pin)
 		return true;
 	}
 
+	if (!PinLabel.EqualTo(GetPinLabel(Pin), ETextComparisonLevel::Default))
+	{
+		return true;
+	}
+
 	const FString PinDefaultObjectName = GetPinDefaultObjectName(Pin);
 	if (PinObject != PinDefaultObjectName)
 	{
@@ -54,6 +60,19 @@ bool FASCPinChangeData::HasPinChanged(UEdGraphPin* Pin)
 FString FASCPinChangeData::GetPinDefaultObjectName(UEdGraphPin* Pin) const
 {
 	return Pin->DefaultObject ? Pin->DefaultObject->GetName() : FString();
+}
+
+FText FASCPinChangeData::GetPinLabel(UEdGraphPin* Pin) const
+{
+	if (Pin)
+	{
+		if (UEdGraphNode* GraphNode = Pin->GetOwningNodeUnchecked())
+		{
+			return GraphNode->GetPinDisplayName(Pin);
+		}
+	}
+
+	return FText::GetEmpty();
 }
 
 void FASCNodeChangeData::UpdateNode(UEdGraphNode* Node)
