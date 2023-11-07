@@ -37,10 +37,7 @@ void FAutoSizeCommentsCacheFile::Init()
 {
 	if (FAssetRegistryModule* AssetRegistryModule = FModuleManager::GetModulePtr<FAssetRegistryModule>(TEXT("AssetRegistry")))
 	{
-		if (IAssetRegistry* AssetRegistry = AssetRegistryModule->TryGet())
-		{
-			AssetRegistry->OnFilesLoaded().AddRaw(this, &FAutoSizeCommentsCacheFile::LoadCacheFromFile);
-		}
+		AssetRegistryModule->Get().OnFilesLoaded().AddRaw(this, &FAutoSizeCommentsCacheFile::LoadCacheFromFile);
 	}
 
 	FCoreDelegates::OnPreExit.AddRaw(this, &FAutoSizeCommentsCacheFile::SaveCacheToFile);
@@ -51,10 +48,7 @@ void FAutoSizeCommentsCacheFile::Cleanup()
 {
 	if (FAssetRegistryModule* AssetRegistryModule = FModuleManager::GetModulePtr<FAssetRegistryModule>(TEXT("AssetRegistry")))
 	{
-		if (IAssetRegistry* AssetRegistry = AssetRegistryModule->TryGet())
-		{
-			AssetRegistry->OnFilesLoaded().RemoveAll(this);
-		}
+		AssetRegistryModule->Get().OnFilesLoaded().RemoveAll(this);
 	}
 
 	FCoreDelegates::OnPreExit.RemoveAll(this);
