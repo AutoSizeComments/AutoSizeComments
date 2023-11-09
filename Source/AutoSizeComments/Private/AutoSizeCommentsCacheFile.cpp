@@ -473,7 +473,7 @@ void FASCGraphData::CleanupGraph(UEdGraph* Graph)
 			const FGuid& Node = ContainingNodes[i];
 			if (!CurrentNodes.Contains(Node))
 			{
-				ContainingNodes.Remove(Node);
+				ContainingNodes.RemoveAt(i);
 			}
 		}
 	}
