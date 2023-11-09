@@ -260,6 +260,7 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 		if (GraphData.IsEmpty())
 		{
 			GraphData.LoadFromPackageMetaData(Graph);
+			GraphData.bInitialized = true;
 		}
 
 		return GraphData;
@@ -276,6 +277,7 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 
 		if (GraphData.LoadFromPackageMetaData(Graph))
 		{
+			GraphData.bInitialized = true;
 			return GraphData;
 		}
 
