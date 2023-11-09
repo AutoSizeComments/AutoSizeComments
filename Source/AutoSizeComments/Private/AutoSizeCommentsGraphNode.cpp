@@ -1037,7 +1037,7 @@ bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes(bool bExpandComments)
 		}
 	}
 
-	FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(CommentNode);
+	UpdateCache();
 
 	if (bDidAddAnything)
 	{
@@ -1134,7 +1134,7 @@ bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes(bool bExpandComments)
 		}
 	}
 
-	FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(CommentNode);
+	UpdateCache();
 
 	if (bDidRemoveAnything)
 	{
@@ -1253,7 +1253,7 @@ void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisi
 		UpdateExistingCommentNodes();
 	}
 
-	FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(CommentNode);
+	UpdateCache();
 }
 
 float SAutoSizeCommentsGraphNode::GetTitleBarHeight() const
@@ -2098,6 +2098,11 @@ EASCResizingMode SAutoSizeCommentsGraphNode::GetResizingMode() const
 	return ASCSettings.ResizingMode;
 }
 
+FASCCommentData& SAutoSizeCommentsGraphNode::GetCommentData()
+{
+	return FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode);
+}
+
 bool SAutoSizeCommentsGraphNode::AreControlsEnabled() const
 {
 	return bAreControlsEnabled;
@@ -2139,7 +2144,7 @@ bool SAutoSizeCommentsGraphNode::LoadCache()
 
 void SAutoSizeCommentsGraphNode::UpdateCache()
 {
-	FAutoSizeCommentsCacheFile::Get().UpdateCommentState(GetCommentNodeObj());
+	GetCommentData().UpdateNodesUnderComment(CommentNode);
 }
 
 void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots)

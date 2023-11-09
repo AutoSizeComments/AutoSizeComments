@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsMacros.h"
 #include "AutoSizeCommentsNodeChangeData.h"
 
@@ -15,6 +16,7 @@ struct FASCGraphHandlerData
 	FDelegateHandle OnGraphChangedHandle;
 
 	TMap<FGuid, FASCCommentChangeData> CommentChangeData;
+	FASCGraphData GraphCacheData;
 };
 
 class FAutoSizeCommentGraphHandler
@@ -38,6 +40,7 @@ public:
 
 	void ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel);
 
+	FASCGraphHandlerData& GetGraphHandlerData(UEdGraph* Graph) { return GraphDatas.FindOrAdd(Graph); }
 	void UpdateCommentChangeState(UEdGraphNode_Comment* Comment);
 	bool HasCommentChangeState(UEdGraphNode_Comment* Comment) const;
 	bool HasCommentChanged(UEdGraphNode_Comment* Comment);

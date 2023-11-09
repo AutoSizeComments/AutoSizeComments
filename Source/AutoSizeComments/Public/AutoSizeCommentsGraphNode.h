@@ -281,4 +281,6 @@ public:
 	void ResetNodesUnrelated();
 
 	EASCResizingMode GetResizingMode() const;
+
+	FASCCommentData& GetCommentData();
 };

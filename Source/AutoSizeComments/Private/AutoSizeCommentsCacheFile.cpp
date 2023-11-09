@@ -57,11 +57,6 @@ void FAutoSizeCommentsCacheFile::Cleanup()
 
 void FAutoSizeCommentsCacheFile::LoadCacheFromFile()
 {
-	if (UAutoSizeCommentsSettings::Get().CacheSaveMethod != EASCCacheSaveMethod::File)
-	{
-		return;
-	}
-
 	if (bHasLoaded)
 	{
 		return;
@@ -104,6 +99,49 @@ void FAutoSizeCommentsCacheFile::LoadCacheFromFile()
 
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
 	AssetRegistry.OnFilesLoaded().RemoveAll(this);
+}
+
+FASCCacheData FAutoSizeCommentsCacheFile::CreateCacheFromFile()
+{
+	FASCCacheData NewCacheData;
+
+	const FString CachePath = GetCachePath();
+	const FString OldCachePath = GetAlternateCachePath();
+
+	FString FileData;
+	if (FPlatformFileManager::Get().GetPlatformFile().FileExists(*CachePath))
+	{
+		FFileHelper::LoadFileToString(FileData, *CachePath);
+
+		if (FJsonObjectConverter::JsonObjectStringToUStruct(FileData, &NewCacheData, 0, 0))
+		{
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Loaded auto size comments cache: %s"), *GetCachePath(true));
+		}
+		else
+		{
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Failed to load auto size comments cache: %s"), *GetCachePath(true));
+		}
+	}
+	else
+	{
+		FFileHelper::LoadFileToString(FileData, *OldCachePath);
+
+		if (FJsonObjectConverter::JsonObjectStringToUStruct(FileData, &NewCacheData, 0, 0))
+		{
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Loaded auto size comments cache from old cache path: %s"), *GetAlternateCachePath(true));
+		}
+		else
+		{
+			UE_LOG(LogAutoSizeComments, Log, TEXT("Failed to load auto size comments cache from old cache path: %s"), *GetAlternateCachePath(true));
+		}
+	}
+
+	return NewCacheData;
+}
+
+void FAutoSizeCommentsCacheFile::InitMetaData()
+{
+	
 }
 
 void FAutoSizeCommentsCacheFile::SaveCacheToFile()
@@ -198,133 +236,70 @@ void FAutoSizeCommentsCacheFile::CleanupFiles()
 	}
 }
 
-void FAutoSizeCommentsCacheFile::UpdateCommentState(UEdGraphNode_Comment* Comment)
+FASCCommentData& FAutoSizeCommentsCacheFile::GetCommentData(UEdGraphNode_Comment* Comment)
 {
-	if (!Comment)
-	{
-		UE_LOG(LogAutoSizeComments, Warning, TEXT("Tried to update null comment"));
-		return;
-	}
-
-	UEdGraph* Graph = Comment->GetGraph();
-	if (!Graph)
-	{
-		UE_LOG(LogAutoSizeComments, Warning, TEXT("Tried to update comment with null graph"));
-		return;
-	}
-
-	if (FASCUtils::HasNodeBeenDeleted(Comment))
-	{
-		GetGraphData(Graph).CommentData.Remove(Comment->NodeGuid);
-	}
-	else
-	{
-		UpdateNodesUnderComment(Comment);
-	}
-}
-
-void FAutoSizeCommentsCacheFile::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
-{
-	UEdGraph* Graph = Comment->GetGraph();
-	if (!Graph)
-	{
-		UE_LOG(LogAutoSizeComments, Warning, TEXT("Tried to update comment with null graph"));
-		return;
-	}
-
-	FASCCommentData& CommentData = GetGraphData(Graph).CommentData.FindOrAdd(Comment->NodeGuid);
-
-	const TArray<UEdGraphNode*> NodesUnder = FASCUtils::GetNodesUnderComment(Comment);
-	CommentData.NodeGuids.Reset(NodesUnder.Num());
-
-	// update nodes under
-	for (UEdGraphNode* Node : NodesUnder)
-	{
-		if (!FASCUtils::HasNodeBeenDeleted(Node))
-		{
-			CommentData.NodeGuids.Add(Node->NodeGuid);
-		}
-	}
+	return GetGraphData(Comment->GetGraph()).GetCommentData(Comment);
 }
 
 FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 {
-	UPackage* Package = Graph->GetOutermost();
+	check(Graph);
 
-	FASCPackageData& PackageData = CacheData.PackageData.FindOrAdd(Package->GetFName());
-
-	FASCGraphData& GraphData = PackageData.GraphData.FindOrAdd(Graph->GraphGuid);
-
-	if (!GraphData.bTriedLoadingMetaData)
+	// load from cache file class
+	if (UAutoSizeCommentsSettings::Get().CacheSaveMethod == EASCCacheSaveMethod::File)
 	{
-		LoadGraphDataFromPackageMetaData(Graph, GraphData);
+		FASCGraphData& GraphData = GetCacheFileGraphData(Graph);
+		if (GraphData.bInitialized)
+		{
+			return GraphData;
+		}
+
+		GraphData.bInitialized = true;
+
+		// if we have no data, try loading from the package's meta data
+		if (GraphData.IsEmpty())
+		{
+			GraphData.LoadFromPackageMetaData(Graph);
+		}
+
+		return GraphData;
 	}
 
-	return GraphData;
+	// load and store from package metadata
+	{
+		FASCGraphHandlerData& GraphHandlerData = FAutoSizeCommentGraphHandler::Get().GetGraphHandlerData(Graph);
+		FASCGraphData& GraphData = GraphHandlerData.GraphCacheData;
+		if (GraphData.bInitialized)
+		{
+			return GraphData;
+		}
+
+		if (GraphData.LoadFromPackageMetaData(Graph))
+		{
+			return GraphData;
+		}
+
+		// we failed to load from the package meta data, load from the cache file
+		GraphData = GetCacheFileGraphData(Graph);
+		GraphData.bInitialized = true;
+
+		// write any data we got from the cache file to the meta data
+		GraphData.SaveToPackageMetaData(Graph);
+
+		return GraphData;
+	}
+}
+
+bool FAutoSizeCommentsCacheFile::RemoveGraphData(UEdGraph* Graph)
+{
+	UPackage* Package = Graph->GetOutermost();
+	FASCPackageData& PackageData = CacheData.PackageData.FindOrAdd(Package->GetFName());
+	return PackageData.GraphData.Remove(Graph->GraphGuid) > 0;
 }
 
 FASCPackageData* FAutoSizeCommentsCacheFile::FindPackageData(UPackage* Package)
 {
 	return CacheData.PackageData.Find(Package->GetFName());
-}
-
-void FAutoSizeCommentsCacheFile::SaveGraphDataToPackageMetaData(UEdGraph* Graph)
-{
-	if (UAutoSizeCommentsSettings::Get().CacheSaveMethod != EASCCacheSaveMethod::MetaData)
-	{
-		return;
-	}
-
-	if (!Graph)
-	{
-		return;
-	}
-
-	if (UPackage* AssetPackage = Graph->GetPackage())
-	{
-		if (UMetaData* MetaData = AssetPackage->GetMetaData())
-		{
-			FASCGraphData& GraphData = GetGraphData(Graph);
-
-			GraphData.CleanupGraph(Graph);
-
-			FString GraphDataAsString;
-			if (FJsonObjectConverter::UStructToJsonObjectString(GraphData, GraphDataAsString))
-			{
-				MetaData->SetValue(Graph, NAME_ASC_GRAPH_DATA, *GraphDataAsString);
-			}
-		}
-	}
-}
-
-bool FAutoSizeCommentsCacheFile::LoadGraphDataFromPackageMetaData(UEdGraph* Graph, FASCGraphData& GraphData)
-{
-	if (UAutoSizeCommentsSettings::Get().CacheSaveMethod != EASCCacheSaveMethod::MetaData)
-	{
-		return false;
-	}
-
-	if (!Graph)
-	{
-		return false;
-	}
-
-	if (UPackage* AssetPackage = Graph->GetPackage())
-	{
-		if (UMetaData* MetaData = AssetPackage->GetMetaData())
-		{
-			if (const FString* GraphDataAsString = MetaData->FindValue(Graph, NAME_ASC_GRAPH_DATA))
-			{
-				if (FJsonObjectConverter::JsonObjectStringToUStruct(*GraphDataAsString, &GraphData, 0, 0))
-				{
-					GraphData.bTriedLoadingMetaData = true;
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
 }
 
 void FAutoSizeCommentsCacheFile::ClearPackageMetaData(UEdGraph* Graph)
@@ -429,9 +404,17 @@ void FAutoSizeCommentsCacheFile::OnObjectLoaded(UObject* Obj)
 	{
 		for (auto& GraphData : PackageData->GraphData)
 		{
-			GraphData.Value.bTriedLoadingMetaData = false;
+			GraphData.Value.bInitialized = false;
 		}
 	}
+}
+
+FASCGraphData& FAutoSizeCommentsCacheFile::GetCacheFileGraphData(UEdGraph* Graph)
+{
+	UPackage* Package = Graph->GetOutermost();
+	FASCPackageData& PackageData = CacheData.PackageData.FindOrAdd(Package->GetFName());
+	FASCGraphData& GraphData = PackageData.GraphData.FindOrAdd(Graph->GraphGuid);
+	return GraphData;
 }
 
 void FAutoSizeCommentsCacheFile::OnPreExit()
@@ -439,6 +422,26 @@ void FAutoSizeCommentsCacheFile::OnPreExit()
 	if (UAutoSizeCommentsSettings::Get().bSaveCommentDataOnExit)
 	{
 		SaveCacheToFile();
+	}
+}
+
+void FASCCommentData::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
+{
+	if (!Comment)
+	{
+		return;
+	}
+
+	const TArray<UEdGraphNode*> NodesUnder = FASCUtils::GetNodesUnderComment(Comment);
+	NodeGuids.Reset(NodesUnder.Num());
+
+	// update nodes under
+	for (UEdGraphNode* Node : NodesUnder)
+	{
+		if (!FASCUtils::HasNodeBeenDeleted(Node))
+		{
+			NodeGuids.Add(Node->NodeGuid);
+		}
 	}
 }
 
@@ -477,4 +480,58 @@ void FASCGraphData::CleanupGraph(UEdGraph* Graph)
 	{
 		CommentData.Remove(NodeGuid);
 	}
+}
+
+bool FASCGraphData::LoadFromPackageMetaData(UEdGraph* Graph)
+{
+	if (!Graph)
+	{
+		return false;
+	}
+
+	if (UPackage* AssetPackage = Graph->GetPackage())
+	{
+		if (UMetaData* MetaData = AssetPackage->GetMetaData())
+		{
+			if (const FString* GraphDataAsString = MetaData->FindValue(Graph, NAME_ASC_GRAPH_DATA))
+			{
+				if (FJsonObjectConverter::JsonObjectStringToUStruct(*GraphDataAsString, this, 0, 0))
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+void FASCGraphData::SaveToPackageMetaData(UEdGraph* Graph)
+{
+	if (!Graph)
+	{
+		return;
+	}
+
+	if (UPackage* AssetPackage = Graph->GetPackage())
+	{
+		if (UMetaData* MetaData = AssetPackage->GetMetaData())
+		{
+			CleanupGraph(Graph);
+
+			FString GraphDataAsString;
+			if (FJsonObjectConverter::UStructToJsonObjectString(*this, GraphDataAsString))
+			{
+				MetaData->SetValue(Graph, NAME_ASC_GRAPH_DATA, *GraphDataAsString);
+			}
+
+			MetaData->RemoveMetaDataOutsidePackage();
+		}
+	}
+}
+
+FASCCommentData& FASCGraphData::GetCommentData(UEdGraphNode_Comment* Comment)
+{
+	check(Comment);
+	return CommentData.FindOrAdd(Comment->NodeGuid);
 }

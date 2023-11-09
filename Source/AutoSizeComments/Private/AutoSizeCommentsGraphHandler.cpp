@@ -725,8 +725,6 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 		return;
 	}
 
-	FAutoSizeCommentsCacheFile& CacheFile = FAutoSizeCommentsCacheFile::Get();
-
 	// upon saving a graph, save all comments to cache
 	if (UEdGraph* Graph = Cast<UEdGraph>(Object))
 	{
@@ -735,13 +733,10 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 			return;
 		}
 
+		FASCGraphData& CacheGraphData = FAutoSizeCommentsCacheFile::Get().GetGraphData(Graph);
+
 		TArray<UEdGraphNode_Comment*> Comments;
 		Graph->GetNodesOfClassEx<UEdGraphNode_Comment>(Comments);
-
-		for (UEdGraphNode_Comment* Comment : Comments)
-		{
-			CacheFile.UpdateCommentState(Comment);
-		}
 
 		if (!bPendingSave)
 		{
@@ -752,7 +747,7 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 		if (UAutoSizeCommentsSettings::Get().CacheSaveMethod == EASCCacheSaveMethod::MetaData)
 		{
 			// we should do this now since this will edit the package
-			FAutoSizeCommentsCacheFile::Get().SaveGraphDataToPackageMetaData(Graph);
+			CacheGraphData.SaveToPackageMetaData(Graph);
 		}
 		else
 		{
