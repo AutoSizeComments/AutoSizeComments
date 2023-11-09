@@ -68,6 +68,11 @@ void FAutoSizeCommentsModule::ShutdownModule()
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		SettingsModule->UnregisterSettings("Editor", "Plugins", "AutoSizeComments");
+
+		if (FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
+		{
+			PropertyModule->UnregisterCustomClassLayout(UAutoSizeCommentsSettings::StaticClass()->GetFName());
+		}
 	}
 
 	// Unregister the graph node factory
