@@ -57,6 +57,7 @@ public:
 
 class FASCCommentChangeData
 {
+	FString NodeComment;
 	TMap<TWeakObjectPtr<UEdGraphNode>, FASCNodeChangeData> NodeChangeData;
 
 public:

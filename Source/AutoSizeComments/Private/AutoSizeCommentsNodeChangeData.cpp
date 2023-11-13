@@ -170,6 +170,8 @@ void FASCCommentChangeData::UpdateComment(UEdGraphNode_Comment* Comment)
 			NodeChangeData.FindOrAdd(Node).UpdateNode(Node);
 		}
 	}
+
+	NodeComment = Comment->NodeComment;
 }
 
 bool FASCCommentChangeData::HasCommentChanged(UEdGraphNode_Comment* Comment)
@@ -183,6 +185,11 @@ bool FASCCommentChangeData::HasCommentChanged(UEdGraphNode_Comment* Comment)
 	if (!Graph)
 	{
 		return false;
+	}
+
+	if (!NodeComment.Equals(Comment->NodeComment, ESearchCase::Type::CaseSensitive))
+	{
+		return true;
 	}
 
 	TArray<TWeakObjectPtr<UEdGraphNode>> LastNodes;
