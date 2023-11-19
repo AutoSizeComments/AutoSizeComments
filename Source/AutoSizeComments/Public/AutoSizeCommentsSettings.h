@@ -294,6 +294,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bHighlightContainingNodesOnSelection;
 
+	/** Force the graph panel to use the 1:1 LOD for nodes */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bUseMaxDetailNodes;
+
 	/** Do not use ASC node for these graphs, turn on DebugClass_ASC and open graph to find graph class name */
 	UPROPERTY(EditAnywhere, config, Category = Misc, AdvancedDisplay)
 	TArray<FString> IgnoredGraphs;

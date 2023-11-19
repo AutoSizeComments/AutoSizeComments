@@ -24,6 +24,95 @@
 #include "Misc/TransactionObjectEvent.h"
 #endif
 
+
+struct FASCZoomLevel
+{
+public:
+	FASCZoomLevel(float InZoomAmount, const FText& InDisplayText, EGraphRenderingLOD::Type InLOD)
+		: DisplayText(FText::Format(INVTEXT("ASC Zoom {0}"), InDisplayText))
+	 , ZoomAmount(InZoomAmount)
+	 , LOD(InLOD)
+	{
+	}
+
+public:
+	FText DisplayText;
+	float ZoomAmount;
+	EGraphRenderingLOD::Type LOD;
+};
+
+struct FASCZoomLevelsContainer final : FZoomLevelsContainer
+{
+	FASCZoomLevelsContainer()
+	{
+		ZoomLevels.Reserve(20);
+		ZoomLevels.Add(FASCZoomLevel(0.100f, FText::FromString(TEXT("-12")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.125f, FText::FromString(TEXT("-11")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.150f, FText::FromString(TEXT("-10")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.175f, FText::FromString(TEXT("-9")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.200f, FText::FromString(TEXT("-8")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.225f, FText::FromString(TEXT("-7")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.250f, FText::FromString(TEXT("-6")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.375f, FText::FromString(TEXT("-5")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.500f, FText::FromString(TEXT("-4")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.675f, FText::FromString(TEXT("-3")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.750f, FText::FromString(TEXT("-2")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(0.875f, FText::FromString(TEXT("-1")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(1.000f, FText::FromString(TEXT("1:1")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(1.250f, FText::FromString(TEXT("+1")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(1.375f, FText::FromString(TEXT("+2")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(1.500f, FText::FromString(TEXT("+3")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(1.675f, FText::FromString(TEXT("+4")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(1.750f, FText::FromString(TEXT("+5")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(1.875f, FText::FromString(TEXT("+6")), EGraphRenderingLOD::DefaultDetail));
+		ZoomLevels.Add(FASCZoomLevel(2.000f, FText::FromString(TEXT("+7")), EGraphRenderingLOD::DefaultDetail));
+	}
+
+	virtual float GetZoomAmount(int32 InZoomLevel) const override
+	{
+		checkSlow(ZoomLevels.IsValidIndex(InZoomLevel));
+		return ZoomLevels[InZoomLevel].ZoomAmount;
+	}
+
+	virtual int32 GetNearestZoomLevel(float InZoomAmount) const override
+	{
+		for (int32 ZoomLevelIndex=0; ZoomLevelIndex < GetNumZoomLevels(); ++ZoomLevelIndex)
+		{
+			if (InZoomAmount <= GetZoomAmount(ZoomLevelIndex))
+			{
+				return ZoomLevelIndex;
+			}
+		}
+
+		return GetDefaultZoomLevel();
+	}
+
+	virtual FText GetZoomText(int32 InZoomLevel) const override
+	{
+		checkSlow(ZoomLevels.IsValidIndex(InZoomLevel));
+		return ZoomLevels[InZoomLevel].DisplayText;
+	}
+
+	virtual int32 GetNumZoomLevels() const override
+	{
+		return ZoomLevels.Num();
+	}
+
+	virtual int32 GetDefaultZoomLevel() const override
+	{
+		return 12;
+	}
+
+	virtual EGraphRenderingLOD::Type GetLOD(int32 InZoomLevel) const override
+	{
+		checkSlow(ZoomLevels.IsValidIndex(InZoomLevel));
+		return ZoomLevels[InZoomLevel].LOD;
+	}
+
+	TArray<FASCZoomLevel> ZoomLevels;
+};
+
+
 FAutoSizeCommentGraphHandler& FAutoSizeCommentGraphHandler::Get()
 {
 	return TLazySingleton<FAutoSizeCommentGraphHandler>::Get();
@@ -207,6 +296,20 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEd
 		{
 			FLocal::TakeCommentNode(Graph, NewNode.Get(), *SelectedOutput);
 		}
+	}
+}
+
+void FAutoSizeCommentGraphHandler::RegisterActiveGraphPanel(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	if (GraphPanel.IsValid() && !ActiveGraphPanels.Contains(GraphPanel))
+	{
+		if (UAutoSizeCommentsSettings::Get().bUseMaxDetailNodes)
+		{
+			// init the graph panel
+			GraphPanel->SetZoomLevelsContainer<FASCZoomLevelsContainer>();
+		}
+
+		ActiveGraphPanels.Add(GraphPanel);
 	}
 }
 

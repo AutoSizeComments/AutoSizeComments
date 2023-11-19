@@ -34,7 +34,7 @@ public:
 
 	void AutoInsertIntoCommentNodes(TWeakObjectPtr<UEdGraphNode> Node, TWeakObjectPtr<UEdGraphNode> LastSelectedNode);
 
-	void RegisterActiveGraphPanel(TSharedPtr<SGraphPanel> GraphPanel) { ActiveGraphPanels.Add(GraphPanel); }
+	void RegisterActiveGraphPanel(TSharedPtr<SGraphPanel> GraphPanel);
 
 	void RequestGraphVisualRefresh(TSharedPtr<SGraphPanel> GraphPanel);
 
