@@ -294,7 +294,7 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bHighlightContainingNodesOnSelection;
 
-	/** Force the graph panel to use the 1:1 LOD for nodes */
+	/** Force the graph panel to use the 1:1 LOD for nodes (UE 5.0+) */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bUseMaxDetailNodes;
 
