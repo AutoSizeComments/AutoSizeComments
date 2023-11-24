@@ -554,7 +554,15 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	FGraphNodeMetaData TagMeta(TEXT("Graphnode"));
 	PopulateMetaTag(&TagMeta);
 
-	CommentStyle = ASC_STYLE_CLASS::Get().GetWidgetStyle<FInlineEditableTextBlockStyle>("Graph.CommentBlock.TitleInlineEditableText");
+	if (UAutoSizeCommentsSettings::Get().bUseMinimalTitlebarStyle)
+	{
+		CommentStyle = FASCStyle::Get().GetWidgetStyle<FInlineEditableTextBlockStyle>("ASC.CommentTitleTextBoxStyle");
+	}
+	else
+	{
+		CommentStyle = ASC_STYLE_CLASS::Get().GetWidgetStyle<FInlineEditableTextBlockStyle>("Graph.CommentBlock.TitleInlineEditableText");
+	}
+
 #if ASC_UE_VERSION_OR_LATER(5, 1)
 	CommentStyle.EditableTextBoxStyle.TextStyle.Font.Size = CommentNode->FontSize;
 #else

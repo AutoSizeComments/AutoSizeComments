@@ -1,6 +1,7 @@
 ﻿#include "AutoSizeCommentsStyle.h"
 
 #include "Interfaces/IPluginManager.h"
+#include "Styling/SlateStyleMacros.h"
 #include "Styling/SlateStyleRegistry.h"
 
 #if ENGINE_MAJOR_VERSION >= 5
@@ -34,6 +35,42 @@ void FASCStyle::Initialize()
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("AutoSizeComments")->GetBaseDir() / TEXT("Resources"));
 
 	StyleSet->Set("ASC.AnchorBox", new ASC_BOX_BRUSH("AnchorBox", FMargin(18.0f/64.0f), FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
+
+	{
+		const FTextBlockStyle GraphCommentBlockTitle = FTextBlockStyle()
+			.SetFont(DEFAULT_FONT("Bold", 18))
+			.SetColorAndOpacity(FLinearColor(218.0f / 255.0f, 218.0f / 255.0f, 218.0f / 255.0f))
+			.SetShadowOffset( FVector2D(1.5f, 1.5f) )
+			.SetShadowColorAndOpacity( FLinearColor(0.f,0.f,0.f, 0.7f));
+
+		FSlateBrush EmptyBrush;
+		EmptyBrush.Margin = FMargin(0);
+		EmptyBrush.DrawAs = ESlateBrushDrawType::Type::NoDrawType;
+
+		FScrollBarStyle ScrollBarStyle;
+		ScrollBarStyle.Thickness = 0;
+		ScrollBarStyle.SetDraggedThumbImage(EmptyBrush);
+		ScrollBarStyle.SetHoveredThumbImage(EmptyBrush);
+		ScrollBarStyle.SetNormalThumbImage(EmptyBrush);
+
+		const FEditableTextBoxStyle GraphCommentBlockTitleEditableText = FEditableTextBoxStyle()
+			.SetPadding(FMargin(0))
+			.SetHScrollBarPadding(FMargin(0))
+			.SetVScrollBarPadding(FMargin(0))
+			.SetBackgroundImageFocused(EmptyBrush)
+			.SetBackgroundImageHovered(EmptyBrush)
+			.SetBackgroundImageNormal(EmptyBrush)
+			.SetBackgroundImageReadOnly(EmptyBrush)
+			.SetScrollBarStyle(ScrollBarStyle)
+			.SetFont(GraphCommentBlockTitle.Font)
+			.SetFocusedForegroundColor(FColor(200, 200, 200, 255));
+
+		const FInlineEditableTextBlockStyle InlineEditableTextBoxStyle = FInlineEditableTextBlockStyle()
+			.SetTextStyle(GraphCommentBlockTitle)
+			.SetEditableTextBoxStyle(GraphCommentBlockTitleEditableText);
+
+		StyleSet->Set("ASC.CommentTitleTextBoxStyle", InlineEditableTextBoxStyle);
+	}
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }

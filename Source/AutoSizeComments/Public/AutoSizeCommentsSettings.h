@@ -116,11 +116,11 @@ public:
 	UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer);
 
 	/** The default font size for comment boxes */
-	UPROPERTY(EditAnywhere, config, Category = FontSize)
+	UPROPERTY(EditAnywhere, config, Category = UI)
 	int DefaultFontSize;
 
 	/** If enabled, all nodes will be changed to the default font size (unless they are a preset or floating node) */
-	UPROPERTY(EditAnywhere, config, Category = FontSize)
+	UPROPERTY(EditAnywhere, config, Category = UI)
 	bool bUseDefaultFontSize;
 
 	UPROPERTY(EditAnywhere, Config, Category = Color)
@@ -161,6 +161,10 @@ public:
 	/** Preset style that will apply if the title starts with the according prefix */
 	UPROPERTY(EditAnywhere, config, Category = Styles)
 	TMap<FString, FPresetCommentStyle> TaggedPresets;
+
+	/** Highlight the contained node for a comment when you select it */
+	UPROPERTY(EditAnywhere, config, Category = "UI")
+	bool bUseMinimalTitlebarStyle = false;
 
 	/** Always hide the comment bubble */
 	UPROPERTY(EditAnywhere, config, Category = CommentBubble)
