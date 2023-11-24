@@ -162,7 +162,7 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Styles)
 	TMap<FString, FPresetCommentStyle> TaggedPresets;
 
-	/** Highlight the contained node for a comment when you select it */
+	/** The title bar uses a minimal style when being edited (requires UE5 or later) */
 	UPROPERTY(EditAnywhere, config, Category = "UI")
 	bool bUseMinimalTitlebarStyle = false;
 

@@ -554,7 +554,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 	FGraphNodeMetaData TagMeta(TEXT("Graphnode"));
 	PopulateMetaTag(&TagMeta);
 
-	if (UAutoSizeCommentsSettings::Get().bUseMinimalTitlebarStyle)
+	if (UAutoSizeCommentsSettings::Get().bUseMinimalTitlebarStyle && ASC_UE_VERSION_OR_LATER(5, 0))
 	{
 		CommentStyle = FASCStyle::Get().GetWidgetStyle<FInlineEditableTextBlockStyle>("ASC.CommentTitleTextBoxStyle");
 	}

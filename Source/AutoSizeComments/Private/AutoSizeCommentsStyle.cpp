@@ -1,10 +1,10 @@
 ﻿#include "AutoSizeCommentsStyle.h"
 
 #include "Interfaces/IPluginManager.h"
-#include "Styling/SlateStyleMacros.h"
 #include "Styling/SlateStyleRegistry.h"
 
-#if ENGINE_MAJOR_VERSION >= 5
+#if ASC_UE_VERSION_OR_LATER(5, 0)
+#include "Styling/SlateStyleMacros.h"
 #include "Styling/StyleColors.h"
 #endif
 
@@ -36,6 +36,7 @@ void FASCStyle::Initialize()
 
 	StyleSet->Set("ASC.AnchorBox", new ASC_BOX_BRUSH("AnchorBox", FMargin(18.0f/64.0f), FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
 
+#if ASC_UE_VERSION_OR_LATER(5, 0)
 	{
 		const FTextBlockStyle GraphCommentBlockTitle = FTextBlockStyle()
 			.SetFont(DEFAULT_FONT("Bold", 18))
@@ -71,6 +72,7 @@ void FASCStyle::Initialize()
 
 		StyleSet->Set("ASC.CommentTitleTextBoxStyle", InlineEditableTextBoxStyle);
 	}
+#endif
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }
