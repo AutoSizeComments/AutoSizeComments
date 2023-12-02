@@ -11,13 +11,25 @@ Marketplace link: https://www.unrealengine.com/marketplace/auto-size-comments
 
 This was originally a feature from the [Blueprint Assist Plugin](https://forums.unrealengine.com/unreal-engine/marketplace/120671), a plugin that provides automatic formatting and mouse-free node editing when working with blueprints.
 
----
+# Building the plugin
 
-## Building for your version of UE4
+There are two methods of building the plugin. I suggest using the first method if you have a C++ project setup.
 
-1. Download the plugin
-2. Open `AutoSizeComments.uplugin` in a text editor and set `EngineVersion` to your desired version, by default it is set to (4.27.0). For example if you wanted to build for 5.0.0 it would be `"EngineVersion": "5.0.0",`
-3. Open the command prompt and run the UnrealEngine batch file to build the plugin, with your download location and out location.
+## From a C++ project
+
+1. In your project folder, create a plugin folder `C:/UnrealProjects/MyProject/Plugins`
+
+1. Clone the repo into the plugin folder
+
+1. Open your project in your IDE and build the project
+
+1. If everything built successfully, you can keep the plugin local to your project. Or you can move it into the engine plugin folder. 
+    * `C:/Epic Games/UE_5.0/Engine/Plugins/Marketplace`
+
+## Without a C++ project (Using RunUAT.bat)
+
+1. Clone the repo
+1. Open the command prompt and run the UnrealEngine batch file to build the plugin, with your download location and out location.
 
 > "`%UNREAL_DESIRED%`/Engine/Build/BatchFiles/RunUAT.bat" BuildPlugin -Plugin="`%DOWNLOAD_LOCATION%`/AutoSizeComments/AutoSizeComments.uplugin" -Package="`%OUT_LOCATION%`" -CreateSubFolder
 
