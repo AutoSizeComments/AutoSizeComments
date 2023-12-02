@@ -582,7 +582,7 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			.AllowPinning(true)
 			.EnableTitleBarBubble(false)
 			.EnableBubbleCtrls(false)
-			.GraphLOD(this, &SGraphNode::GetCurrentLOD)
+			.GraphLOD(this, &SAutoSizeCommentsGraphNode::GetLOD)
 			.InvertLODCulling(true)
 			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
@@ -2109,6 +2109,11 @@ EASCResizingMode SAutoSizeCommentsGraphNode::GetResizingMode() const
 FASCCommentData& SAutoSizeCommentsGraphNode::GetCommentData()
 {
 	return FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode);
+}
+
+EGraphRenderingLOD::Type SAutoSizeCommentsGraphNode::GetLOD() const
+{
+	return FAutoSizeCommentGraphHandler::Get().GetGraphLOD(OwnerGraphPanelPtr.Pin());
 }
 
 bool SAutoSizeCommentsGraphNode::AreControlsEnabled() const

@@ -409,6 +409,59 @@ void FAutoSizeCommentGraphHandler::CheckCacheDataError(UEdGraph* Graph)
 	}
 }
 
+EGraphRenderingLOD::Type FAutoSizeCommentGraphHandler::GetGraphLOD(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	if (!GraphPanel.IsValid())
+	{
+		return EGraphRenderingLOD::Type::DefaultDetail;
+	}
+
+	// if we use MaxDetailNodes, we are setting the LOD to DefaultDetail all the time
+	// we need to calculate the LOD without the setting on to fix things such as comment bubbles
+	if (!UAutoSizeCommentsSettings::Get().bUseMaxDetailNodes)
+	{
+		return GraphPanel->GetCurrentLOD();
+	}
+
+	UEdGraph* Graph = GraphPanel->GetGraphObj();
+	if (!Graph)
+	{
+		return EGraphRenderingLOD::Type::DefaultDetail;
+	}
+
+	FASCGraphHandlerData& Data = GetGraphHandlerData(Graph);
+
+	const float ZoomAmount = GraphPanel->GetZoomAmount();
+
+	if (ZoomAmount != Data.LastZoomLevel)
+	{
+		Data.LastZoomLevel = ZoomAmount;
+
+		if (ZoomAmount <= 0.200f)
+		{
+			Data.LastLOD = EGraphRenderingLOD::LowestDetail;
+		}
+		else if (ZoomAmount <= 0.250f)
+		{
+			Data.LastLOD = EGraphRenderingLOD::LowDetail;
+		}
+		else if (ZoomAmount <= 0.675f)
+		{
+			Data.LastLOD = EGraphRenderingLOD::MediumDetail;
+		}
+		else if (ZoomAmount <= 1.375f)
+		{
+			Data.LastLOD = EGraphRenderingLOD::DefaultDetail;
+		}
+		else
+		{
+			Data.LastLOD = EGraphRenderingLOD::FullyZoomedIn;
+		}
+	}
+
+	return Data.LastLOD;
+}
+
 void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel)
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FAutoSizeCommentGraphHandler::ProcessAltReleased"), STAT_ASC_ProcessAltReleased, STATGROUP_AutoSizeComments);

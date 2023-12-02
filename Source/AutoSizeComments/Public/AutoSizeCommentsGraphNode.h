@@ -283,4 +283,6 @@ public:
 	EASCResizingMode GetResizingMode() const;
 
 	FASCCommentData& GetCommentData();
+
+	EGraphRenderingLOD::Type GetLOD() const;
 };

@@ -17,6 +17,9 @@ struct FASCGraphHandlerData
 
 	TMap<FGuid, FASCCommentChangeData> CommentChangeData;
 	FASCGraphData GraphCacheData;
+
+	float LastZoomLevel = -1;
+	EGraphRenderingLOD::Type LastLOD = EGraphRenderingLOD::Type::DefaultDetail;
 };
 
 class FAutoSizeCommentGraphHandler
@@ -46,6 +49,8 @@ public:
 	bool HasCommentChanged(UEdGraphNode_Comment* Comment);
 
 	TArray<UEdGraph*> GetActiveGraphs();
+
+	EGraphRenderingLOD::Type GetGraphLOD(TSharedPtr<SGraphPanel> GraphPanel);
 
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FASCGraphHandlerData> GraphDatas;
