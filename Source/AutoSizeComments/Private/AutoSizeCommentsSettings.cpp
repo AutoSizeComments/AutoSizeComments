@@ -61,7 +61,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	CacheSaveMethod = EASCCacheSaveMethod::MetaData;
 	CacheSaveLocation = EASCCacheSaveLocation::Project;
 	bSaveCommentDataOnSavingGraph = true;
-	bSaveCommentDataOnExit = true;
+	bSaveCommentDataOnExit = false;
 	bPrettyPrintCommentCacheJSON = false;
 	bDetectNodesContainedForNewComments = true;
 	ResizeChord = FInputChord(EKeys::LeftMouseButton, EModifierKey::Shift);
