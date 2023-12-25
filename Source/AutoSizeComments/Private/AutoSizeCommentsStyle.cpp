@@ -1,5 +1,6 @@
 ﻿#include "AutoSizeCommentsStyle.h"
 
+#include "AutoSizeCommentsMacros.h"
 #include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyleRegistry.h"
 
