@@ -81,7 +81,7 @@ void FAutoSizeCommentsCacheFile::LoadCacheFromFile()
 			UE_LOG(LogAutoSizeComments, Log, TEXT("Failed to load auto size comments cache: %s"), *GetCachePath(true));
 		}
 	}
-	else
+	else if (FPlatformFileManager::Get().GetPlatformFile().FileExists(*OldCachePath))
 	{
 		FFileHelper::LoadFileToString(FileData, *OldCachePath);
 
