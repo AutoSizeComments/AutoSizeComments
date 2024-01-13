@@ -235,11 +235,11 @@ public:
 	EASCCacheSaveLocation CacheSaveLocation;
 
 	/** If enabled, nodes will be saved to file when the graph is saved */
-	UPROPERTY(EditAnywhere, config, Category = CommentCache, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
+	UPROPERTY(EditAnywhere, config, Category = CommentCache)
 	bool bSaveCommentDataOnSavingGraph;
 
 	/** If enabled, nodes will be saved to file when the program is exited */
-	UPROPERTY(EditAnywhere, config, Category = CommentCache, meta = (EditCondition = "bSaveCommentNodeDataToFile"))
+	UPROPERTY(EditAnywhere, config, Category = CommentCache)
 	bool bSaveCommentDataOnExit;
 
 	/** If enabled, cache file JSON text will be made more human-readable, but increases file size */
