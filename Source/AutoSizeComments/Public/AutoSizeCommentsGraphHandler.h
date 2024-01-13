@@ -43,7 +43,7 @@ public:
 
 	void ProcessAltReleased(TSharedPtr<SGraphPanel> GraphPanel);
 
-	FASCGraphHandlerData& GetGraphHandlerData(UEdGraph* Graph) { return GraphDatas.FindOrAdd(Graph); }
+	FASCGraphHandlerData& GetGraphHandlerData(UEdGraph* Graph);
 	void UpdateCommentChangeState(UEdGraphNode_Comment* Comment);
 	bool HasCommentChangeState(UEdGraphNode_Comment* Comment) const;
 	bool HasCommentChanged(UEdGraphNode_Comment* Comment);

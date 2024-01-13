@@ -170,12 +170,8 @@ void FAutoSizeCommentGraphHandler::BindToGraph(UEdGraph* Graph)
 		return;
 	}
 
-	GraphDatas.Remove(nullptr);
-
-	FASCGraphHandlerData GraphData;
-	GraphData.OnGraphChangedHandle = Graph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::OnGraphChanged));
-
-	GraphDatas.Add(Graph, GraphData);
+	// calling this Get function will initialize the graph (binding delegates)
+	GetGraphHandlerData(Graph);
 
 	CheckCacheDataError(Graph);
 }
@@ -590,6 +586,18 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 	}));
 }
 
+FASCGraphHandlerData& FAutoSizeCommentGraphHandler::GetGraphHandlerData(UEdGraph* Graph)
+{
+	if (!GraphDatas.Contains(Graph))
+	{
+		FASCGraphHandlerData GraphData;
+		GraphData.OnGraphChangedHandle = Graph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::OnGraphChanged));
+		GraphDatas.Add(Graph, GraphData);
+	}
+
+	return GraphDatas[Graph]; 
+}
+
 void FAutoSizeCommentGraphHandler::UpdateCommentChangeState(UEdGraphNode_Comment* Comment)
 {
 	UEdGraph* Graph = Comment->GetGraph();
@@ -598,7 +606,7 @@ void FAutoSizeCommentGraphHandler::UpdateCommentChangeState(UEdGraphNode_Comment
 		return;
 	}
 
-	FASCGraphHandlerData& GraphData = GraphDatas.FindOrAdd(Graph);
+	FASCGraphHandlerData& GraphData = GetGraphHandlerData(Graph);
 	GraphData.CommentChangeData.FindOrAdd(Comment->NodeGuid).UpdateComment(Comment);
 }
 
