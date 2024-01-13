@@ -238,7 +238,7 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEd
 			auto ContainingComments = FASCUtils::GetContainingCommentNodes(CommentNodes, NodeToTakeFrom);
 			for (UEdGraphNode_Comment* CommentNode : ContainingComments)
 			{
-				CommentNode->AddNodeUnderComment(Node);
+				FASCUtils::AddNodeIntoComment(CommentNode, Node);
 			}
 		};
 	};
