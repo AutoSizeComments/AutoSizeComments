@@ -135,6 +135,7 @@ void FAutoSizeCommentGraphHandler::BindDelegates()
 #endif
 
 	FCoreUObjectDelegates::OnObjectTransacted.AddRaw(this, &FAutoSizeCommentGraphHandler::OnObjectTransacted);
+	FCoreUObjectDelegates::GetPostGarbageCollect().AddRaw(this, &FAutoSizeCommentGraphHandler::OnPostGarbageCollect);
 }
 
 void FAutoSizeCommentGraphHandler::UnbindDelegates()
@@ -145,6 +146,8 @@ void FAutoSizeCommentGraphHandler::UnbindDelegates()
 	FCoreUObjectDelegates::OnObjectSaved.RemoveAll(this);
 #endif
 	FCoreUObjectDelegates::OnObjectTransacted.RemoveAll(this);
+
+	FCoreUObjectDelegates::GetPostGarbageCollect().RemoveAll(this);
 
 	for (const auto& Kvp : GraphDatas)
 	{
@@ -949,6 +952,12 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 		}
 		
 	}
+}
+
+void FAutoSizeCommentGraphHandler::OnPostGarbageCollect()
+{
+	// cleanup invalid graphs
+	GraphDatas.Remove(nullptr);
 }
 
 void FAutoSizeCommentGraphHandler::SaveSizeCache()

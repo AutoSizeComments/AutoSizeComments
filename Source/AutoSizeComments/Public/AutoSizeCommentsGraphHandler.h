@@ -85,6 +85,8 @@ private:
 
 	void OnObjectTransacted(UObject* Object, const FTransactionObjectEvent& Event);
 
+	void OnPostGarbageCollect();
+
 	void SaveSizeCache();
 
 	void UpdateContainingComments(TWeakObjectPtr<UEdGraphNode> Node);
