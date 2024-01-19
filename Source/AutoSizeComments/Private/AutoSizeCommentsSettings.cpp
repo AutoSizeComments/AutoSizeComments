@@ -22,6 +22,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	DefaultFontSize = 18;
 	bUseDefaultFontSize = false;
 	DefaultCommentColorMethod = EASCDefaultCommentColorMethod::Random;
+	HeaderColorMethod = EASCDefaultCommentColorMethod::Default;
 	RandomColorOpacity = 1.f;
 	bUseRandomColorFromList = false;
 	PredefinedRandomColorList.Add(FLinearColor(1, 0, 0));

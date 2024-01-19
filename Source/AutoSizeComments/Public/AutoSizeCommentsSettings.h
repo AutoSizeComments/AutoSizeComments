@@ -73,13 +73,13 @@ enum class EASCAutoInsertComment : uint8
 UENUM()
 enum class EASCDefaultCommentColorMethod : uint8
 {
-	/** Use the default engine comment color */
+	/** Do not change the color */
 	None UMETA(DisplayName = "None"),
 
 	/** Use a random color when spawning the comment */
 	Random UMETA(DisplayName = "Random"),
 
-	/** Use the plugin color `DefaultCommentColor` when spawning the comment */
+	/** Apply the default color defined in the settings here */
 	Default UMETA(DisplayName = "Default"),
 };
 
@@ -123,8 +123,13 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = UI)
 	bool bUseDefaultFontSize;
 
+	/** How to color the comment when creating the node */
 	UPROPERTY(EditAnywhere, Config, Category = Color)
 	EASCDefaultCommentColorMethod DefaultCommentColorMethod;
+
+	/** How to color the comment when pressing the `Toggle Header` button */
+	UPROPERTY(EditAnywhere, Config, Category = Color)
+	EASCDefaultCommentColorMethod HeaderColorMethod;
 
 	/** If Use Random Color is not enabled, comment boxes will spawn with this default color */
 	UPROPERTY(EditAnywhere, config, Category = Color, meta=(EditCondition="DefaultCommentColorMethod==EASCDefaultCommentColorMethod::Default", EditConditionHides))

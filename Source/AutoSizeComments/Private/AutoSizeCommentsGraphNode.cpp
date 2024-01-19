@@ -93,7 +93,6 @@ void SAutoSizeCommentsGraphNode::InitializeColor(const UAutoSizeCommentsSettings
 {
 	if (bIsHeaderComment)
 	{
-		ApplyHeaderStyle();
 		return;
 	}
 
@@ -1527,9 +1526,23 @@ void SAutoSizeCommentsGraphNode::ResizeToFit()
 
 void SAutoSizeCommentsGraphNode::ApplyHeaderStyle()
 {
-	FPresetCommentStyle Style = UAutoSizeCommentsSettings::Get().HeaderStyle;
-	CommentNode->CommentColor = Style.Color;
-	CommentNode->FontSize = Style.FontSize;
+	switch (UAutoSizeCommentsSettings::Get().HeaderColorMethod)
+	{
+		case EASCDefaultCommentColorMethod::Random:
+		{
+			RandomizeColor();
+			break;
+		}
+		case EASCDefaultCommentColorMethod::Default:
+		{
+			const FPresetCommentStyle& Style = UAutoSizeCommentsSettings::Get().HeaderStyle;
+			CommentNode->CommentColor = Style.Color;
+			CommentNode->FontSize = Style.FontSize;
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 void SAutoSizeCommentsGraphNode::ApplyPresetStyle(const FPresetCommentStyle& Style)
@@ -1999,17 +2012,20 @@ void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue, bool bUpdateStyle)
 		}
 		else // undo header style
 		{
-			const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
-			if (ASCSettings.DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
+			// only refresh the color if the color matches the header style color 
+			if (CommentNode->CommentColor == UAutoSizeCommentsSettings::Get().HeaderStyle.Color)
 			{
-				RandomizeColor();
-			}
-			else
-			{
-				CommentNode->CommentColor = ASCSettings.DefaultCommentColor;
+				if (UAutoSizeCommentsSettings::Get().DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
+				{
+					RandomizeColor();
+				}
+				else
+				{
+					CommentNode->CommentColor = UAutoSizeCommentsSettings::Get().DefaultCommentColor;
+				}
 			}
 
-			CommentNode->FontSize = ASCSettings.DefaultFontSize;
+			CommentNode->FontSize = UAutoSizeCommentsSettings::Get().DefaultFontSize;
 			AdjustMinSize(UserSize);
 			CommentNode->ResizeNode(UserSize);
 		}
