@@ -100,7 +100,7 @@ public:
 
 	void CleanupFiles();
 
-	void UpdateNodesUnderComment(UEdGraphNode_Comment* Comment) { GetCommentData(Comment).UpdateNodesUnderComment(Comment); }
+	void UpdateNodesUnderComment(UEdGraphNode_Comment* Comment);
 
 	FASCCommentData& GetCommentData(UEdGraphNode_Comment* Comment);
 	FASCGraphData& GetGraphData(UEdGraph* Graph);
@@ -115,6 +115,7 @@ public:
 	FString GetAlternateCachePath(bool bFullPath = false);
 
 	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
+	bool GetNodesUnderComment(UEdGraphNode_Comment* CommentNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 
 	FASCCommentData& GetCommentData(UEdGraphNode* CommentNode);
 

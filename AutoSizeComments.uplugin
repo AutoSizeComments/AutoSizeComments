@@ -17,7 +17,7 @@
     {
       "Name": "AutoSizeComments",
       "Type": "EditorNoCommandlet",
-      "LoadingPhase": "Default",
+      "LoadingPhase": "PreDefault",
       "WhitelistPlatforms": [
         "Win64",
         "Mac",

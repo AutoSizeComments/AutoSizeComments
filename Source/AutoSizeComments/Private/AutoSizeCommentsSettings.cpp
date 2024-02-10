@@ -4,9 +4,15 @@
 
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsMacros.h"
+#include "AutoSizeCommentsUtils.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
+
+void FPresetCommentStyle::ApplyStyle(UEdGraphNode_Comment* Comment, bool bModify) const
+{
+	FASCUtils::SetCommentFontSizeAndColor(Comment, FontSize, Color, bModify);
+}
 
 UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
@@ -22,7 +28,6 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	DefaultFontSize = 18;
 	bUseDefaultFontSize = false;
 	DefaultCommentColorMethod = EASCDefaultCommentColorMethod::Random;
-	HeaderColorMethod = EASCDefaultCommentColorMethod::Default;
 	RandomColorOpacity = 1.f;
 	bUseRandomColorFromList = false;
 	PredefinedRandomColorList.Add(FLinearColor(1, 0, 0));
@@ -52,7 +57,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 		TaggedPresets.Add("@INFO", InfoPreset);
 	}
 	bAggressivelyUseDefaultColor = false;
-	bUseCommentBubbleBounds = true;
+	bUseCommentBubbleBounds = false;
 	bMoveEmptyCommentBoxes = false;
 	EmptyCommentBoxSpeed = 10;
 	bHideCommentBubble = false;
@@ -68,6 +73,8 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	ResizeChord = FInputChord(EKeys::LeftMouseButton, EModifierKey::Shift);
 	ResizeCollisionMethod = ECommentCollisionMethod::Contained;
 	EnableCommentControlsKey = FInputChord();
+	AddNodeToCommentKey = FInputChord(EKeys::MiddleMouseButton, EModifierKey::Shift);
+	RemoveNodeFromCommentKey = FInputChord(EKeys::MiddleMouseButton, EModifierKey::Control | EModifierKey::Shift);
 	AltCollisionMethod = ECommentCollisionMethod::Intersect;
 	ResizeCornerAnchorSize = 40.0f;
 	ResizeSidePadding = 20.0f;

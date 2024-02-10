@@ -2,6 +2,7 @@
 
 #include "AutoSizeCommentsCacheFile.h"
 
+#include "AutoSizeCommentNodeState.h"
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsModule.h"
@@ -236,6 +237,11 @@ void FAutoSizeCommentsCacheFile::CleanupFiles()
 	}
 }
 
+void FAutoSizeCommentsCacheFile::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
+{
+	GetCommentData(Comment).UpdateNodesUnderComment(Comment);
+}
+
 FASCCommentData& FAutoSizeCommentsCacheFile::GetCommentData(UEdGraphNode_Comment* Comment)
 {
 	return GetGraphData(Comment->GetGraph()).GetCommentData(Comment);
@@ -349,12 +355,21 @@ FString FAutoSizeCommentsCacheFile::GetAlternateCachePath(bool bFullPath)
 
 bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment)
 {
-	UEdGraphNode* Node = ASCNode->GetNodeObj();
-	UEdGraph* Graph = Node->GetGraph();
-	FASCGraphData& Data = GetGraphData(Graph);
-	if (Data.CommentData.Contains(Node->NodeGuid))
+	return GetNodesUnderComment(ASCNode->GetCommentNodeObj(), OutNodesUnderComment);
+}
+
+bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(UEdGraphNode_Comment* CommentNode, TArray<UEdGraphNode*>& OutNodesUnderComment)
+{
+	if (!CommentNode)
 	{
-		for (FGuid NodeInsideGuid : Data.CommentData[Node->NodeGuid].NodeGuids)
+		return false;
+	}
+
+	UEdGraph* Graph = CommentNode->GetGraph();
+	const FASCGraphData& Data = GetGraphData(Graph);
+	if (Data.CommentData.Contains(CommentNode->NodeGuid))
+	{
+		for (FGuid NodeInsideGuid : Data.CommentData[CommentNode->NodeGuid].NodeGuids)
 		{
 			for (UEdGraphNode* NodeOnGraph : Graph->Nodes)
 			{
@@ -434,7 +449,8 @@ void FASCCommentData::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
 		return;
 	}
 
-	const TArray<UEdGraphNode*> NodesUnder = FASCUtils::GetNodesUnderComment(Comment);
+	UE_LOG(LogTemp, Warning, TEXT("Update comment data! %s"), *Comment->NodeComment);
+	const TSet<UEdGraphNode*>& NodesUnder = UASCNodeState::Get(Comment)->GetNodesUnderComment();
 	NodeGuids.Reset(NodesUnder.Num());
 
 	// update nodes under
@@ -442,6 +458,7 @@ void FASCCommentData::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
 	{
 		if (!FASCUtils::HasNodeBeenDeleted(Node))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Wrote to Comment node %s"), *Node->NodeGuid.ToString());
 			NodeGuids.Add(Node->NodeGuid);
 		}
 	}
