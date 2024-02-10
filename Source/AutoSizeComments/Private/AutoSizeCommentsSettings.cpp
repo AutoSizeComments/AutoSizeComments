@@ -5,11 +5,17 @@
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsMacros.h"
+#include "AutoSizeCommentsUtils.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "Misc/MessageDialog.h"
 #include "Widgets/Input/SButton.h"
+
+void FPresetCommentStyle::ApplyStyle(UEdGraphNode_Comment* Comment, bool bModify) const
+{
+	FASCUtils::SetCommentFontSizeAndColor(Comment, FontSize, Color, bModify);
+}
 
 UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
@@ -74,6 +80,8 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	ResizeChord = FInputChord(EKeys::LeftMouseButton, EModifierKey::Shift);
 	ResizeCollisionMethod = ECommentCollisionMethod::Contained;
 	EnableCommentControlsKey = FInputChord();
+	AddNodeToCommentKey = FInputChord(EKeys::MiddleMouseButton, EModifierKey::Shift);
+	RemoveNodeFromCommentKey = FInputChord(EKeys::MiddleMouseButton, EModifierKey::Control | EModifierKey::Shift);
 	AltCollisionMethod = ECommentCollisionMethod::Intersect;
 	ResizeCornerAnchorSize = 40.0f;
 	ResizeSidePadding = 20.0f;

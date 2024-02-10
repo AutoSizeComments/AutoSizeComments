@@ -1,7 +1,9 @@
 #include "AutoSizeCommentsUtils.h"
 
+#include "AutoSizeCommentNodeState.h"
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphNode.h"
+#include "AutoSizeCommentsState.h"
 #include "EdGraphNode_Comment.h"
 #include "SGraphPanel.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -11,10 +13,13 @@ TArray<UEdGraphNode_Comment*> FASCUtils::GetContainingCommentNodes(const TArray<
 	TArray<UEdGraphNode_Comment*> ContainingComments;
 	for (auto Comment : Comments)
 	{
-		TArray<UEdGraphNode*> NodesUnderComments = GetNodesUnderComment(Comment);
-		if (NodesUnderComments.Contains(Node))
+		if (Comment)
 		{
-			ContainingComments.Add(Comment);
+			const TSet<UEdGraphNode*>& NodesUnderComments = UASCNodeState::Get(Comment)->GetNodesUnderComment();
+			if (NodesUnderComments.Contains(Node))
+			{
+				ContainingComments.Add(Comment);
+			}
 		}
 	}
 
@@ -86,6 +91,20 @@ TArray<UEdGraphNode_Comment*> FASCUtils::GetCommentsFromGraph(UEdGraph* Graph)
 	return Comments;
 }
 
+TArray<TSharedPtr<SAutoSizeCommentsGraphNode>> FASCUtils::GetASCCommentsFromGraph(UEdGraph* Graph)
+{
+	TArray<TSharedPtr<SAutoSizeCommentsGraphNode>> OutASCComments;
+	for (UEdGraphNode_Comment* Comment : GetCommentsFromGraph(Graph))
+	{
+		if (auto ASCComment = FASCState::Get().GetASCComment(Comment))
+		{
+			OutASCComments.Add(ASCComment);
+		}
+	}
+
+	return OutASCComments;
+}
+
 bool FASCUtils::HasNodeBeenDeleted(UEdGraphNode* Node)
 {
 	if (Node == nullptr)
@@ -105,6 +124,32 @@ bool FASCUtils::HasNodeBeenDeleted(UEdGraphNode* Node)
 bool FASCUtils::IsValidPin(UEdGraphPin* Pin)
 {
 	return Pin != nullptr && !Pin->bWasTrashed;
+}
+
+TSharedPtr<SWidget> FASCUtils::GetChildWidget(TSharedPtr<SWidget> Widget, const FName& WidgetClassName)
+{
+	if (Widget.IsValid())
+	{
+		if (Widget->GetType() == WidgetClassName)
+		{
+			return Widget;
+		}
+
+		// iterate through children
+		if (FChildren* Children = Widget->GetChildren())
+		{
+			for (int i = 0; i < Children->Num(); i++)
+			{
+				TSharedPtr<SWidget> ReturnWidget = GetChildWidget(Children->GetChildAt(i), WidgetClassName);
+				if (ReturnWidget.IsValid())
+				{
+					return ReturnWidget;
+				}
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 TSharedPtr<SGraphPin> FASCUtils::GetGraphPin(TSharedPtr<SGraphPanel> GraphPanel, UEdGraphPin* Pin)
@@ -186,6 +231,60 @@ TSharedPtr<SGraphPin> FASCUtils::GetHoveredGraphPin(TSharedPtr<SGraphPanel> Grap
 	return nullptr;
 }
 
+TSharedPtr<SGraphNode> FASCUtils::GetHoveredGraphNode(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	if (!GraphPanel.IsValid())
+	{
+		return nullptr;
+	}
+
+	UEdGraph* Graph = GraphPanel->GetGraphObj();
+	if (Graph == nullptr)
+	{
+		return nullptr;
+	}
+
+	const bool bIsMaterialGraph = Graph->GetClass()->GetFName() == "MaterialGraph";
+
+	// check if graph pin "IsHovered" function
+	for (UEdGraphNode* Node : Graph->Nodes)
+	{
+		if (auto GraphNode = GetGraphNode(GraphPanel, Node))
+		{
+			if (GraphNode->IsHovered())
+			{
+				return GraphNode;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+TSharedPtr<SGraphPanel> FASCUtils::GetHoveredGraphPanel()
+{
+	FSlateApplication& SlateApp = FSlateApplication::Get();
+	FWidgetPath Path = SlateApp.LocateWindowUnderMouse(SlateApp.GetCursorPos(), SlateApp.GetInteractiveTopLevelWindows());
+	if (Path.IsValid())
+	{
+		for (int32 PathIndex = Path.Widgets.Num() - 1; PathIndex >= 0; PathIndex--)
+		{
+			TSharedRef<SWidget> Widget = Path.Widgets[PathIndex].Widget;
+			TSharedPtr<SWidget> GraphPanelAsWidget = GetChildWidget(Widget, "SGraphPanel");
+			if (GraphPanelAsWidget.IsValid())
+			{
+				auto GraphPanel = StaticCastSharedPtr<SGraphPanel>(GraphPanelAsWidget);
+				if (GraphPanel.IsValid())
+				{
+					return GraphPanel;
+				}
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 TArray<UEdGraphNode_Comment*> FASCUtils::GetSelectedComments(TSharedPtr<SGraphPanel> GraphPanel)
 {
 	TArray<UEdGraphNode_Comment*> OutComments;
@@ -221,13 +320,24 @@ TSet<UEdGraphNode*> FASCUtils::GetSelectedNodes(TSharedPtr<SGraphPanel> GraphPan
 			{
 				if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(Node))
 				{
-					SelectedNodes.Append(GetNodesUnderComment(SelectedComment));
+					SelectedNodes.Append(UASCNodeState::Get(SelectedComment)->GetNodesUnderComment());
 				}
 			}
 		}
 	}
 
 	return SelectedNodes;
+}
+
+UEdGraphNode* FASCUtils::GetSelectedNode(TSharedPtr<SGraphPanel> GraphPanel, bool bExpandComments)
+{
+	TSet<UEdGraphNode*> SelectedNodes = GetSelectedNodes(GraphPanel, bExpandComments);
+	if (SelectedNodes.Num() == 1)
+	{
+		return SelectedNodes.Get(FSetElementId::FromInteger(0));
+	}
+
+	return nullptr;
 }
 
 bool FASCUtils::IsGraphReadOnly(TSharedPtr<SGraphPanel> GraphPanel)
@@ -371,121 +481,16 @@ bool FASCUtils::DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraph
 	return FLocal::DoesCommentContainComment_Recursive(Source, Other, Visited);
 }
 
-void FASCUtils::ClearCommentNodes(UEdGraphNode_Comment* Comment, bool bUpdateCache)
+void FASCUtils::SetCommentFontSizeAndColor(UEdGraphNode_Comment* Comment, int32 FontSize, const FLinearColor& Color, bool bModify)
 {
-	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::ClearCommentNodes"), STAT_ASC_ClearCommentNodes, STATGROUP_AutoSizeComments);
-	if (!Comment)
+	if (Comment)
 	{
-		return;
-	}
-
-	Comment->ClearNodesUnderComment();
-
-	if (bUpdateCache)
-	{
-		FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(Comment);
-	}
-}
-
-bool FASCUtils::RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NodesToRemove, bool bUpdateCache)
-{
-	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::RemoveNodesFromComment"), STAT_ASC_RemoveNodesFromComment, STATGROUP_AutoSizeComments);
-	if (!Comment)
-	{
-		return false;
-	}
-
-	if (NodesToRemove.Num() == 0)
-	{
-		return false;
-	}
-
-	const FCommentNodeSet NodesUnderComment = Comment->GetNodesUnderComment();
-
-	// don't do anything if we have nothing to remove
-	const bool bRemoveSomething = NodesUnderComment.ContainsByPredicate([&NodesToRemove](const UObject* Obj)
-	{
-		return NodesToRemove.Contains(Obj);
-	});
-
-	if (!bRemoveSomething)
-	{
-		return false;
-	}
-
-	// Clear all nodes under comment
-	Comment->ClearNodesUnderComment();
-
-	// Add back the nodes under comment while filtering out any which are to be removed
-	for (UObject* NodeUnderComment : NodesUnderComment)
-	{
-		if (NodeUnderComment)
+		if (bModify)
 		{
-			if (!NodesToRemove.Contains(NodeUnderComment))
-			{
-				AddNodeIntoComment(Comment, NodeUnderComment, false);
-			}
+			Comment->Modify();
 		}
+
+		Comment->FontSize = FontSize;
+		Comment->CommentColor = Color;
 	}
-
-	if (bUpdateCache)
-	{
-		FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(Comment);
-	}
-
-	return true;
-}
-
-bool FASCUtils::AddNodeIntoComment(UEdGraphNode_Comment* Comment, UObject* NewNode, bool bUpdateCache)
-{
-	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::AddNodeIntoComment"), STAT_ASC_AddNodeIntoComment, STATGROUP_AutoSizeComments);
-	if (!Comment || !NewNode)
-	{
-		return false;
-	}
-
-	// don't add duplicates
-	if (Comment->GetNodesUnderComment().Contains(NewNode))
-	{
-		return false;
-	}
-
-	// don't add comment if the comment contains us
-	if (UEdGraphNode_Comment* NewComment = Cast<UEdGraphNode_Comment>(NewNode))
-	{
-		if (DoesCommentContainComment(NewComment, Comment))
-		{
-			return false;
-		}
-	}
-
-	Comment->AddNodeUnderComment(NewNode);
-
-	if (bUpdateCache)
-	{
-		FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(Comment);
-	}
-
-	return true;
-}
-
-bool FASCUtils::AddNodesIntoComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NewNodes, bool bUpdateCache)
-{
-	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("FASCUtils::AddNodesIntoComment"), STAT_ASC_AddNodesIntoComment, STATGROUP_AutoSizeComments);
-	if (!Comment)
-	{
-		return false;
-	}
-
-	for (UObject* Node : NewNodes)
-	{
-		FASCUtils::AddNodeIntoComment(Comment, Node, false);
-	}
-
-	if (bUpdateCache)
-	{
-		FAutoSizeCommentsCacheFile::Get().UpdateNodesUnderComment(Comment);
-	}
-
-	return true;
 }

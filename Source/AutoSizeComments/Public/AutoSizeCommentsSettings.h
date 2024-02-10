@@ -9,6 +9,8 @@
 #include "Layout/Margin.h"
 #include "AutoSizeCommentsSettings.generated.h"
 
+class UEdGraphNode_Comment;
+
 UENUM()
 enum class EASCCacheSaveMethod : uint8
 {
@@ -72,13 +74,13 @@ enum class EASCAutoInsertComment : uint8
 UENUM()
 enum class EASCDefaultCommentColorMethod : uint8
 {
-	/** Do not change the color */
+	/** Use the default engine comment color */
 	None UMETA(DisplayName = "None"),
 
 	/** Use a random color when spawning the comment */
 	Random UMETA(DisplayName = "Random"),
 
-	/** Apply the default color defined in the settings here */
+	/** Use the plugin color `DefaultCommentColor` when spawning the comment */
 	Default UMETA(DisplayName = "Default"),
 };
 
@@ -95,6 +97,8 @@ struct FPresetCommentStyle
 
 	UPROPERTY(EditAnywhere, config, Category = Default)
 	bool bSetHeader = false;
+
+	void ApplyStyle(UEdGraphNode_Comment* Comment, bool bModify = true) const;
 };
 
 USTRUCT()
@@ -122,13 +126,8 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = UI)
 	bool bUseDefaultFontSize;
 
-	/** How to color the comment when creating the node */
 	UPROPERTY(EditAnywhere, Config, Category = Color)
 	EASCDefaultCommentColorMethod DefaultCommentColorMethod;
-
-	/** How to color the comment when pressing the `Toggle Header` button */
-	UPROPERTY(EditAnywhere, Config, Category = Color)
-	EASCDefaultCommentColorMethod HeaderColorMethod;
 
 	/** If Use Random Color is not enabled, comment boxes will spawn with this default color */
 	UPROPERTY(EditAnywhere, config, Category = Color, meta=(EditCondition="DefaultCommentColorMethod==EASCDefaultCommentColorMethod::Default", EditConditionHides))
@@ -267,12 +266,20 @@ public:
 	bool bDetectNodesContainedForNewComments;
 
 	/** Mouse input chord to resize a node */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
+	UPROPERTY(EditAnywhere, config, Category = "Input")
 	FInputChord ResizeChord;
 
 	/** Input key to enable comment controls */
-	UPROPERTY(EditAnywhere, config, Category = Misc)
+	UPROPERTY(EditAnywhere, config, Category = "Input")
 	FInputChord EnableCommentControlsKey;
+
+	/** Mouse input chord to resize a node */
+	UPROPERTY(EditAnywhere, config, Category = "Input")
+	FInputChord AddNodeToCommentKey;
+
+	/** Mouse input chord to resize a node */
+	UPROPERTY(EditAnywhere, config, Category = "Input")
+	FInputChord RemoveNodeFromCommentKey;
 
 	/** Collision method to use when resizing comment nodes */
 	UPROPERTY(EditAnywhere, config, Category = Misc)

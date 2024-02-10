@@ -23,6 +23,10 @@ void FAutoSizeCommentsModule::StartupModule()
 {
 #if ASC_ENABLED
 	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FAutoSizeCommentsModule::OnPostEngineInit);
+
+	// Register the graph node factory
+	ASCNodeFactory = MakeShareable(new FAutoSizeCommentsGraphPanelNodeFactory());
+	FEdGraphUtilities::RegisterVisualNodeFactory(ASCNodeFactory);
 #endif
 }
 
@@ -31,10 +35,6 @@ void FAutoSizeCommentsModule::OnPostEngineInit()
 	UE_LOG(LogAutoSizeComments, Log, TEXT("Startup AutoSizeComments"));
 
 	FAutoSizeCommentsCacheFile::Get().Init();
-
-	// Register the graph node factory
-	ASCNodeFactory = MakeShareable(new FAutoSizeCommentsGraphPanelNodeFactory());
-	FEdGraphUtilities::RegisterVisualNodeFactory(ASCNodeFactory);
 
 	// Register custom settings to appear in the project settings
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))

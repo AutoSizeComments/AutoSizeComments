@@ -6,6 +6,7 @@
 #include "AutoSizeCommentsMacros.h"
 #include "SGraphNode.h"
 
+class UASCNodeState;
 class SHorizontalBox;
 class SButton;
 enum class EASCResizingMode : uint8;
@@ -34,7 +35,7 @@ enum class EASCAnchorPoint : uint8
 	None
 };
 
-class SAutoSizeCommentsGraphNode final : public SGraphNode
+class AUTOSIZECOMMENTS_API SAutoSizeCommentsGraphNode final : public SGraphNode
 {
 public:
 	/** This delay is to ensure that all nodes exist on the graph and have their bounds properly set */
@@ -56,21 +57,18 @@ public:
 
 	bool bRequireUpdate = false;
 
+	SLATE_BEGIN_ARGS(SAutoSizeCommentsGraphNode) {}
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
+	virtual ~SAutoSizeCommentsGraphNode() override;
+	void OnDeleted();
+
 #if ASC_UE_VERSION_OR_LATER(4, 27)
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 #else
 	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
 #endif
-
-public:
-	// @formatter:off
-	SLATE_BEGIN_ARGS(SAutoSizeCommentsGraphNode) {}
-	SLATE_END_ARGS()
-	// @formatter:on
-
-	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
-	virtual ~SAutoSizeCommentsGraphNode() override;
-	void OnDeleted();
 
 	//~ Begin SWidget Interface
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
@@ -108,12 +106,86 @@ public:
 
 	FASCCommentData& GetCommentData() const;
 
-	void ResizeToFit();
+	void ResizeToFit(bool bCheckTwice = true);
 
 	void ApplyHeaderStyle();
 	void ApplyPresetStyle(const FPresetCommentStyle& Style);
 
 	void OnTitleChanged(const FString& OldTitle, const FString& NewTitle);
+
+	bool HasNode(UEdGraphNode* Node) const;
+	bool AddNode(UEdGraphNode* Node);
+	bool RemoveNode(UEdGraphNode* Node);
+	bool ReplaceNodes(TSet<UObject*> Nodes);
+
+	void HandleCommentNodeStateChanged(UASCNodeState* NodeState);
+
+		/** Update the nodes */
+	void UpdateRefreshDelay();
+
+	void RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false, const bool bUpdateExistingComments = true);
+
+	float GetTitleBarHeight() const;
+
+	/** Util functions */
+	FSlateRect GetBoundsForNodesInside();
+	FSlateRect GetNodeBounds(UEdGraphNode* Node);
+	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> GetOtherCommentNodes();
+	TArray<UEdGraphNode_Comment*> GetParentComments() const;
+	void UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>* OldParentComments, const TArray<UObject*>* OldCommentContains);
+	void UpdateExistingCommentNodes();
+	bool AnySelectedNodes();
+	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
+	void SnapVectorToGrid(FVector2D& Vector);
+	void SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier);
+	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
+	TSet<UEdGraphNode*>& GetNodesUnderComment() const;
+	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments = true);
+	bool IsValidGraphPanel(TSharedPtr<SGraphPanel> GraphPanel);
+
+	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
+
+	void UpdateHeaderStyle(bool bIsHeader, bool bUpdateStyle);
+	bool IsHeaderComment() const;
+	bool IsPresetStyle();
+
+	bool LoadCache();
+	void UpdateCache();
+
+	void QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
+	void QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
+
+	void RandomizeColor();
+
+	void AdjustMinSize(FVector2D& InSize);
+
+	bool HasNodeBeenDeleted(UEdGraphNode* Node);
+
+	bool CanAddNode(const TSharedPtr<SGraphNode> OtherGraphNode, const bool bIgnoreKnots = false) const;
+	bool CanAddNode(const UObject* Node, const bool bIgnoreKnots = false) const;
+	void OnAltReleased();
+
+	static bool IsCommentNode(UObject* Object);
+	static bool IsNotCommentNode(UObject* Object) { return !IsCommentNode(Object); }
+	static bool IsMajorNode(UObject* Object);
+	static bool IsHeaderComment(UEdGraphNode_Comment* OtherComment);
+
+	FKey GetResizeKey() const;
+	bool AreResizeModifiersDown(bool bDownIfNoModifiers = true) const;
+
+	bool IsSingleSelectedNode() const;
+
+	bool IsNodeUnrelated() const;
+	void SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf = true);
+	void ResetNodesUnrelated();
+
+	EASCResizingMode GetResizingMode() const;
+
+	FASCCommentData& GetCommentData();
+
+	EGraphRenderingLOD::Type GetLOD() const;
+
+	UASCNodeState* GetASCNodeState() const { return ASCNodeState; } 
 
 protected:
 	//~ Begin SGraphNode Interface
@@ -140,6 +212,14 @@ protected:
 	bool RemoveAllSelectedNodes(bool bExpandComments = false);
 
 	void UpdateColors(const float InDeltaTime);
+
+	bool ResizeNode(const FVector2D& NewSize, bool bModify = true);
+	bool ResizeNode(int32 NewWidth, int32 NewHeight, bool bModify = true);
+
+	bool MoveNodeTo(const FVector2D& NewPos, bool bModify = true);
+	bool MoveNodeTo(int32 NodePosX, int32 NodePosY, bool bModify = true);
+
+	bool OffsetPosition(const FVector2D& Offset, bool bModify = true);
 
 private:
 	/** @return the color to tint the comment body */
@@ -200,12 +280,12 @@ private:
 
 	float OpacityValue = 0;
 
-	bool bIsHeader = false;
+	// bool bIsHeader = false;
 
 	bool bInitialized = false;
 
-	// TODO: Look into resize transaction perhaps requires the EdGraphNode_Comment to have UPROPERTY() for NodesUnderComment
-	// TSharedPtr<FScopedTransaction> ResizeTransaction;
+	TSharedPtr<FScopedTransaction> ResizeTransaction;
+	bool bHasModifiedAfterMouseDown = true;
 
 	/** Local copy of the comment style */
 	FInlineEditableTextBlockStyle CommentStyle;
@@ -216,77 +296,12 @@ private:
 	TSharedPtr<SHorizontalBox> ColorControls;
 	TSharedPtr<SHorizontalBox> CommentControls;
 
+	TSharedPtr<SInlineEditableTextBlock> CommentTextBlock;
+
 	bool bAreControlsEnabled = false;
 
 	FName CachedGraphClassName;
 	FString OldNodeTitle;
 
-public:
-	/** Update the nodes */
-	void UpdateRefreshDelay();
-
-	void RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false, const bool bUpdateExistingComments = true);
-
-	float GetTitleBarHeight() const;
-
-	/** Util functions */
-	FSlateRect GetBoundsForNodesInside();
-	FSlateRect GetNodeBounds(UEdGraphNode* Node);
-	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> GetOtherCommentNodes();
-	TArray<UEdGraphNode_Comment*> GetParentComments() const;
-	void UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>* OldParentComments, const TArray<UObject*>* OldCommentContains);
-	void UpdateExistingCommentNodes();
-	bool AnySelectedNodes();
-	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
-	void SnapVectorToGrid(FVector2D& Vector);
-	void SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier);
-	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
-	TArray<UEdGraphNode*> GetNodesUnderComment() const;
-	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments = true);
-	bool IsValidGraphPanel(TSharedPtr<SGraphPanel> GraphPanel);
-	void RemoveInvalidNodes();
-
-	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
-
-	void SetIsHeader(bool bNewValue, bool bUpdateStyle);
-	bool IsHeaderComment() const;
-	bool IsPresetStyle();
-
-	bool LoadCache();
-	void UpdateCache();
-
-	void QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
-	void QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
-
-	void RandomizeColor();
-
-	void AdjustMinSize(FVector2D& InSize);
-
-	bool HasNodeBeenDeleted(UEdGraphNode* Node);
-
-	bool CanAddNode(const TSharedPtr<SGraphNode> OtherGraphNode, const bool bIgnoreKnots = false) const;
-	bool CanAddNode(const UObject* Node, const bool bIgnoreKnots = false) const;
-	void OnAltReleased();
-
-	static bool IsCommentNode(UObject* Object);
-	static bool IsNotCommentNode(UObject* Object) { return !IsCommentNode(Object); }
-	static bool IsMajorNode(UObject* Object);
-	static bool IsHeaderComment(UEdGraphNode_Comment* OtherComment);
-
-	FKey GetResizeKey() const;
-	bool AreResizeModifiersDown(bool bDownIfNoModifiers = true) const;
-
-	bool IsSingleSelectedNode() const;
-
-	bool IsNodeUnrelated() const;
-	void SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf = true);
-	void ResetNodesUnrelated();
-
-	bool IsExistingComment() const;
-
-	EASCResizingMode GetResizingMode() const;
-
-	FASCCommentData& GetCommentData();
-
-	EGraphRenderingLOD::Type GetLOD() const;
+	UASCNodeState* ASCNodeState = nullptr;
 };

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphSchema.h" // EGraphType, EEdGraphPinDirection
 
+class SAutoSizeCommentsGraphNode;
 class UEdGraphNode;
 class UEdGraphPin;
 class UEdGraphNode_Comment;
@@ -20,17 +21,24 @@ struct FASCUtils
 
 	static TArray<UEdGraphNode*> GetLinkedNodes(const UEdGraphNode* Node, EEdGraphPinDirection Direction = EGPD_MAX);
 	static TArray<UEdGraphNode_Comment*> GetCommentsFromGraph(UEdGraph* Graph);
+	static TArray<TSharedPtr<SAutoSizeCommentsGraphNode>> GetASCCommentsFromGraph(UEdGraph* Graph);
 
 	static bool HasNodeBeenDeleted(UEdGraphNode* Node);
 
 	static bool IsValidPin(UEdGraphPin* Pin);
+
+	static TSharedPtr<SWidget> GetChildWidget(TSharedPtr<SWidget> Widget, const FName& WidgetClassName);
+
 	static TSharedPtr<SGraphPin> GetGraphPin(TSharedPtr<SGraphPanel> GraphPanel, UEdGraphPin* Pin);
 	static TSharedPtr<SGraphNode> GetGraphNode(TSharedPtr<SGraphPanel> GraphPanel, UEdGraphNode* Node);
 
 	static TSharedPtr<SGraphPin> GetHoveredGraphPin(TSharedPtr<SGraphPanel> GraphPanel);
+	static TSharedPtr<SGraphNode> GetHoveredGraphNode(TSharedPtr<SGraphPanel> GraphPanel);
+	static TSharedPtr<SGraphPanel> GetHoveredGraphPanel();
 
 	static TArray<UEdGraphNode_Comment*> GetSelectedComments(TSharedPtr<SGraphPanel> GraphPanel);
 	static TSet<UEdGraphNode*> GetSelectedNodes(TSharedPtr<SGraphPanel> GraphPanel, bool bExpandComments);
+	static UEdGraphNode* GetSelectedNode(TSharedPtr<SGraphPanel> GraphPanel, bool bExpandComments = false);
 
 	static bool IsGraphReadOnly(TSharedPtr<SGraphPanel> GraphPanel);
 
@@ -44,10 +52,5 @@ struct FASCUtils
 
 	static bool DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraphNode_Comment* Other);
 
-	// ~~ Logic that modifies nodes under comment
-	static void ClearCommentNodes(UEdGraphNode_Comment* Comment, bool bUpdateCache = true);
-	static bool RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NodesToRemove, bool bUpdateCache = true);
-	static bool AddNodeIntoComment(UEdGraphNode_Comment* Comment, UObject* NewNode, bool bUpdateCache = true);
-	static bool AddNodesIntoComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NewNodes, bool bUpdateCache = true);
-	// ~~ Logic that modifies nodes under comment
+	static void SetCommentFontSizeAndColor(UEdGraphNode_Comment* Comment, int32 FontSize, const FLinearColor& Color, bool bModify = true);
 };
