@@ -157,8 +157,7 @@ void SAutoSizeCommentsGraphNode::InitializeCommentBubbleSettings()
 		CommentNode->bColorCommentBubble = ASCSettings.bDefaultColorCommentBubble;
 		CommentNode->bCommentBubbleVisible_InDetailsPanel = ASCSettings.bDefaultShowBubbleWhenZoomed;
 		CommentNode->bCommentBubblePinned = ASCSettings.bDefaultShowBubbleWhenZoomed;
-		CommentNode->SetMakeCommentBubbleVisible(ASCSettings.bDefaultShowBubbleWhenZoomed);
-		bRequireUpdate = true;
+		CommentNode->bCommentBubbleVisible = ASCSettings.bDefaultShowBubbleWhenZoomed;
 	}
 }
 
@@ -504,12 +503,6 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 		{
 			CommentBubble->UpdateBubble();
 		}
-	}
-
-	if (bCachedColorCommentBubble != CommentNode->bColorCommentBubble)
-	{
-		bRequireUpdate = true;
-		bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
 	}
 
 	// Update cached font size
