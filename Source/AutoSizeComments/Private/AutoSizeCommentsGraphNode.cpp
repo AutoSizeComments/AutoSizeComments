@@ -48,9 +48,6 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 	const bool bIsPresetStyle = IsPresetStyle();
 
-	// init color
-	InitializeColor(ASCSettings, bIsPresetStyle, bIsHeader);
-
 	// use default font
 	if (ASCSettings.bUseDefaultFontSize && !bIsHeader && !bIsPresetStyle)
 	{
@@ -812,6 +809,7 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		{
 			CommentData.SetInitialized(true);
 			InitializeCommentBubbleSettings();
+			InitializeColor(UAutoSizeCommentsSettings::Get(), false, GetCommentData().IsHeader());
 		}
 	}
 }
