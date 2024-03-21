@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright fpwong. All Rights Reserved.
 
 #include "AutoSizeCommentsNotifications.h"
 

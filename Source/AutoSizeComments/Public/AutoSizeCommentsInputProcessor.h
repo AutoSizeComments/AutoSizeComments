@@ -1,9 +1,10 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright fpwong. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Framework/Application/IInputProcessor.h"
+#include "Framework/Commands/InputChord.h"
 
 class AUTOSIZECOMMENTS_API FAutoSizeCommentsInputProcessor
 	: public TSharedFromThis<FAutoSizeCommentsInputProcessor>

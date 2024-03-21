@@ -6,8 +6,9 @@ public class AutoSizeComments : ModuleRules
 {
 	public AutoSizeComments(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
+		PCHUsage = ModuleRules.PCHUsageMode.NoPCHs;
+		bUseUnity = false;
+
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
@@ -26,6 +27,7 @@ public class AutoSizeComments : ModuleRules
 			new string[]
 			{
 				"Core",
+				"Engine",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

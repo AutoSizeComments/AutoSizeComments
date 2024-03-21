@@ -1,10 +1,11 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright fpwong. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Misc/LazySingleton.h"
 
+class SNotificationItem;
 class ISourceControlModule;
 class ISourceControlProvider;
 

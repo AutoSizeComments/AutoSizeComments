@@ -2,7 +2,9 @@
 
 #include "AutoSizeCommentsMacros.h"
 #include "Interfaces/IPluginManager.h"
+#include "Styling/CoreStyle.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Styling/SlateTypes.h"
 
 #if ASC_UE_VERSION_OR_LATER(5, 0)
 #include "Styling/SlateStyleMacros.h"

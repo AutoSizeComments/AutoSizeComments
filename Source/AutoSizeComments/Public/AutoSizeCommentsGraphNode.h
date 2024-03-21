@@ -1,4 +1,4 @@
-// Copyright 2021 fpwong. All Rights Reserved.
+// Copyright fpwong. All Rights Reserved.
 
 #pragma once
 
@@ -6,6 +6,8 @@
 #include "AutoSizeCommentsMacros.h"
 #include "SGraphNode.h"
 
+class SHorizontalBox;
+class SButton;
 enum class EASCResizingMode : uint8;
 enum class ECommentCollisionMethod : uint8;
 class SCommentBubble;

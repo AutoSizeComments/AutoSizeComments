@@ -1,10 +1,11 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright fpwong. All Rights Reserved.
 
 #include "AutoSizeCommentsInputProcessor.h"
 
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsUtils.h"
 #include "SGraphPanel.h"
+#include "Framework/Application/SlateApplication.h"
 
 static TSharedPtr<FAutoSizeCommentsInputProcessor> Instance;
 

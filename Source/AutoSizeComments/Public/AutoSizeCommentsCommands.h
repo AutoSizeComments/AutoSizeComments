@@ -1,10 +1,11 @@
-﻿// Copyright 2021 fpwong. All Rights Reserved.
+﻿// Copyright fpwong. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "AutoSizeCommentsMacros.h"
 #include "Framework/Commands/Commands.h"
+#include "Styling/AppStyle.h"
 
 /**
  * 

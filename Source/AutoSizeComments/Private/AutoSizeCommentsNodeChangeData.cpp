@@ -1,9 +1,10 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright fpwong. All Rights Reserved.
 
 #include "AutoSizeCommentsNodeChangeData.h"
 
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
+#include "EdGraphSchema_K2.h"
 #include "K2Node_CreateDelegate.h"
 
 void FASCPinChangeData::UpdatePin(UEdGraphPin* Pin)

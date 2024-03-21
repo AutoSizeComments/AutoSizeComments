@@ -1,5 +1,10 @@
 #pragma once
 
+#include "CoreMinimal.h"
+#include "EdGraph/EdGraphSchema.h" // EGraphType, EEdGraphPinDirection
+
+class UEdGraphNode;
+class UEdGraphPin;
 class UEdGraphNode_Comment;
 class SGraphPin;
 class SGraphPanel;

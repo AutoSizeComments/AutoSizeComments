@@ -1,4 +1,4 @@
-// Copyright 2021 fpwong. All Rights Reserved.
+// Copyright fpwong. All Rights Reserved.
 
 #include "AutoSizeCommentsGraphHandler.h"
 
@@ -9,9 +9,13 @@
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
+#include "EdGraphSchema_K2.h"
+#include "Editor.h"
 #include "GraphEditAction.h"
 #include "K2Node_Knot.h"
 #include "SGraphPanel.h"
+#include "EdGraph/EdGraph.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Misc/LazySingleton.h"
 #include "Widgets/Notifications/SNotificationList.h"

@@ -1,13 +1,12 @@
-// Copyright 2021 fpwong. All Rights Reserved.
+// Copyright fpwong. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "IDetailCustomization.h"
-
+#include "Framework/Commands/InputChord.h"
 #include "Framework/Text/TextLayout.h"
 #include "Layout/Margin.h"
-
 #include "AutoSizeCommentsSettings.generated.h"
 
 UENUM()

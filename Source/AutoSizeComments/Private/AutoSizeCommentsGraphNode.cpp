@@ -1,4 +1,4 @@
-// Copyright 2021 fpwong. All Rights Reserved.
+// Copyright fpwong. All Rights Reserved.
 
 #include "AutoSizeCommentsGraphNode.h"
 
@@ -10,6 +10,7 @@
 #include "AutoSizeCommentsStyle.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
+#include "Editor.h"
 #include "GraphEditorSettings.h"
 #include "K2Node_Knot.h"
 #include "SCommentBubble.h"
