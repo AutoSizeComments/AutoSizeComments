@@ -400,8 +400,10 @@ bool FASCUtils::RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet
 		return false;
 	}
 
+	const FCommentNodeSet NodesUnderComment = Comment->GetNodesUnderComment();
+
 	// don't do anything if we have nothing to remove
-	const bool bRemoveSomething = Comment->GetNodesUnderComment().ContainsByPredicate([&NodesToRemove](const UObject* Obj)
+	const bool bRemoveSomething = NodesUnderComment.ContainsByPredicate([&NodesToRemove](const UObject* Obj)
 	{
 		return NodesToRemove.Contains(Obj);
 	});
@@ -415,7 +417,6 @@ bool FASCUtils::RemoveNodesFromComment(UEdGraphNode_Comment* Comment, const TSet
 	Comment->ClearNodesUnderComment();
 
 	// Add back the nodes under comment while filtering out any which are to be removed
-	const FCommentNodeSet NodesUnderComment = Comment->GetNodesUnderComment();
 	for (UObject* NodeUnderComment : NodesUnderComment)
 	{
 		if (NodeUnderComment)
