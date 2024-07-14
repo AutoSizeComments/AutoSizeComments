@@ -2,6 +2,7 @@
 
 #include "AutoSizeCommentsInputProcessor.h"
 
+#include "AutoSizeCommentsCommands.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsUtils.h"
 #include "SGraphPanel.h"
@@ -13,6 +14,8 @@ void FAutoSizeCommentsInputProcessor::Create()
 {
 	Instance = MakeShareable(new FAutoSizeCommentsInputProcessor());
 	FSlateApplication::Get().RegisterInputPreProcessor(Instance);
+
+	Instance->Init();
 }
 
 void FAutoSizeCommentsInputProcessor::Cleanup()
@@ -26,6 +29,11 @@ void FAutoSizeCommentsInputProcessor::Cleanup()
 
 		Instance.Reset();
 	}
+}
+
+void FAutoSizeCommentsInputProcessor::Init()
+{
+	ASCCommandList = FASCCommands::MakeCommandList();
 }
 
 FAutoSizeCommentsInputProcessor& FAutoSizeCommentsInputProcessor::Get()
@@ -73,9 +81,34 @@ bool FAutoSizeCommentsInputProcessor::HandleMouseButtonDownEvent(FSlateApplicati
 	return false;
 }
 
-bool FAutoSizeCommentsInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
+bool FAutoSizeCommentsInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& KeyEvent)
 {
-	KeysDown.Add(InKeyEvent.GetKey());
+	KeysDown.Add(KeyEvent.GetKey());
+
+	if (FSlateApplication::Get().IsDragDropping())
+	{
+		return false;
+	}
+
+	FModifierKeysState ModifierKeysState = FSlateApplication::Get().GetModifierKeys();
+	const FInputChord CheckChord(KeyEvent.GetKey(), EModifierKey::FromBools(
+		ModifierKeysState.IsControlDown(),
+		ModifierKeysState.IsAltDown(),
+		ModifierKeysState.IsShiftDown(),
+		ModifierKeysState.IsCommandDown()));
+
+	TSharedPtr<FUICommandInfo> Command = FInputBindingManager::Get().FindCommandInContext(FASCCommands::Get().GetContextName(), CheckChord, false);
+	if (Command.IsValid() && Command->HasActiveChord(CheckChord))
+	{
+		if (const FUIAction* Action = ASCCommandList->GetActionForCommand(Command))
+		{
+			if (Action->CanExecute() && (!KeyEvent.IsRepeat() || Action->CanRepeat()))
+			{
+				return Action->Execute();
+			}
+		}
+	}
+
 	return false;
 }
 

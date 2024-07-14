@@ -49,6 +49,7 @@ public:
 	bool HasCommentChanged(UEdGraphNode_Comment* Comment);
 
 	TArray<UEdGraph*> GetActiveGraphs();
+	TArray<TSharedPtr<SGraphPanel>> GetActiveGraphPanels();
 
 	EGraphRenderingLOD::Type GetGraphLOD(TSharedPtr<SGraphPanel> GraphPanel);
 

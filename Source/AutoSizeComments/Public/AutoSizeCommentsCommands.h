@@ -23,4 +23,10 @@ public:
 	virtual ~FASCCommands() override { }
 
 	virtual void RegisterCommands() override;
+
+	TSharedPtr<FUICommandInfo> ResizeSelectedComment;
+
+	static TSharedPtr<FUICommandList> MakeCommandList();
+
+	static void RunResizeSelectedComment();
 };

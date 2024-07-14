@@ -3,6 +3,7 @@
 #include "AutoSizeCommentsModule.h"
 
 #include "AutoSizeCommentsCacheFile.h"
+#include "AutoSizeCommentsCommands.h"
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
 #include "AutoSizeCommentsInputProcessor.h"
@@ -49,6 +50,8 @@ void FAutoSizeCommentsModule::OnPostEngineInit()
 		PropertyModule.RegisterCustomClassLayout(UAutoSizeCommentsSettings::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FASCSettingsDetails::MakeInstance));
 	}
 
+	FASCCommands::Register();
+
 	FAutoSizeCommentGraphHandler::Get().BindDelegates();
 
 	FAutoSizeCommentsInputProcessor::Create();
@@ -94,6 +97,8 @@ void FAutoSizeCommentsModule::ShutdownModule()
 	FAutoSizeCommentsCacheFile::Get().Cleanup();
 
 	FASCStyle::Shutdown();
+
+	FASCCommands::Unregister();
 #endif
 }
 

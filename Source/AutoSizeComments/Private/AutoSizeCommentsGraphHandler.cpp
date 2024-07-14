@@ -662,6 +662,20 @@ TArray<UEdGraph*> FAutoSizeCommentGraphHandler::GetActiveGraphs()
 	return ActiveGraphs;
 }
 
+TArray<TSharedPtr<SGraphPanel>> FAutoSizeCommentGraphHandler::GetActiveGraphPanels()
+{
+	TArray<TSharedPtr<SGraphPanel>> OutGraphPanels;
+	for (TWeakPtr<SGraphPanel> ActiveGraphPanel : ActiveGraphPanels)
+	{
+		if (ActiveGraphPanel.IsValid())
+		{
+			OutGraphPanels.Add(ActiveGraphPanel.Pin());
+		}
+	}
+
+	return OutGraphPanels;
+}
+
 bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 {
 	UpdateNodeUnrelatedState();
