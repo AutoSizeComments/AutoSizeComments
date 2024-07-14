@@ -574,6 +574,7 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 			{
 				CommentNode->ClearNodesUnderComment();
 				ASCGraphNode->AddAllNodesUnderComment(NewSelection.Array(), false);
+				ASCGraphNode->ResizeToFit();
 				ChangedGraphNodes.Add(ASCGraphNode);
 			}
 		}

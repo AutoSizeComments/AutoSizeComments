@@ -986,6 +986,7 @@ FReply SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked()
 	{
 		FASCUtils::ClearCommentNodes(CommentNode);
 		AddAllSelectedNodes(true);
+		ResizeToFit();
 	}
 
 	return FReply::Handled();
@@ -994,18 +995,21 @@ FReply SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked()
 FReply SAutoSizeCommentsGraphNode::HandlePresetButtonClicked(const FPresetCommentStyle Style)
 {
 	ApplyPresetStyle(Style);
+	ResizeToFit();
 	return FReply::Handled();
 }
 
 FReply SAutoSizeCommentsGraphNode::HandleAddButtonClicked()
 {
 	AddAllSelectedNodes(true);
+	ResizeToFit();
 	return FReply::Handled();
 }
 
 FReply SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked()
 {
 	RemoveAllSelectedNodes(true);
+	ResizeToFit();
 	return FReply::Handled();
 }
 
