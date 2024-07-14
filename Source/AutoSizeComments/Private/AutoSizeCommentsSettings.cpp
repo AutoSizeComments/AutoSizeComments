@@ -81,7 +81,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bRefreshContainingNodesOnMove = false;
 	bDisableTooltip = true;
 	bHighlightContainingNodesOnSelection = true;
-	bUseMaxDetailNodes = ASC_UE_VERSION_OR_LATER(5, 0);
+	bUseMaxDetailNodes = false;
 	IgnoredGraphs.Add("ControlRigGraph");
 	bSuppressSuggestedSettings = false;
 	bSuppressSourceControlNotification = false;
