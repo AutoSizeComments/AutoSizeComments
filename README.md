@@ -1,15 +1,15 @@
 # AutoSizeComments
-Plugin for Unreal Engine 4 that adds auto resizing comment boxes
+Plugin for Unreal Engine that adds auto resizing comment boxes
 
 Settings for the plugin are under Edit > Editor Preferences > Plugins > Auto Size Comments
 
 Hold alt to quickly add / remove nodes from the comment boxes
 
-UE4 forum page: https://forums.unrealengine.com/community/released-projects/1540542
+Unreal forum page: https://forums.unrealengine.com/t/free-autosizecomments/117614/123
 
 Marketplace link: https://www.unrealengine.com/marketplace/auto-size-comments
 
-This was originally a feature from the [Blueprint Assist Plugin](https://forums.unrealengine.com/unreal-engine/marketplace/120671), a plugin that provides automatic formatting and mouse-free node editing when working with blueprints.
+This was originally a feature from the [Blueprint Assist Plugin](https://www.unrealengine.com/marketplace/en-US/product/blueprint-assist), a plugin that provides automatic formatting and mouse-free node editing when working with blueprints.
 
 # Building the plugin
 
