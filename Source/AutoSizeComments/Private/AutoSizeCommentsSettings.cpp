@@ -23,7 +23,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	CommentTextAlignment = ETextJustify::Left;
 	DefaultFontSize = 18;
 	bUseDefaultFontSize = false;
-	DefaultCommentColorMethod = EASCDefaultCommentColorMethod::Random;
+	DefaultCommentColorMethod = EASCDefaultCommentColorMethod::None;
 	HeaderColorMethod = EASCDefaultCommentColorMethod::Default;
 	RandomColorOpacity = 1.f;
 	bUseRandomColorFromList = false;
