@@ -190,6 +190,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	EASCResizingMode ResizingMode;
 
+	/** Should the comment resize to fit after running user commands in disabled mode */
+    UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "ResizingMode == EASCResizingMode::Disabled", EditConditionHides))
+    bool ResizeToFitWhenDisabled;
+
 	/** Determines when to insert newly created nodes into existing comments */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	EASCAutoInsertComment AutoInsertComment;
@@ -377,6 +381,11 @@ public:
 	static FORCEINLINE UAutoSizeCommentsSettings& GetMutable()
 	{
 		return *GetMutableDefault<UAutoSizeCommentsSettings>();
+	}
+
+	bool ShouldResizeToFit() const
+	{
+		return ResizingMode != EASCResizingMode::Disabled || ResizeToFitWhenDisabled;
 	}
 };
 

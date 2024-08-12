@@ -288,7 +288,10 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, 
 
 		ResetNodesUnrelated();
 
-		ResizeToFit();
+		if (UAutoSizeCommentsSettings::Get().ShouldResizeToFit())
+		{
+			ResizeToFit();
+		}
 
 		return FReply::Handled().ReleaseMouseCapture();
 	}
@@ -986,7 +989,11 @@ FReply SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked()
 	{
 		FASCUtils::ClearCommentNodes(CommentNode);
 		AddAllSelectedNodes(true);
-		ResizeToFit();
+
+		if (UAutoSizeCommentsSettings::Get().ShouldResizeToFit())
+		{
+			ResizeToFit();
+		}
 	}
 
 	return FReply::Handled();
@@ -995,21 +1002,36 @@ FReply SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked()
 FReply SAutoSizeCommentsGraphNode::HandlePresetButtonClicked(const FPresetCommentStyle Style)
 {
 	ApplyPresetStyle(Style);
-	ResizeToFit();
+
+	if (UAutoSizeCommentsSettings::Get().ShouldResizeToFit())
+	{
+		ResizeToFit();
+	}
+
 	return FReply::Handled();
 }
 
 FReply SAutoSizeCommentsGraphNode::HandleAddButtonClicked()
 {
 	AddAllSelectedNodes(true);
-	ResizeToFit();
+
+	if (UAutoSizeCommentsSettings::Get().ShouldResizeToFit())
+	{
+		ResizeToFit();
+	}
+
 	return FReply::Handled();
 }
 
 FReply SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked()
 {
 	RemoveAllSelectedNodes(true);
-	ResizeToFit();
+
+	if (UAutoSizeCommentsSettings::Get().ShouldResizeToFit())
+	{
+		ResizeToFit();
+	}
+
 	return FReply::Handled();
 }
 
