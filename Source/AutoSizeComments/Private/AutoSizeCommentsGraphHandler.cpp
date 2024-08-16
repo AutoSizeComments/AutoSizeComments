@@ -722,8 +722,8 @@ void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
 				}
 			}
 
-			// clear the unrelated nodes and empty the last selection set
-			if (bSelectedNonComment || (SelectedComments.Num() == 0 && GraphData->LastSelectionSet.Num() != 0))
+			// if we deselected everything, clear the unrelated nodes and empty the last selection set
+			if (SelectedComments.Num() == 0 && GraphData->LastSelectionSet.Num() != 0)
 			{
 				for (UEdGraphNode* Node : Graph->Nodes)
 				{
