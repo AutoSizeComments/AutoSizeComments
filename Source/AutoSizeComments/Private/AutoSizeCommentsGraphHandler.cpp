@@ -784,6 +784,20 @@ void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
 	}
 }
 
+void FAutoSizeCommentGraphHandler::ClearUnrelatedNodes()
+{
+	for (auto&[Graph, Data] : GraphDatas)
+	{
+		if (Graph.IsValid())
+		{
+			for (UEdGraphNode* NodeToUpdate : Graph->Nodes)
+			{
+				NodeToUpdate->SetNodeUnrelated(false);
+			}
+		}
+	}
+}
+
 void FAutoSizeCommentGraphHandler::OnNodeAdded(TWeakObjectPtr<UEdGraphNode> NewNodePtr)
 {
 	if (!NewNodePtr.IsValid())

@@ -387,6 +387,8 @@ public:
 	{
 		return ResizingMode != EASCResizingMode::Disabled || ResizeToFitWhenDisabled;
 	}
+
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 };
 
 class FASCSettingsDetails final : public IDetailCustomization

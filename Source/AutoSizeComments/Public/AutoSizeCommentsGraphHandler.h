@@ -53,6 +53,8 @@ public:
 
 	EGraphRenderingLOD::Type GetGraphLOD(TSharedPtr<SGraphPanel> GraphPanel);
 
+	void ClearUnrelatedNodes();
+
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FASCGraphHandlerData> GraphDatas;
 

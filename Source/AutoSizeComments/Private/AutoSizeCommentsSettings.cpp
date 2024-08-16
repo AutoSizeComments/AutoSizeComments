@@ -3,6 +3,7 @@
 #include "AutoSizeCommentsSettings.h"
 
 #include "AutoSizeCommentsCacheFile.h"
+#include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsMacros.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
@@ -98,6 +99,21 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 	bDebugGraph_ASC = false;
 	bDisablePackageCleanup = false;
 	bDisableASCGraphNode = false;
+}
+
+void UAutoSizeCommentsSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	const FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UAutoSizeCommentsSettings, bHighlightContainingNodesOnSelection))
+	{
+		if (!bHighlightContainingNodesOnSelection)
+		{
+			FAutoSizeCommentGraphHandler::Get().ClearUnrelatedNodes();
+		}
+	}
+
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 TSharedRef<IDetailCustomization> FASCSettingsDetails::MakeInstance()
