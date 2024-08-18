@@ -599,6 +599,16 @@ FASCGraphHandlerData& FAutoSizeCommentGraphHandler::GetGraphHandlerData(UEdGraph
 	if (!GraphDatas.Contains(Graph))
 	{
 		FASCGraphHandlerData GraphData;
+
+		// read comments that already exist in the graph
+		for (auto Node : Graph->Nodes)
+		{
+			if (auto Comment = Cast<UEdGraphNode_Comment>(Node))
+			{
+				GraphData.InitialComments.Add(Comment);
+			}
+		}
+
 		GraphData.OnGraphChangedHandle = Graph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::OnGraphChanged));
 		GraphDatas.Add(Graph, GraphData);
 	}

@@ -68,4 +68,6 @@ public:
 	void UpdateComment(UEdGraphNode_Comment* Comment);
 
 	bool HasCommentChanged(UEdGraphNode_Comment* Comment);
+
+	void DebugPrint();
 };

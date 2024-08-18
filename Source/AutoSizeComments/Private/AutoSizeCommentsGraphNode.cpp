@@ -5,6 +5,7 @@
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsInputProcessor.h"
+#include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsStyle.h"
@@ -781,8 +782,13 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		}
 	}
 
+	// if this node is selected then we have been copy pasted, don't add all selected nodes
+	bool bHasBeenCopyPasted = InitialSelectedNodes.Contains(CommentNode);
+
 	if (!bInitialized)
 	{
+		UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("Init ASC node %p %s %d %d"), this, *CommentNode->NodeGuid.ToString(), IsExistingComment(), bHasBeenCopyPasted);
+
 		bInitialized = true;
 
 		// register graph
@@ -805,8 +811,14 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		if (!CommentData.HasBeenInitialized())
 		{
 			CommentData.SetInitialized(true);
-			InitializeCommentBubbleSettings();
-			InitializeColor(UAutoSizeCommentsSettings::Get(), false, GetCommentData().IsHeader());
+
+			// don't initialize without any selected nodes!
+			const bool bShouldApplyColor = !bHasBeenCopyPasted && (!IsExistingComment() || UAutoSizeCommentsSettings::Get().bApplyColorToExistingNodes);
+			if (bShouldApplyColor)
+			{
+				InitializeCommentBubbleSettings();
+				InitializeColor(UAutoSizeCommentsSettings::Get(), false, GetCommentData().IsHeader());
+			}
 		}
 	}
 }
@@ -1233,7 +1245,14 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 		{
 			RefreshNodesInsideComment(ECommentCollisionMethod::Point);
 
-			ResizeToFit();
+			// so that it doesn't trigger the auto resize check
+			FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
+
+			if (IsExistingComment() && UAutoSizeCommentsSettings::Get().bResizeExistingNodes)
+			{
+				ResizeToFit();
+			}
+			// else - we have been copy pasted don't resize
 
 			if (UAutoSizeCommentsSettings::Get().bEnableFixForSortDepthIssue)
 			{
@@ -2127,6 +2146,17 @@ void SAutoSizeCommentsGraphNode::ResetNodesUnrelated()
 		}
 	}
 #endif
+}
+
+bool SAutoSizeCommentsGraphNode::IsExistingComment() const
+{
+	if (CommentNode)
+	{
+		FASCGraphHandlerData& GraphData = FAutoSizeCommentGraphHandler::Get().GetGraphHandlerData(CommentNode->GetGraph());
+		return GraphData.InitialComments.Contains(CommentNode);
+	}
+
+	return false;
 }
 
 EASCResizingMode SAutoSizeCommentsGraphNode::GetResizingMode() const

@@ -1,6 +1,8 @@
 // Copyright fpwong. All Rights Reserved.
 
 #include "AutoSizeCommentsGraphPanelNodeFactory.h"
+
+#include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
@@ -9,6 +11,12 @@
 
 TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class UEdGraphNode* InNode) const
 {
+	if (InNode)
+	{
+		// init graph handler for containing graph
+		FAutoSizeCommentGraphHandler::Get().BindToGraph(InNode->GetGraph());
+	}
+
 	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
 	if (ASCSettings.bDisableASCGraphNode)

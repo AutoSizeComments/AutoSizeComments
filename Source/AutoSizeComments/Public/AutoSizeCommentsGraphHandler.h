@@ -18,6 +18,8 @@ struct FASCGraphHandlerData
 	TMap<FGuid, FASCCommentChangeData> CommentChangeData;
 	FASCGraphData GraphCacheData;
 
+	TArray<TWeakObjectPtr<UEdGraphNode_Comment>> InitialComments;
+
 	float LastZoomLevel = -1;
 	EGraphRenderingLOD::Type LastLOD = EGraphRenderingLOD::Type::DefaultDetail;
 };

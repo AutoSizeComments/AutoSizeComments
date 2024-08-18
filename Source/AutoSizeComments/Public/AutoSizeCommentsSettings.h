@@ -254,6 +254,14 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = CommentCache, AdvancedDisplay)
 	bool bPrettyPrintCommentCacheJSON;
 
+	/** When opening a new graph, existing comments will apply default color settings (suggest disabled) */
+	UPROPERTY(EditAnywhere, config, Category = Initialization)
+	bool bApplyColorToExistingNodes;
+
+	/** When opening a new graph, existing comments will try to fit to their overlapping nodes (suggest disabled) */
+	UPROPERTY(EditAnywhere, config, Category = Initialization)
+	bool bResizeExistingNodes;
+
 	/** Commments will detect and add nodes are underneath on creation */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bDetectNodesContainedForNewComments;

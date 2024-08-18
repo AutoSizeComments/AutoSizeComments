@@ -2,6 +2,7 @@
 
 #include "AutoSizeCommentsNodeChangeData.h"
 
+#include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "EdGraphSchema_K2.h"
@@ -237,4 +238,16 @@ bool FASCCommentChangeData::HasCommentChanged(UEdGraphNode_Comment* Comment)
 	}
 
 	return false;
+}
+
+void FASCCommentChangeData::DebugPrint()
+{
+	UE_LOG(LogAutoSizeComments, Log, TEXT("%s"), *NodeComment);
+	for (auto&[Node, Data] : NodeChangeData)
+	{
+		if (Node.IsValid())
+		{
+			UE_LOG(LogAutoSizeComments, Log, TEXT("\t%s"), *FASCUtils::GetNodeName(Node.Get()));
+		}
+	}
 }

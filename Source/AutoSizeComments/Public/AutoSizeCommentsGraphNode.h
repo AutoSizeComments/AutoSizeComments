@@ -282,6 +282,8 @@ public:
 	void SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf = true);
 	void ResetNodesUnrelated();
 
+	bool IsExistingComment() const;
+
 	EASCResizingMode GetResizingMode() const;
 
 	FASCCommentData& GetCommentData();
