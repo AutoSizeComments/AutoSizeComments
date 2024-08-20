@@ -802,11 +802,11 @@ void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
 
 void FAutoSizeCommentGraphHandler::ClearUnrelatedNodes()
 {
-	for (auto&[Graph, Data] : GraphDatas)
+	for (auto& Elem : GraphDatas)
 	{
-		if (Graph.IsValid())
+		if (Elem.Key.IsValid())
 		{
-			for (UEdGraphNode* NodeToUpdate : Graph->Nodes)
+			for (UEdGraphNode* NodeToUpdate : Elem.Key->Nodes)
 			{
 				NodeToUpdate->SetNodeUnrelated(false);
 			}

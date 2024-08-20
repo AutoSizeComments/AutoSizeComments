@@ -5,6 +5,7 @@
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsState.h"
+#include "EdGraphNode_Comment.h"
 #include "SGraphPanel.h"
 #include "Framework/Application/SlateApplication.h"
 
@@ -36,7 +37,7 @@ void FASCCommands::RunResizeSelectedComment()
 {
 	for (TSharedPtr<SGraphPanel> GraphPanel : FAutoSizeCommentGraphHandler::Get().GetActiveGraphPanels())
 	{
-		for (UEdGraphNode* SelectedGraphNode : GraphPanel->GetSelectedGraphNodes())
+		for (UObject* SelectedGraphNode : GraphPanel->SelectionManager.GetSelectedNodes())
 		{
 			if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(SelectedGraphNode))
 			{

@@ -7,6 +7,8 @@
 #include "EditorStyleSet.h"
 #include "Framework/Commands/Commands.h"
 
+class FUICommandList;
+
 /**
  * 
  */

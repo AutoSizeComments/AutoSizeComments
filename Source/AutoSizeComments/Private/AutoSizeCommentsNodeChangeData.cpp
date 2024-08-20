@@ -243,11 +243,11 @@ bool FASCCommentChangeData::HasCommentChanged(UEdGraphNode_Comment* Comment)
 void FASCCommentChangeData::DebugPrint()
 {
 	UE_LOG(LogAutoSizeComments, Log, TEXT("%s"), *NodeComment);
-	for (auto&[Node, Data] : NodeChangeData)
+	for (auto& Elem : NodeChangeData)
 	{
-		if (Node.IsValid())
+		if (Elem.Key.IsValid())
 		{
-			UE_LOG(LogAutoSizeComments, Log, TEXT("\t%s"), *FASCUtils::GetNodeName(Node.Get()));
+			UE_LOG(LogAutoSizeComments, Log, TEXT("\t%s"), *FASCUtils::GetNodeName(Elem.Key.Get()));
 		}
 	}
 }
