@@ -18,6 +18,8 @@
 #include "SGraphPanel.h"
 #include "TutorialMetaData.h"
 #include "Framework/Application/SlateApplication.h"
+#include "MaterialGraph/MaterialGraphNode_Comment.h"
+#include "Materials/MaterialExpressionComment.h"
 #include "Runtime/Engine/Classes/EdGraph/EdGraph.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Images/SImage.h"
@@ -237,6 +239,15 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 				}
 			}
 		}
+	}
+
+	// from SGraphNodeMaterialComment
+	if (UMaterialGraphNode_Comment* MaterialComment = Cast<UMaterialGraphNode_Comment>(CommentNode))
+	{
+		MaterialComment->MaterialExpressionComment->MaterialExpressionEditorX = CommentNode->NodePosX;
+		MaterialComment->MaterialExpressionComment->MaterialExpressionEditorY = CommentNode->NodePosY;
+		MaterialComment->MaterialExpressionComment->MarkPackageDirty();
+		MaterialComment->MaterialDirtyDelegate.ExecuteIfBound();
 	}
 }
 
