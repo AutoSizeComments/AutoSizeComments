@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "UObject/Object.h"
 #include "AutoSizeCommentNodeState.generated.h"
 
+class UEdGraphNode;
 class UEdGraphNode_Comment;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCNodeStateChanged, class UASCNodeState*);

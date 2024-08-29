@@ -178,6 +178,7 @@ public:
 	bool IsNodeUnrelated() const;
 	void SetNodesRelated(const TArray<UEdGraphNode*>& Nodes, bool bIncludeSelf = true);
 	void ResetNodesUnrelated();
+	bool IsExistingComment() const;
 
 	EASCResizingMode GetResizingMode() const;
 
@@ -279,8 +280,6 @@ private:
 	bool bCachedColorCommentBubble = false;
 
 	float OpacityValue = 0;
-
-	// bool bIsHeader = false;
 
 	bool bInitialized = false;
 

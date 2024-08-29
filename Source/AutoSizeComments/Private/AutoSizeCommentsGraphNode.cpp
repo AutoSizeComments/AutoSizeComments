@@ -16,6 +16,7 @@
 #include "GraphEditorSettings.h"
 #include "K2Node_Knot.h"
 #include "SCommentBubble.h"
+#include "ScopedTransaction.h"
 #include "SGraphPanel.h"
 #include "TutorialMetaData.h"
 #include "Framework/Application/SlateApplication.h"
@@ -296,8 +297,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 			// deselect all nodes when we are trying to resize
 			GetOwnerPanel()->SelectionManager.ClearSelectionSet();
 
-			ResizeTransaction = MakeShareable(new FScopedTransaction(NSLOCTEXT("UnrealEd", "Resize Comment Node", "Resize Comment Node")));
-			// CommentNode->Modify();
+			ResizeTransaction = MakeShareable(new FScopedTransaction(INVTEXT("Resize Comment Node")));
 			return FReply::Handled().CaptureMouse(SharedThis(this));
 		}
 	}
@@ -996,29 +996,7 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 
 int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 {
-	if (!CommentNode)
-	{
-		return -1;
-	}
-
-	if (IsHeaderComment())
-	{
-		return 0;
-	}
-
-	if (IsSelectedExclusively())
-	{
-		return 0;
-	}
-
-	// Check if mouse is above titlebar for sort depth so comments can be dragged on first click
-	const FVector2D LocalPos = GetCachedGeometry().AbsoluteToLocal(FSlateApplication::Get().GetCursorPos());
-	if (CanBeSelected(LocalPos))
-	{
-		return 0;
-	}
-
-	return CommentNode->CommentDepth;
+	return CommentNode ? CommentNode->CommentDepth : -1;
 }
 
 FReply SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked()
@@ -1038,7 +1016,6 @@ FReply SAutoSizeCommentsGraphNode::HandleResizeButtonClicked()
 FReply SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked()
 {
 	FScopedTransaction Transaction(INVTEXT("Toggle comment header state"));
-	// ApplyHeaderStyle(!bIsHeader, true);
 	ASCNodeState->SetIsHeader(!ASCNodeState->IsHeader());
 	return FReply::Handled();
 }

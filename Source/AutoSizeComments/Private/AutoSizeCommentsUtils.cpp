@@ -6,6 +6,7 @@
 #include "AutoSizeCommentsState.h"
 #include "EdGraphNode_Comment.h"
 #include "SGraphPanel.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
 TArray<UEdGraphNode_Comment*> FASCUtils::GetContainingCommentNodes(const TArray<UEdGraphNode_Comment*>& Comments, UEdGraphNode* Node)

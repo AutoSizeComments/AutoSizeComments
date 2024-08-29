@@ -8,8 +8,10 @@
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
+#include "Editor.h"
 #include "K2Node_Knot.h"
 #include "Misc/LazySingleton.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 
 void UASCNodeState::Cleanup()
 {
@@ -85,10 +87,6 @@ void FASCNodeStateManager::CleanupCommentStateMap()
 			UE_LOG(LogTemp, Warning, TEXT("Cleanup %s"), *Elem.Key.ToString());
 			InvalidNodes.Add(Elem.Key);
 			NodeState->Cleanup();
-		}
-		else // also check if any "nodes under comment" were deleted
-		{
-			TSet<UEdGraphNode*>& Test = NodeState->GetNodesUnderCommentMut();
 		}
 	}
 

@@ -8,6 +8,8 @@
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
+#include "Editor.h"
+#include "ScopedTransaction.h"
 #include "SGraphPanel.h"
 #include "Framework/Application/SlateApplication.h"
 
