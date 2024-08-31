@@ -198,8 +198,6 @@ void UASCNodeState::PostEditUndo()
 	UObject::PostEditUndo();
 	if (CommentNode.IsValid())
 	{
-		WriteNodesToComment();
-
 		// check if the header state changed from undoing
 		if (bPrevIsHeader != bIsHeader)
 		{
@@ -212,6 +210,8 @@ void UASCNodeState::PostEditUndo()
 				ASCGraphNode->SetHeaderStyle(bIsHeader, true);
 			}
 		}
+
+		FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode.Get());
 	}
 }
 
