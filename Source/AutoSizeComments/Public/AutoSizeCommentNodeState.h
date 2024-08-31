@@ -30,7 +30,6 @@ public:
 	UPROPERTY()
 	TWeakObjectPtr<UEdGraphNode_Comment> CommentNode;
 
-	virtual void PostTransacted(const FTransactionObjectEvent& TransactionEvent) override;
 	virtual void PostEditUndo() override;
 
 	void InitializeFromCache();

@@ -449,7 +449,6 @@ void FASCCommentData::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Update comment data! %s"), *Comment->NodeComment);
 	const TSet<UEdGraphNode*>& NodesUnder = UASCNodeState::Get(Comment)->GetNodesUnderComment();
 	NodeGuids.Reset(NodesUnder.Num());
 
@@ -458,7 +457,6 @@ void FASCCommentData::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
 	{
 		if (!FASCUtils::HasNodeBeenDeleted(Node))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Wrote to Comment node %s"), *Node->NodeGuid.ToString());
 			NodeGuids.Add(Node->NodeGuid);
 		}
 	}

@@ -47,7 +47,6 @@ bool FASCNodeStateManager::Init()
 		return false;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Init node state manager"));
 	bInitialized = true;
 
 	FCoreUObjectDelegates::GetPostGarbageCollect().AddRaw(this, &FASCNodeStateManager::CleanupCommentStateMap);
@@ -77,7 +76,6 @@ void FASCNodeStateManager::Cleanup()
 
 void FASCNodeStateManager::CleanupCommentStateMap()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Cleanup comment state map"));
 	TSet<FGuid> InvalidNodes;
 
 	for (const auto& Elem : CommentStateMap)
@@ -85,7 +83,6 @@ void FASCNodeStateManager::CleanupCommentStateMap()
 		UASCNodeState* NodeState = Elem.Value;
 		if (!NodeState->CommentNode.IsValid())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Cleanup %s"), *Elem.Key.ToString());
 			InvalidNodes.Add(Elem.Key);
 			NodeState->Cleanup();
 		}
@@ -99,7 +96,6 @@ void FASCNodeStateManager::CleanupCommentStateMap()
 
 void FASCNodeStateManager::CleanupOnAssetClosed(UObject* Asset, EAssetEditorCloseReason CloseReason)
 {
-	// UE_LOG(LogTemp, Warning, TEXT("CleanupCommentStateFromAssetClosed %s"), *Asset->GetName());
 	TSet<FGuid> InvalidNodes;
 
 	for (const auto& Elem : CommentStateMap)
@@ -109,7 +105,6 @@ void FASCNodeStateManager::CleanupOnAssetClosed(UObject* Asset, EAssetEditorClos
 		// if the comment node is invalid, remove our node state
 		if (!NodeState->CommentNode.IsValid())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Cleanup %s"), *Elem.Key.ToString());
 			InvalidNodes.Add(Elem.Key);
 			NodeState->Cleanup();
 		}
@@ -170,29 +165,6 @@ void UASCNodeState::Initialize(UEdGraphNode_Comment* Comment)
 	InitializeFromCache();
 }
 
-void UASCNodeState::PostTransacted(const FTransactionObjectEvent& TransactionEvent)
-{
-	UObject::PostTransacted(TransactionEvent);
-
-	// FASCState::Get().GetASCComment();
-	// UE_LOG(LogTemp, Warning, TEXT("Transacted?"));
-	//
-	// if (CommentNode.IsValid())
-	// {
-	// 	UpdateCommentStateChange();
-	// 	// if (auto ASCComment = FASCState::Get().GetASCComment(CommentNode.Get()))
-	// 	// {
-	// 	// 	TSet<UObject*> Objs;
-	// 	// 	for (UEdGraphNode* Node : NodesUnderComment)
-	// 	// 	{
-	// 	// 		Objs.Add(Node);
-	// 	// 	}
-	// 	//
-	// 	// 	ASCComment->ReplaceNodes(Objs);
-	// 	// }
-	// }
-}
-
 void UASCNodeState::PostEditUndo()
 {
 	UObject::PostEditUndo();
@@ -221,13 +193,6 @@ void UASCNodeState::InitializeFromCache()
 	if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(CommentNode.Get(), OutNodesUnder))
 	{
 		ReplaceNodes(OutNodesUnder, false);
-
-		UE_LOG(LogTemp, Warning, TEXT("Init %s"), *CommentNode->NodeComment);
-		for (auto Node : OutNodesUnder)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *Node->NodeGuid.ToString());
-		}
-		// WriteToComment();
 	}
 }
 
@@ -278,24 +243,17 @@ void UASCNodeState::UpdateCommentStateChange(bool bUpdateParentComments)
 		UpdateParentComments();
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Update changed %s %d,%d %d,%d"), *CommentNode->NodeComment, CommentNode->NodePosX, CommentNode->NodePosY, CommentNode->NodeWidth, CommentNode->NodeHeight);
+	// UE_LOG(LogAutoSizeComments, Warning, TEXT("Update changed %s %d,%d %d,%d"), *CommentNode->NodeComment, CommentNode->NodePosX, CommentNode->NodePosY, CommentNode->NodeWidth, CommentNode->NodeHeight);
 	if (WriteNodesToComment())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("\tActually Changed"));
-
 		// don't update the graph node if it's been deleted off the graph
-		auto ASCGraphNode = FASCState::Get().GetASCComment(CommentNode.Get());
+		TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode.Get());
 		if (ASCGraphNode.IsValid())
 		{
 			if (!FASCUtils::HasNodeBeenDeleted(CommentNode.Get()))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("\t\tUpdating graph node!"));
 				ASCGraphNode->HandleCommentNodeStateChanged(this);
 			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Has not ASC Graph node!"));
 		}
 	}
 }
@@ -483,7 +441,6 @@ void UASCNodeState::RemoveChild(UASCNodeState* ChildNodeState)
 
 void UASCNodeState::UpdateParentComments()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Update parent comments %s"), *CommentNode->NodeComment);
 	// check all the comments in our graph
 	TArray<UEdGraphNode_Comment*> AllComments = FASCUtils::GetCommentsFromGraph(CommentNode->GetGraph());
 
@@ -501,20 +458,15 @@ void UASCNodeState::UpdateParentComments()
 		UASCNodeState* OtherCommentState = Get(OtherComment);
 
 		TSet<UEdGraphNode*> OtherMajorNodes = OtherCommentState->GetMajorNodesUnderComment();
-		UE_LOG(LogTemp, Warning, TEXT("Checking the other comment? %s"), *OtherComment->NodeComment);
-
 		bool bShouldAddOtherNode = OtherMajorNodes.Num() > 0;
 
 		bool bCheckNewRelationship = true;
 
 		if (ParentComments.Contains(OtherCommentState))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("1"));
 			// if not included from the parent, remove ourselves
 			if (MajorNodes.IsEmpty() || !OtherMajorNodes.Includes(MajorNodes))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("REMOVING PARENT"));
-				// UE_LOG(LogTemp, Warning, TEXT("aaaa"));
 				OtherCommentState->RemoveChild(this);
 				DirtyNodes.Add(OtherCommentState);
 			}
@@ -525,11 +477,9 @@ void UASCNodeState::UpdateParentComments()
 		}
 		else if (ChildComments.Contains(OtherCommentState))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("1111"));
 			// if we don't include the child, remove it
 			if (OtherMajorNodes.IsEmpty() || !MajorNodes.Includes(OtherMajorNodes))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("REMOVING CHILD"));
 				RemoveChild(OtherCommentState);
 				DirtyNodes.Add(OtherCommentState);
 			}
@@ -542,15 +492,12 @@ void UASCNodeState::UpdateParentComments()
 		// else
 		if (bCheckNewRelationship)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("3"));
 			// if we have more nodes than the other comment, then try to add the other comment
 			if (bShouldAddOtherNode && MajorNodes.Num() > OtherMajorNodes.Num())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("2"));
 				// if we contain the other comment, add the other comment
 				if (!OtherMajorNodes.IsEmpty() && MajorNodes.Includes(OtherMajorNodes))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("WE CONTAINS OTHER"));
 					AddChild(OtherCommentState);
 					DirtyNodes.Add(OtherCommentState);
 				}
@@ -561,8 +508,6 @@ void UASCNodeState::UpdateParentComments()
 				// otherwise check if the other comment contains us
 				if (OtherMajorNodes.Includes(MajorNodes))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("OTHER CONTAINS US"));
-
 					OtherCommentState->AddChild(this);
 					DirtyNodes.Add(OtherCommentState);
 				}

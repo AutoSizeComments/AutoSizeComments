@@ -157,8 +157,6 @@ bool FAutoSizeCommentsInputProcessor::OnKeyOrMouseDown(FSlateApplication& SlateA
 {
 	KeysDown.Add(Key);
 
-	// UE_LOG(LogTemp, Warning, TEXT("On key or mouse down?"));
-
 	if (UAutoSizeCommentsSettings::Get().RemoveNodeFromCommentKey.GetRelationship(UAutoSizeCommentsSettings::Get().AddNodeToCommentKey) == FInputChord::ERelationshipType::Masked)
 	{
 		if (RunRemoveNodeCommand(Key))
@@ -202,7 +200,6 @@ bool FAutoSizeCommentsInputProcessor::OnKeyOrMouseUp(FSlateApplication& SlateApp
 				TSet<UEdGraphNode*> SelectedNodes = FASCUtils::GetSelectedNodes(GraphPanel, false);
 				if (SelectedNodes.Num() > 0)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Process alt release %d"), GEditor->IsTransactionActive());
 					FAutoSizeCommentGraphHandler::Get().ProcessAltReleased(GraphPanel);
 				}
 			}

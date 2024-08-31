@@ -105,7 +105,7 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 	if (Node->NodePosX != NodeX || Node->NodePosY != NodeY)
 	{
 #if DEBUG_CHANGE_DATA
-		UE_LOG(LogTemp, Warning, TEXT("Node pos changed"));
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Node pos changed"));
 #endif
 		return true;
 	}
@@ -120,7 +120,7 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 			if (FoundPinData->HasPinChanged(Pin))
 			{
 #if DEBUG_CHANGE_DATA
-				UE_LOG(LogTemp, Warning, TEXT("Pin changed"));
+				UE_LOG(LogAutoSizeComments, Warning, TEXT("Pin changed"));
 #endif
 				return true;
 			}
@@ -137,7 +137,7 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 	if (PinGuids.Num())
 	{
 #if DEBUG_CHANGE_DATA
-		UE_LOG(LogTemp, Warning, TEXT("Num pins changed"));
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Num pins changed"));
 #endif
 		return true;
 	}
@@ -145,7 +145,7 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 	if (AdvancedPinDisplay != (Node->AdvancedPinDisplay == ENodeAdvancedPins::Shown))
 	{
 #if DEBUG_CHANGE_DATA
-		UE_LOG(LogTemp, Warning, TEXT("Advanced display changed"));
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Advanced display changed"));
 #endif
 		return true;
 	}
@@ -153,7 +153,7 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 	if (NodeTitle != Node->GetNodeTitle(ENodeTitleType::FullTitle).ToString())
 	{
 #if DEBUG_CHANGE_DATA
-		UE_LOG(LogTemp, Warning, TEXT("Title changed"));
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Title changed"));
 #endif
 		return true;
 	}
@@ -161,7 +161,7 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 	if (bCommentBubblePinned != Node->bCommentBubblePinned)
 	{
 #if DEBUG_CHANGE_DATA
-		UE_LOG(LogTemp, Warning, TEXT("Comment bubble pinned changed"));
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Comment bubble pinned changed"));
 #endif
 		return true;
 	}
@@ -169,7 +169,7 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 	if (NodeEnabledState != Node->GetDesiredEnabledState())
 	{
 #if DEBUG_CHANGE_DATA
-		UE_LOG(LogTemp, Warning, TEXT("Node enabled state changed"));
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Node enabled state changed"));
 #endif
 		return true;
 	}
@@ -179,7 +179,7 @@ bool FASCNodeChangeData::HasNodeChanged(UEdGraphNode* Node)
 		if (DelegateFunctionName != Delegate->GetFunctionName())
 		{
 #if DEBUG_CHANGE_DATA
-			UE_LOG(LogTemp, Warning, TEXT("Delegate function name changed"));
+			UE_LOG(LogAutoSizeComments, Warning, TEXT("Delegate function name changed"));
 #endif
 			return true;
 		}
@@ -230,7 +230,7 @@ bool FASCCommentChangeData::HasCommentChanged(UEdGraphNode_Comment* Comment)
 		if (!Node.IsValid() || !Graph->Nodes.Contains(Node))
 		{
 #if DEBUG_CHANGE_DATA
-			UE_LOG(LogTemp, Warning, TEXT("Node deleted"));
+			UE_LOG(LogAutoSizeComments, Warning, TEXT("Node deleted"));
 #endif
 			LastNodes.RemoveAt(i);
 		}
@@ -240,7 +240,7 @@ bool FASCCommentChangeData::HasCommentChanged(UEdGraphNode_Comment* Comment)
 	if (Comment->GetNodesUnderComment().Num() != LastNodes.Num())
 	{
 #if DEBUG_CHANGE_DATA
-		UE_LOG(LogTemp, Warning, TEXT("Node added or removed!"));
+		UE_LOG(LogAutoSizeComments, Warning, TEXT("Node added or removed!"));
 #endif
 		return true;
 	}
@@ -250,7 +250,7 @@ bool FASCCommentChangeData::HasCommentChanged(UEdGraphNode_Comment* Comment)
 		if (!LastNodes.Contains(Node))
 		{
 #if DEBUG_CHANGE_DATA
-			UE_LOG(LogTemp, Warning, TEXT("Node added"));
+			UE_LOG(LogAutoSizeComments, Warning, TEXT("Node added"));
 #endif
 			return true;
 		}
@@ -264,7 +264,7 @@ bool FASCCommentChangeData::HasCommentChanged(UEdGraphNode_Comment* Comment)
 			if (Data && Data->HasNodeChanged(Node.Get()))
 			{
 #if DEBUG_CHANGE_DATA
-				UE_LOG(LogTemp, Warning, TEXT("Data has changed!"));
+				UE_LOG(LogAutoSizeComments, Warning, TEXT("Data has changed!"));
 #endif
 				return true;
 			}

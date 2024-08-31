@@ -235,7 +235,6 @@ void FAutoSizeCommentGraphHandler::AutoInsertIntoCommentNodes(TWeakObjectPtr<UEd
 	{
 		static void TakeCommentNode(UEdGraph* Graph, UEdGraphNode* Node, UEdGraphNode* NodeToTakeFrom)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Take comment node?"));
 			if (!Graph || !Node || !NodeToTakeFrom)
 				return;
 
@@ -1012,11 +1011,6 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 	{
 		return;
 	}
-
-	// if (auto Test = Cast<UAutoSizeCommentNodeObject>(Object))
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("Transacted node obj"));
-	// }
 
 	// we are probably currently dragging a node around so don't update now
 	if (FSlateApplication::Get().GetModifierKeys().IsAltDown())

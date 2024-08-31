@@ -265,22 +265,6 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 		return FReply::Unhandled();
 	}
 
-	if (ASCNodeState)
-	{
-		for (UEdGraphNode* NodesUnderComment : ASCNodeState->GetNodesUnderComment())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UNDER COMMENT STATE %p"), NodesUnderComment);
-		}
-	}
-
-	if (CommentNode)
-	{
-		for (UObject* NodesUnderComment : CommentNode->GetNodesUnderComment())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UNDER COMMENT ORIGINAL %p"), NodesUnderComment);
-		}
-	}
-
 	if (MouseEvent.GetEffectingButton() == GetResizeKey() && AreResizeModifiersDown())
 	{
 		CachedAnchorPoint = GetAnchorPoint(MyGeometry, MouseEvent);
@@ -801,14 +785,12 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 	TSharedPtr<SGraphNode> NodeWidget = OwnerPanel->GetNodeWidgetFromGuid(CommentNode->NodeGuid);
 	if (NodeWidget != AsShared())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Comment invalid?"));
 		return;
 	}
 
 	// if there is already a registered comment do nothing
 	if (TSharedPtr<SAutoSizeCommentsGraphNode> RegisteredComment = FASCState::Get().GetASCComment(CommentNode))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Already registered comment, do nothing"));
 		if (RegisteredComment.Get() != this)
 		{
 			return;
@@ -1155,7 +1137,6 @@ bool SAutoSizeCommentsGraphNode::ReplaceNodes(TSet<UObject*> Nodes)
 
 void SAutoSizeCommentsGraphNode::HandleCommentNodeStateChanged(UASCNodeState* NodeState)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Commetn node state changed? %s"), *CommentNode->NodeComment);
 	ResizeToFit();
 
 	if (IsSingleSelectedNode())
@@ -1581,7 +1562,6 @@ void SAutoSizeCommentsGraphNode::ResizeToFit(bool bCheckTwice)
 				FTimerHandle OutHandle;
 				GEditor->GetTimerManager()->SetTimer(OutHandle, [&]()
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Resize again?"));
 					ResizeToFit(false);
 				}, 0.2, false);
 			}
