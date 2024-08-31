@@ -84,11 +84,6 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 
 SAutoSizeCommentsGraphNode::~SAutoSizeCommentsGraphNode()
 {
-	if (ASCNodeState)
-	{
-		ASCNodeState->OnNodeStateChanged.RemoveAll(this);
-	}
-
 	if (!bInitialized)
 	{
 		return;
@@ -829,9 +824,6 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 
 		bInitialized = true;
 
-		// bind to comment stat
-		// ASCNodeState->OnNodeStateChanged.AddRaw(this, &SAutoSizeCommentsGraphNode::HandleCommentNodeStateChanged);
-
 		// register graph
 		FASCState::Get().RegisterComment(SharedThis(this));
 
@@ -1283,7 +1275,7 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 
 		if (RefreshNodesDelay == 0)
 		{
-			RefreshNodesInsideComment(ECommentCollisionMethod::Point);
+			RefreshNodesInsideComment(ECommentCollisionMethod::Point, false, false);
 
 			// so that it doesn't trigger the auto resize check
 			FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
@@ -1328,7 +1320,7 @@ void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisi
 	// 	return;
 	// }
 
-	ASCNodeState->ReplaceNodes(OutNodes);
+	ASCNodeState->ReplaceNodes(OutNodes, bUpdateExistingComments);
 	// ASCNodeState->ClearNodes(false);
 	// ASCNodeState->AddNodes(OutNodes, true);
 	// FASCUtils::ClearCommentNodes(CommentNode, false);
@@ -2090,7 +2082,7 @@ EASCAnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGe
 	return EASCAnchorPoint::None;
 }
 
-void SAutoSizeCommentsGraphNode::UpdateHeaderStyle(bool bIsHeader, bool bUpdateStyle)
+void SAutoSizeCommentsGraphNode::SetHeaderStyle(bool bIsHeader, bool bUpdateStyle)
 {
 	// do nothing if we are already a header
 	// if (bIsHeader == bNewValue)
@@ -2108,31 +2100,35 @@ void SAutoSizeCommentsGraphNode::UpdateHeaderStyle(bool bIsHeader, bool bUpdateS
 
 	if (bUpdateStyle)
 	{
-		if (bIsHeader) // apply header style
-		{
-			ApplyHeaderStyle();
-			ASCNodeState->ClearNodes();
-		}
-		else // undo header style
-		{
-			CommentNode->Modify();
-			const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
-			if (ASCSettings.DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
-			{
-				RandomizeColor();
-			}
-			else
-			{
-				CommentNode->CommentColor = ASCSettings.DefaultCommentColor;
-			}
-
-			CommentNode->FontSize = ASCSettings.DefaultFontSize;
-			AdjustMinSize(UserSize);
-			CommentNode->ResizeNode(UserSize);
-		}
+		ApplyHeaderStyle();
+		UpdateGraphNode();
 	}
+}
 
-	UpdateGraphNode();
+void SAutoSizeCommentsGraphNode::ApplyHeaderStyle(bool bIsHeader)
+{
+	if (bIsHeader) // apply header style
+	{
+		ApplyHeaderStyle();
+		ASCNodeState->ClearNodes();
+	}
+	else // undo header style
+	{
+		CommentNode->Modify();
+		const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
+		if (ASCSettings.DefaultCommentColorMethod == EASCDefaultCommentColorMethod::Random)
+		{
+			RandomizeColor();
+		}
+		else
+		{
+			CommentNode->CommentColor = ASCSettings.DefaultCommentColor;
+		}
+
+		CommentNode->FontSize = ASCSettings.DefaultFontSize;
+		AdjustMinSize(UserSize);
+		CommentNode->ResizeNode(UserSize);
+	}
 }
 
 bool SAutoSizeCommentsGraphNode::IsHeaderComment() const

@@ -3,6 +3,7 @@
 #include "AutoSizeCommentNodeState.h"
 
 #include "AutoSizeCommentsCacheFile.h"
+#include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
@@ -208,36 +209,10 @@ void UASCNodeState::PostEditUndo()
 			TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode.Get());
 			if (ASCGraphNode.IsValid())
 			{
-				ASCGraphNode->UpdateHeaderStyle(bIsHeader, true);
+				ASCGraphNode->SetHeaderStyle(bIsHeader, true);
 			}
 		}
-		// UE_LOG(LogTemp, Warning, TEXT("Undo? %s"), *CommentNode->NodeComment);
-		// //
-		// for (UEdGraphNode* UnderComment : NodesUnderComment)
-		// {
-		// 	if (UnderComment)
-		// 	{
-		// 		UE_LOG(LogTemp, Warning, TEXT("\t%p"), UnderComment);
-		// 		// CommentData.NodeGuids.Add(UnderComment->NodeGuid);
-		// 	}
-		// }
-
-		// GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() { UpdateCommentStateChange(); } ));
-
-		// if (!UAutoSizeCommentsSettings::Get().bDebugGraph_ASC)
-		// {
-		// 	UpdateCommentStateChange(false);
-		// }
 	}
-
-	// if (!CommentNode.IsValid())
-	// {
-	// 	return;
-	// }
-	//
-	// FASCCommentData& CommentData = FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode.Get());
-	// CommentData.NodeGuids.Empty();
-	//
 }
 
 void UASCNodeState::InitializeFromCache()
@@ -269,7 +244,6 @@ bool UASCNodeState::WriteNodesToComment()
 		const bool bMissingNode = CommentNode->GetNodesUnderComment().ContainsByPredicate([&](UObject* Node) { return !NodesUnderComment.Contains(Cast<UEdGraphNode>(Node)); });
 		if (!bMissingNode)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("\tNot missing anything??!!!!"));
 			return false;
 		}
 	}
@@ -286,7 +260,6 @@ bool UASCNodeState::WriteNodesToComment()
 	FASCCommentData& CommentData = FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode.Get());
 	CommentData.UpdateNodesUnderComment(CommentNode.Get());
 
-	OnNodeStateChanged.Broadcast(this);
 
 	return true;
 }
@@ -324,7 +297,6 @@ void UASCNodeState::UpdateCommentStateChange(bool bUpdateParentComments)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Has not ASC Graph node!"));
 		}
-		OnNodeStateChanged.Broadcast(this);
 	}
 }
 
@@ -342,9 +314,14 @@ bool UASCNodeState::CanAddNode(UEdGraphNode* Node, bool bIgnoreKnots)
 
 	if (UEdGraphNode_Comment* OtherComment = Cast<UEdGraphNode_Comment>(Node))
 	{
-		// TODO check if header node
+		if (UASCNodeState* OtherState = UASCNodeState::Get(OtherComment))
+		{
+			if (OtherState->IsHeader())
+			{
+				return false;
+			}
+		}
 
-		// TODO don't add comment if the comment contains us
 		if (FASCUtils::DoesCommentContainComment(OtherComment, CommentNode.Get()))
 		{
 			return false;
@@ -617,7 +594,7 @@ bool UASCNodeState::SetIsHeader(bool bNewValue)
 	auto ASCGraphNode = FASCState::Get().GetASCComment(CommentNode.Get());
 	if (ASCGraphNode.IsValid())
 	{
-		ASCGraphNode->UpdateHeaderStyle(bIsHeader, true);
+		ASCGraphNode->SetHeaderStyle(bIsHeader, true);
 	}
 
 	return true;

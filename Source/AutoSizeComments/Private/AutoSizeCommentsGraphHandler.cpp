@@ -310,7 +310,6 @@ void FAutoSizeCommentGraphHandler::RegisterActiveGraphPanel(TSharedPtr<SGraphPan
 	{
 		if (UAutoSizeCommentsSettings::Get().bUseMaxDetailNodes)
 		{
-			// TODO: Find fallback for <5.0 if possible
 #if ASC_UE_VERSION_OR_LATER(5, 0)
 			// init the graph panel
 			GraphPanel->SetZoomLevelsContainer<FASCZoomLevelsContainer>();
@@ -1033,6 +1032,11 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 			if (GetResizingMode(Node->GetGraph()) != EASCResizingMode::Disabled)
 			{
 				GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
+			}
+
+			if (UEdGraphNode_Comment* Comment = Cast<UEdGraphNode_Comment>(Object))
+			{
+				UpdateCommentChangeState(Comment);
 			}
 		}
 		

@@ -27,8 +27,6 @@ public:
 	void Initialize(UEdGraphNode_Comment* Comment);
 	void Cleanup();
 
-	FOnASCNodeStateChanged OnNodeStateChanged;
-
 	UPROPERTY()
 	TWeakObjectPtr<UEdGraphNode_Comment> CommentNode;
 
