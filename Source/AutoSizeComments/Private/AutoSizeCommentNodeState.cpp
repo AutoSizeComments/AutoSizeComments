@@ -183,6 +183,7 @@ void UASCNodeState::PostEditUndo()
 			}
 		}
 
+		WriteNodesToComment();
 		FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode.Get());
 	}
 }
@@ -234,6 +235,24 @@ bool UASCNodeState::WriteHeaderToComment()
 	FASCCommentData& CommentData = FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode.Get());
 	CommentData.SetHeader(bIsHeader);
 	return true;
+}
+
+bool UASCNodeState::SyncStateToComment()
+{
+	if (!CommentNode.IsValid())
+	{
+		return false;
+	}
+
+	TSet<UEdGraphNode*> CurrentNodes = TSet(FASCUtils::GetNodesUnderComment(CommentNode.Get()));
+	const bool bHasChanges = CurrentNodes.Num() != NodesUnderComment.Num() || NodesUnderComment.Difference(CurrentNodes).Num() > 0;
+	if (bHasChanges)
+	{
+		ReplaceNodes(CurrentNodes.Array());
+		return true;
+	}
+
+	return false;
 }
 
 void UASCNodeState::UpdateCommentStateChange(bool bUpdateParentComments)
@@ -534,9 +553,14 @@ bool UASCNodeState::SetIsHeader(bool bNewValue)
 	bIsHeader = bNewValue;
 	bPrevIsHeader = bIsHeader;
 
+	if (!bIsHeader)
+	{
+		ClearNodes(true);
+	}
+
 	WriteHeaderToComment();
-	
-	auto ASCGraphNode = FASCState::Get().GetASCComment(CommentNode.Get());
+
+	TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode.Get());
 	if (ASCGraphNode.IsValid())
 	{
 		ASCGraphNode->SetHeaderStyle(bIsHeader, true);

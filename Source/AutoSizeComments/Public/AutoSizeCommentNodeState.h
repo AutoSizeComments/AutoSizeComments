@@ -35,6 +35,7 @@ public:
 	void InitializeFromCache();
 	bool WriteNodesToComment();
 	bool WriteHeaderToComment();
+	bool SyncStateToComment();
 	void UpdateCommentStateChange(bool bUpdateParentComments = true);
 
 	bool CanAddNode(UEdGraphNode* Node, bool bIgnoreKnots = false);

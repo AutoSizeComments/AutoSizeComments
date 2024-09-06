@@ -146,7 +146,6 @@ public:
 	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
 
 	void SetHeaderStyle(bool bIsHeader, bool bUpdateStyle);
-	void ApplyHeaderStyle(bool bIsHeader);
 	bool IsHeaderComment() const;
 	bool IsPresetStyle();
 

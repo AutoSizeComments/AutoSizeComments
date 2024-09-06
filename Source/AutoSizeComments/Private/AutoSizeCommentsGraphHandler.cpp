@@ -1012,14 +1012,16 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 		return;
 	}
 
+	// UE_LOG(LogTemp, Warning, TEXT("Transact %s %d"), *GetNameSafe(Object), Event.GetEventType());
+
 	// we are probably currently dragging a node around so don't update now
 	if (FSlateApplication::Get().GetModifierKeys().IsAltDown())
 	{
 		return;
 	}
 
-	if (Event.GetEventType() == ETransactionObjectEventType::UndoRedo ||
-		Event.GetEventType() == ETransactionObjectEventType::Finalized)
+	// if a node was adjusted, find any comments that contain that node and resize to fit
+	if (Event.GetEventType() == ETransactionObjectEventType::UndoRedo || Event.GetEventType() == ETransactionObjectEventType::Finalized)
 	{
 		if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
 		{
@@ -1027,13 +1029,24 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 			{
 				GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
 			}
+		}
+	}
 
-			if (UEdGraphNode_Comment* Comment = Cast<UEdGraphNode_Comment>(Object))
+	if (UEdGraphNode_Comment* Comment = Cast<UEdGraphNode_Comment>(Object))
+	{
+		// when we undo, update the change state so the ASCGraphNode does not think there a change
+		if (Event.GetEventType() == ETransactionObjectEventType::UndoRedo)
+		{
+			UpdateCommentChangeState(Comment);
+		}
+		// when a comment is transacted, it may have had nodes added to it externally (from BA plugin) - sync to the comment if this happens 
+		else if (Event.GetEventType() == ETransactionObjectEventType::Finalized)
+		{
+			if (UASCNodeState* NodeState = UASCNodeState::Get(Comment))
 			{
-				UpdateCommentChangeState(Comment);
+				NodeState->SyncStateToComment();
 			}
 		}
-		
 	}
 }
 
