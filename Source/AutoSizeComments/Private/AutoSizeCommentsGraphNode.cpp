@@ -806,9 +806,6 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		// register graph
 		FASCState::Get().RegisterComment(SharedThis(this));
 
-		// init graph handler for containing graph
-		FAutoSizeCommentGraphHandler::Get().BindToGraph(CommentNode->GetGraph());
-
 		FAutoSizeCommentGraphHandler::Get().RegisterActiveGraphPanel(GetOwnerPanel());
 
 		InitializeNodesUnderComment(InitialSelectedNodes);
