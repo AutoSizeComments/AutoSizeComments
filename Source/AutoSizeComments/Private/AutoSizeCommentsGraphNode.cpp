@@ -1179,7 +1179,7 @@ bool SAutoSizeCommentsGraphNode::ResizeNode(int32 NewWidth, int32 NewHeight, boo
 	{
 		if (bModify)
 		{
-			CommentNode->Modify();
+			FASCUtils::ModifyObject(CommentNode);
 		}
 		CommentNode->NodeWidth = NewWidth;
 		CommentNode->NodeHeight = NewHeight;
@@ -1200,7 +1200,7 @@ bool SAutoSizeCommentsGraphNode::MoveNodeTo(int32 NodePosX, int32 NodePosY, bool
 	{
 		if (bModify)
 		{
-			CommentNode->Modify();
+			FASCUtils::ModifyObject(CommentNode);
 		}
 		CommentNode->NodePosX = NodePosX;
 		CommentNode->NodePosY = NodePosY;

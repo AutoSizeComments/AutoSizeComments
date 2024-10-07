@@ -53,4 +53,6 @@ struct FASCUtils
 	static bool DoesCommentContainComment(UEdGraphNode_Comment* Source, UEdGraphNode_Comment* Other);
 
 	static void SetCommentFontSizeAndColor(UEdGraphNode_Comment* Comment, int32 FontSize, const FLinearColor& Color, bool bModify = true);
+
+	static void ModifyObject(UObject* Obj);
 };

@@ -1023,11 +1023,22 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 	// if a node was adjusted, find any comments that contain that node and resize to fit
 	if (Event.GetEventType() == ETransactionObjectEventType::UndoRedo || Event.GetEventType() == ETransactionObjectEventType::Finalized)
 	{
-		if (UEdGraphNode* Node = Cast<UEdGraphNode>(Object))
+		UEdGraphNode* ChangedNode = Cast<UEdGraphNode>(Object);
+
+		// check if it's an ASCNodeState change
+		if (!ChangedNode)
 		{
-			if (GetResizingMode(Node->GetGraph()) != EASCResizingMode::Disabled)
+			if (UASCNodeState* State = Cast<UASCNodeState>(Object))
 			{
-				GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(Node)));
+				ChangedNode = State->CommentNode.Get();
+			}
+		}
+
+		if (ChangedNode)
+		{
+			if (GetResizingMode(ChangedNode->GetGraph()) != EASCResizingMode::Disabled)
+			{
+				GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::UpdateContainingComments, TWeakObjectPtr<UEdGraphNode>(ChangedNode)));
 			}
 		}
 	}

@@ -14,6 +14,8 @@
 #include "Misc/LazySingleton.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 
+class UTransBuffer;
+
 void UASCNodeState::Cleanup()
 {
 	if (IsRooted())
@@ -320,7 +322,7 @@ bool UASCNodeState::AddNode(UEdGraphNode* Node, bool bUpdateComment)
 		return false;
 	}
 
-	Modify();
+	FASCUtils::ModifyObject(this);
 	NodesUnderComment.Add(Node);
 
 	if (bUpdateComment)
@@ -333,7 +335,7 @@ bool UASCNodeState::AddNode(UEdGraphNode* Node, bool bUpdateComment)
 
 bool UASCNodeState::RemoveNode(UEdGraphNode* Node, bool bUpdateComment)
 {
-	Modify();
+	FASCUtils::ModifyObject(this);
 
 	const bool bRemovedSomething = NodesUnderComment.Remove(Node) > 0;
 
@@ -347,7 +349,7 @@ bool UASCNodeState::RemoveNode(UEdGraphNode* Node, bool bUpdateComment)
 
 bool UASCNodeState::AddNodes(const TArray<UEdGraphNode*>& Nodes, bool bUpdateComment)
 {
-	Modify();
+	FASCUtils::ModifyObject(this);
 
 	bool bChanged = false;
 	for (UEdGraphNode* Node : Nodes)
@@ -365,7 +367,7 @@ bool UASCNodeState::AddNodes(const TArray<UEdGraphNode*>& Nodes, bool bUpdateCom
 
 bool UASCNodeState::RemoveNodes(const TArray<UEdGraphNode*>& Nodes, bool bUpdateComment)
 {
-	Modify();
+	FASCUtils::ModifyObject(this);
 
 	bool bChanged = false;
 
@@ -389,7 +391,7 @@ void UASCNodeState::ClearNodes(bool bUpdateComment)
 		return;
 	}
 
-	Modify();
+	FASCUtils::ModifyObject(this);
 	NodesUnderComment.Empty();
 
 	if (bUpdateComment)
@@ -410,7 +412,7 @@ bool UASCNodeState::ReplaceNodes(const TArray<UEdGraphNode*>& Nodes, bool bUpdat
 		}
 	}
 
-	Modify();
+	FASCUtils::ModifyObject(this);
 	ClearNodes(false);
 	AddNodes(Nodes, bUpdateComment);
 
@@ -437,8 +439,8 @@ void UASCNodeState::AddChild(UASCNodeState* ChildNodeState)
 {
 	if (ChildNodeState)
 	{
-		ChildNodeState->Modify();
-		Modify();
+		FASCUtils::ModifyObject(ChildNodeState);
+		FASCUtils::ModifyObject(this);
 		ChildComments.Add(ChildNodeState);
 		ChildNodeState->ParentComments.Add(this);
 		NodesUnderComment.Add(ChildNodeState->CommentNode.Get());
@@ -447,12 +449,12 @@ void UASCNodeState::AddChild(UASCNodeState* ChildNodeState)
 
 void UASCNodeState::RemoveChild(UASCNodeState* ChildNodeState)
 {
-	Modify();
+	FASCUtils::ModifyObject(this);
 	ChildComments.Remove(ChildNodeState);
 
 	if (ChildNodeState)
 	{
-		ChildNodeState->Modify();
+		FASCUtils::ModifyObject(ChildNodeState);
 		ChildNodeState->ParentComments.Remove(this);
 		NodesUnderComment.Remove(ChildNodeState->CommentNode.Get());
 	}

@@ -5,7 +5,9 @@
 #include "AutoSizeCommentsGraphNode.h"
 #include "AutoSizeCommentsState.h"
 #include "EdGraphNode_Comment.h"
+#include "Editor.h"
 #include "SGraphPanel.h"
+#include "Editor/TransBuffer.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
@@ -493,5 +495,28 @@ void FASCUtils::SetCommentFontSizeAndColor(UEdGraphNode_Comment* Comment, int32 
 
 		Comment->FontSize = FontSize;
 		Comment->CommentColor = Color;
+	}
+}
+
+void FASCUtils::ModifyObject(UObject* Obj)
+{
+	if (!Obj)
+	{
+		return;
+	}
+
+	// if we have an active transaction, just write to that
+	if (GUndo)
+	{
+		Obj->Modify();
+		return;
+	}
+
+	// otherwise write to the last transaction in the buffer
+	// UE_LOG(LogTemp, Warning, TEXT("Found trans buffer %d %d"), GEditor->Trans->GetQueueLength(), GEditor->Trans->GetUndoCount());
+	const int QueueIndex = GEditor->Trans->GetQueueLength() - GEditor->Trans->GetUndoCount() - 1;
+	if (FTransaction* CurrentTrans = const_cast<FTransaction*>(GEditor->Trans->GetTransaction(QueueIndex)))
+	{
+		CurrentTrans->SaveObject(Obj);
 	}
 }
