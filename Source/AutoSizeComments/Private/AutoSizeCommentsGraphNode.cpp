@@ -262,6 +262,14 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 		return FReply::Unhandled();
 	}
 
+	FAutoSizeCommentsCacheFile::Get().PrintCache();
+
+	// UE_LOG(LogTemp, Warning, TEXT("%p %p"), this, UASCNodeState::Get(CommentNode));
+	// for (UObject* NodesUnderComment : CommentNode->GetNodesUnderComment())
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("\t%s"), *GetNameSafe(NodesUnderComment));
+	// }
+
 	if (MouseEvent.GetEffectingButton() == GetResizeKey() && AreResizeModifiersDown())
 	{
 		CachedAnchorPoint = GetAnchorPoint(MyGeometry, MouseEvent);
@@ -850,11 +858,16 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 		return;
 	}
 
-	// LoadCache();
-
 	FASCCommentData& CommentData = GetCommentData();
 	if (CommentData.HasBeenInitialized())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Skip comment already init? %s"), *FASCNodeId(CommentNode).ToString());
+
+		for (auto Data : FAutoSizeCommentsCacheFile::Get().GetGraphData(CommentNode->GetGraph()).CommentData)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Existing %s"), *Data.Key.ToString());
+		}
+
 		return;
 	}
 

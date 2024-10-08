@@ -5,6 +5,7 @@
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsGraphNode.h"
+#include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsUtils.h"
@@ -18,6 +19,7 @@ class UTransBuffer;
 
 void UASCNodeState::Cleanup()
 {
+	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("Cleanup ASCNodeState %p"), this);
 	if (IsRooted())
 	{
 		RemoveFromRoot();
@@ -78,53 +80,55 @@ void FASCNodeStateManager::Cleanup()
 
 void FASCNodeStateManager::CleanupCommentStateMap()
 {
-	TSet<FGuid> InvalidNodes;
+	TSet<TWeakObjectPtr<UEdGraphNode>> Nodes;
+	CommentStateMap.GetKeys(Nodes);
 
-	for (const auto& Elem : CommentStateMap)
+	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("CleanupCommentStateMap %d"), CommentStateMap.Num());
+	for (auto It = CommentStateMap.CreateIterator(); It; ++It)
 	{
-		UASCNodeState* NodeState = Elem.Value;
-		if (!NodeState->CommentNode.IsValid())
+		TWeakObjectPtr<UEdGraphNode> Node = It.Key();
+		if (!Node.IsValid())
 		{
-			InvalidNodes.Add(Elem.Key);
-			NodeState->Cleanup();
+			if (UASCNodeState* NodeState = It.Value())
+			{
+				NodeState->Cleanup();
+			}
+
+			It.RemoveCurrent();
+			UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("\tRemoved"));
 		}
 	}
 
-	for (const FGuid& InvalidNode : InvalidNodes)
-	{
-		CommentStateMap.Remove(InvalidNode);
-	}
+	// for (const auto& Elem : CommentStateMap)
+	// {
+	// 	if (!Elem.Key.IsValid())
+	// 	{
+	// 		UASCNodeState* NodeState = Elem.Value;
+	// 		NodeState->Cleanup();
+	// 		InvalidNodes.Add(Elem.Key);
+	//
+	// 		// if (!NodeState->CommentNode.IsValid())
+	// 		// {
+	// 		// }
+	// 	}
+	// }
+	//
+	// // CommentStateMap.Remove(nullptr);
+	// for (const TWeakObjectPtr<UEdGraphNode>& InvalidNode : InvalidNodes)
+	// {
+	// 	int32 Removed = CommentStateMap.Remove(InvalidNode);
+	// }
 }
 
 void FASCNodeStateManager::CleanupOnAssetClosed(UObject* Asset, EAssetEditorCloseReason CloseReason)
 {
-	TSet<FGuid> InvalidNodes;
-
-	for (const auto& Elem : CommentStateMap)
+	if (!Asset)
 	{
-		UASCNodeState* NodeState = Elem.Value;
-
-		// if the comment node is invalid, remove our node state
-		if (!NodeState->CommentNode.IsValid())
-		{
-			InvalidNodes.Add(Elem.Key);
-			NodeState->Cleanup();
-		}
-		else 
-		{
-			UObject* OuterMostObj = NodeState->CommentNode->GetOutermostObject();
-			if (OuterMostObj == Asset)
-			{
-				InvalidNodes.Add(Elem.Key);
-				NodeState->Cleanup();
-			}
-		}
+		return;
 	}
 
-	for (const FGuid& InvalidNode : InvalidNodes)
-	{
-		CommentStateMap.Remove(InvalidNode);
-	}
+	check(false); // does this even get called?
+	CleanupCommentStateMap();
 }
 
 UASCNodeState* FASCNodeStateManager::GetCommentState(UEdGraphNode_Comment* Comment)
@@ -134,7 +138,7 @@ UASCNodeState* FASCNodeStateManager::GetCommentState(UEdGraphNode_Comment* Comme
 		return nullptr;
 	}
 
-	if (UASCNodeState* Obj = CommentStateMap.FindRef(Comment->NodeGuid))
+	if (UASCNodeState* Obj = CommentStateMap.FindRef(Comment))
 	{
 		if (IsValid(Obj))
 		{
@@ -145,7 +149,7 @@ UASCNodeState* FASCNodeStateManager::GetCommentState(UEdGraphNode_Comment* Comme
 	}
 
 	UASCNodeState* NewState = NewObject<UASCNodeState>();
-	CommentStateMap.Add(Comment->NodeGuid, NewState);
+	CommentStateMap.Add(Comment, NewState);
 	NewState->Initialize(Comment);
 	return NewState;
 }
@@ -155,6 +159,12 @@ UASCNodeState::UASCNodeState()
 	SetFlags(RF_Transactional);
 }
 
+UASCNodeState::~UASCNodeState()
+{
+	// TODO is this required?
+	// Cleanup();
+}
+
 UASCNodeState* UASCNodeState::Get(UEdGraphNode_Comment* Comment)
 {
 	return FASCNodeStateManager::Get().GetCommentState(Comment);
@@ -162,9 +172,12 @@ UASCNodeState* UASCNodeState::Get(UEdGraphNode_Comment* Comment)
 
 void UASCNodeState::Initialize(UEdGraphNode_Comment* Comment)
 {
+	check(Comment);
+
 	CommentNode = Comment;
 	AddToRoot();
 	InitializeFromCache();
+	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("Create ASCNodeState %p %s %p"), this, *Comment->GetName(), Comment);
 }
 
 void UASCNodeState::PostEditUndo()
@@ -195,7 +208,7 @@ void UASCNodeState::InitializeFromCache()
 	TArray<UEdGraphNode*> OutNodesUnder;
 	if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(CommentNode.Get(), OutNodesUnder))
 	{
-		ReplaceNodes(OutNodesUnder, false);
+		ReplaceNodes(OutNodesUnder, true);
 	}
 }
 
@@ -215,6 +228,8 @@ bool UASCNodeState::WriteNodesToComment()
 			return false;
 		}
 	}
+
+	UE_LOG(LogAutoSizeComments, Warning, TEXT("WriteNodesToComment %s %d,%d %d,%d"), *CommentNode->NodeComment, CommentNode->NodePosX, CommentNode->NodePosY, CommentNode->NodeWidth, CommentNode->NodeHeight);
 
 	CommentNode->ClearNodesUnderComment();
 	for (UEdGraphNode* Node : NodesUnderComment)
@@ -264,7 +279,6 @@ void UASCNodeState::UpdateCommentStateChange(bool bUpdateParentComments)
 		UpdateParentComments();
 	}
 
-	// UE_LOG(LogAutoSizeComments, Warning, TEXT("Update changed %s %d,%d %d,%d"), *CommentNode->NodeComment, CommentNode->NodePosX, CommentNode->NodePosY, CommentNode->NodeWidth, CommentNode->NodeHeight);
 	if (WriteNodesToComment())
 	{
 		// don't update the graph node if it's been deleted off the graph

@@ -10,6 +10,7 @@
 #include "Editor/TransBuffer.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "MaterialGraph/MaterialGraph.h"
 
 TArray<UEdGraphNode_Comment*> FASCUtils::GetContainingCommentNodes(const TArray<UEdGraphNode_Comment*>& Comments, UEdGraphNode* Node)
 {
@@ -513,10 +514,50 @@ void FASCUtils::ModifyObject(UObject* Obj)
 	}
 
 	// otherwise write to the last transaction in the buffer
-	// UE_LOG(LogTemp, Warning, TEXT("Found trans buffer %d %d"), GEditor->Trans->GetQueueLength(), GEditor->Trans->GetUndoCount());
 	const int QueueIndex = GEditor->Trans->GetQueueLength() - GEditor->Trans->GetUndoCount() - 1;
 	if (FTransaction* CurrentTrans = const_cast<FTransaction*>(GEditor->Trans->GetTransaction(QueueIndex)))
 	{
 		CurrentTrans->SaveObject(Obj);
 	}
 }
+
+UPackage* FASCUtils::GetPackage(UObject* Obj)
+{
+	if (!Obj)
+	{
+		return nullptr;
+	}
+
+	if (UEdGraph* Graph = Cast<UEdGraph>(Obj))
+	{
+		if (UMaterialGraph* MatGraph = Cast<UMaterialGraph>(Graph))
+		{
+			UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+			TArray<UObject*> EditedAssets = AssetEditorSubsystem->GetAllEditedAssets();
+
+			for (UObject* Asset : EditedAssets)
+			{
+				if (UMaterial* EditedMat = Cast<UMaterial>(Asset))
+				{
+					if (MatGraph->OriginalMaterialFullName == EditedMat->GetName())
+					{
+						return EditedMat->GetPackage();
+					}
+				}
+			}
+		}
+	}
+
+	return Obj->GetPackage();
+}
+
+bool FASCUtils::HasReliableGuid(UEdGraph* Graph)
+{
+	if (Graph->IsA(UMaterialGraph::StaticClass()))
+	{
+		return false;
+	}
+
+	return true;
+}
+

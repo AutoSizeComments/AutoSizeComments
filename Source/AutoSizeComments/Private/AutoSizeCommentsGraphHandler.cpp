@@ -16,10 +16,14 @@
 #include "K2Node_Knot.h"
 #include "SGraphPanel.h"
 #include "EdGraph/EdGraph.h"
+#include "Editor/MaterialEditor/Private/MaterialEditor.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Notifications/NotificationManager.h"
+#include "MaterialGraph/MaterialGraph.h"
+#include "Materials/Material.h"
 #include "Misc/LazySingleton.h"
 #include "Widgets/Notifications/SNotificationList.h"
+#include "IMaterialEditor.h"
 
 #if ASC_UE_VERSION_OR_LATER(5, 0)
 #include "UObject/ObjectSaveContext.h"
@@ -180,8 +184,6 @@ void FAutoSizeCommentGraphHandler::BindToGraph(UEdGraph* Graph)
 
 	// calling this Get function will initialize the graph (binding delegates)
 	GetGraphHandlerData(Graph);
-
-	CheckCacheDataError(Graph);
 }
 
 void FAutoSizeCommentGraphHandler::OnGraphChanged(const FEdGraphEditAction& Action)
@@ -372,46 +374,6 @@ EASCResizingMode FAutoSizeCommentGraphHandler::GetResizingMode(UEdGraph* Graph) 
 	return ASCSettings.ResizingMode;
 }
 
-void FAutoSizeCommentGraphHandler::CheckCacheDataError(UEdGraph* Graph)
-{
-	FASCGraphData& GraphData = FAutoSizeCommentsCacheFile::Get().GetGraphData(Graph);
-	TArray<UEdGraphNode_Comment*> Comments = FASCUtils::GetCommentsFromGraph(Graph);
-
-	// skip if we have no comment data for this graph
-	if (GraphData.CommentData.Num() == 0)
-	{
-		return;
-	}
-
-	TSet<FGuid> OldGuids;
-	GraphData.CommentData.GetKeys(OldGuids);
-
-	TSet<FGuid> CurrentGuids;
-	for (UEdGraphNode_Comment* Comment : Comments)
-	{
-		CurrentGuids.Add(Comment->NodeGuid);
-	}
-
-	const int MissingGuids = OldGuids.Difference(CurrentGuids).Num();
-
-	// this is to check if the nodes are having their guid's refreshed somehow
-	// so if we have the same number of nodes and they are all wrong, print an error msg
-	if (OldGuids.Num() == CurrentGuids.Num() && MissingGuids == OldGuids.Num())
-	{
-		UE_LOG(LogAutoSizeComments, Error, TEXT(
-			"Graph '%s' has failed to load all comments\n"
-			"Please report issue this at: https://github.com/AutoSizeComments/AutoSizeComments/issues/13\n"
-			"Please describe any special details of your project (for example: did you just upgrade your project to a new engine version?"),
-			*Graph->GetName());
-
-		FNotificationInfo Info(INVTEXT("ASC: Graph has failed to load comments, see output log for more details"));
-		Info.ExpireDuration = 5.0f;
-		FSlateNotificationManager::Get().AddNotification(Info);
-
-		GraphData.CommentData.Empty();
-	}
-}
-
 EGraphRenderingLOD::Type FAutoSizeCommentGraphHandler::GetGraphLOD(TSharedPtr<SGraphPanel> GraphPanel)
 {
 	if (!GraphPanel.IsValid())
@@ -588,7 +550,7 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 					}
 				}
 
-				ASCGraphNode->GetASCNodeState()->ReplaceNodes(NewNodes, false);
+				ASCGraphNode->GetASCNodeState()->ReplaceNodes(NewNodes, true);
 				ChangedGraphNodes.Add(ASCGraphNode);
 
 				if (UAutoSizeCommentsSettings::Get().ResizingMode != EASCResizingMode::Disabled)
@@ -973,8 +935,42 @@ void FAutoSizeCommentGraphHandler::OnObjectSaved(UObject* Object)
 		return;
 	}
 
+	UEdGraph* Graph = Cast<UEdGraph>(Object);
+
+	// for materials, the object being saved does not match the graph object which contains the live nodes
+	// check the graph datas and match it by looking at the preview material
+	if (UMaterial* Material = Cast<UMaterial>(Object))
+	{
+		if (UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
+		{
+			IAssetEditorInstance* AssetEditor = AssetEditorSubsystem->FindEditorForAsset(Material, false);
+			if (AssetEditor && AssetEditor->GetEditorName() == "MaterialEditor")
+			{
+				FMaterialEditor* Editor = static_cast<FMaterialEditor*>(AssetEditor);
+				check(Editor != nullptr);
+
+				// look at our graph datas to find the matching preview material
+				for (auto& Elem : GraphDatas)
+				{
+					TWeakObjectPtr<UEdGraph> ExistingGraph = Elem.Key;
+					if (ExistingGraph.IsValid())
+					{
+						if (UMaterialGraph* MatGraph = Cast<UMaterialGraph>(ExistingGraph))
+						{
+							if (MatGraph->Material == Editor->Material)
+							{
+								Graph = ExistingGraph.Get();
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// upon saving a graph, save all comments to cache
-	if (UEdGraph* Graph = Cast<UEdGraph>(Object))
+	if (Graph)
 	{
 		if (!GraphDatas.Contains(Graph))
 		{
@@ -1063,8 +1059,16 @@ void FAutoSizeCommentGraphHandler::OnObjectTransacted(UObject* Object, const FTr
 
 void FAutoSizeCommentGraphHandler::OnPostGarbageCollect()
 {
-	// cleanup invalid graphs
-	GraphDatas.Remove(nullptr);
+	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("FAutoSizeCommentGraphHandler::OnPostGarbageCollect %d"), GraphDatas.Num());
+	for (auto It = GraphDatas.CreateIterator(); It; ++It)
+	{
+		TWeakObjectPtr<UEdGraph> Graph = It.Key();
+		if (!Graph.IsValid())
+		{
+			It.RemoveCurrent();
+			UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("\tRemoved graph"));
+		}
+	}
 }
 
 void FAutoSizeCommentGraphHandler::SaveSizeCache()

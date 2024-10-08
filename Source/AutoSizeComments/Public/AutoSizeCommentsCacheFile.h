@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ASCTypes.h"
 #include "SGraphPin.h"
 #include "AutoSizeCommentsCacheFile.generated.h"
 
@@ -16,7 +17,7 @@ struct AUTOSIZECOMMENTS_API FASCCommentData
 
 	/* Containing nodes */
 	UPROPERTY()
-	TArray<FGuid> NodeGuids;
+	TArray<FASCNodeId> NodeGuids;
 
 	void SetHeader(bool bValue) { bHeader = bValue != 0; }
 	bool IsHeader() const { return static_cast<bool>(bHeader); }
@@ -42,11 +43,12 @@ struct AUTOSIZECOMMENTS_API FASCGraphData
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
-	TMap<FGuid, FASCCommentData> CommentData; // node guid -> comment data
+	TMap<FASCNodeId, FASCCommentData> CommentData; // node guid -> comment data
 
 	bool bInitialized = false;
 
 	void CleanupGraph(UEdGraph* Graph);
+	void ReadGraph(UEdGraph* Graph);
 
 	bool LoadFromPackageMetaData(UEdGraph* Graph);
 	void SaveToPackageMetaData(UEdGraph* Graph);
@@ -62,7 +64,7 @@ struct AUTOSIZECOMMENTS_API FASCPackageData
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
-	TMap<FGuid, FASCGraphData> GraphData; // graph guid -> graph data
+	TMap<FName, FASCGraphData> GraphData; // graph name -> graph data
 };
 
 USTRUCT()
@@ -72,6 +74,9 @@ struct AUTOSIZECOMMENTS_API FASCCacheData
 
 	UPROPERTY()
 	TMap<FName, FASCPackageData> PackageData; // package -> graph data
+
+	UPROPERTY()
+	int CacheVersion = -1;
 };
 
 class AUTOSIZECOMMENTS_API FAutoSizeCommentsCacheFile

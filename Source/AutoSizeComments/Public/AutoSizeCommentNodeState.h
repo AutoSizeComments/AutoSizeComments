@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ASCTypes.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "UObject/Object.h"
 #include "AutoSizeCommentNodeState.generated.h"
@@ -21,6 +22,7 @@ class AUTOSIZECOMMENTS_API UASCNodeState : public UObject
 
 public:
 	UASCNodeState();
+	virtual ~UASCNodeState() override;
 
 	static UASCNodeState* Get(UEdGraphNode_Comment* Comment);
 
@@ -91,7 +93,7 @@ public:
 
 	void CleanupOnAssetClosed(UObject* Asset, EAssetEditorCloseReason CloseReason);
 
-	TMap<FGuid, UASCNodeState*> CommentStateMap;
+	TMap<TWeakObjectPtr<UEdGraphNode>, UASCNodeState*> CommentStateMap;
 	UASCNodeState* GetCommentState(UEdGraphNode_Comment* Comment);
 
 protected:

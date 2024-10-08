@@ -55,4 +55,8 @@ struct FASCUtils
 	static void SetCommentFontSizeAndColor(UEdGraphNode_Comment* Comment, int32 FontSize, const FLinearColor& Color, bool bModify = true);
 
 	static void ModifyObject(UObject* Obj);
+
+	static UPackage* GetPackage(UObject* Obj);
+
+	static bool HasReliableGuid(UEdGraph* Graph);
 };
