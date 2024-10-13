@@ -57,6 +57,8 @@ public:
 
 	bool bRequireUpdate = false;
 
+	TSet<TWeakObjectPtr<UEdGraphNode>> InitialSelection;
+
 	SLATE_BEGIN_ARGS(SAutoSizeCommentsGraphNode) {}
 	SLATE_END_ARGS()
 
@@ -132,15 +134,12 @@ public:
 	FSlateRect GetNodeBounds(UEdGraphNode* Node);
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> GetOtherCommentNodes();
 	TArray<UEdGraphNode_Comment*> GetParentComments() const;
-	void UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>* OldParentComments, const TArray<UObject*>* OldCommentContains);
-	void UpdateExistingCommentNodes();
 	bool AnySelectedNodes();
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
 	void SnapVectorToGrid(FVector2D& Vector);
 	void SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier);
 	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
 	TSet<UEdGraphNode*>& GetNodesUnderComment() const;
-	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments = true);
 	bool IsValidGraphPanel(TSharedPtr<SGraphPanel> GraphPanel);
 
 	EASCAnchorPoint GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
@@ -186,7 +185,7 @@ public:
 
 	EGraphRenderingLOD::Type GetLOD() const;
 
-	UASCNodeState* GetASCNodeState() const { return ASCNodeState; } 
+	UASCNodeState* GetASCNodeState() const;
 
 protected:
 	//~ Begin SGraphNode Interface
@@ -206,8 +205,8 @@ protected:
 	FReply HandleSubtractButtonClicked();
 	FReply HandleClearButtonClicked();
 
-	void InitializeASCNode(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes);
-	void InitializeNodesUnderComment(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes);
+	void InitializeASCNode();
+	void InitializeNodesUnderComment();
 
 	bool AddAllSelectedNodes(bool bExpandComments = false);
 	bool RemoveAllSelectedNodes(bool bExpandComments = false);
@@ -251,6 +250,7 @@ private:
 	void InitializeColor(const UAutoSizeCommentsSettings& ASCSettings, bool bIsPresetStyle, bool bIsHeaderComment);
 	void InitializeCommentBubbleSettings();
 	void ApplyDefaultCommentColorMethod();
+	void InitializeFontSize();
 
 	bool AreControlsEnabled() const;
 
@@ -301,6 +301,4 @@ private:
 
 	FName CachedGraphClassName;
 	FString OldNodeTitle;
-
-	UASCNodeState* ASCNodeState = nullptr;
 };

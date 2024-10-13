@@ -22,7 +22,6 @@
 #include "MaterialGraph/MaterialGraph.h"
 #include "Materials/Material.h"
 #include "Misc/LazySingleton.h"
-#include "Widgets/Notifications/SNotificationList.h"
 #include "IMaterialEditor.h"
 
 #if ASC_UE_VERSION_OR_LATER(5, 0)
@@ -121,6 +120,108 @@ struct FASCZoomLevelsContainer final : FZoomLevelsContainer
 	TArray<FASCZoomLevel> ZoomLevels;
 };
 
+
+FASCGraphHandlerData::FASCGraphHandlerData(UEdGraph* InGraph)
+{
+	check(InGraph);
+	Graph = InGraph;
+}
+
+void FASCGraphHandlerData::Init()
+{
+	check(Graph.IsValid());
+	// read comments that already exist in the graph
+	for (auto Node : Graph->Nodes)
+	{
+		if (auto Comment = Cast<UEdGraphNode_Comment>(Node))
+		{
+			InitialComments.Add(Comment);
+		}
+	}
+
+	UpdateGraphEditor();
+}
+
+void FASCGraphHandlerData::UpdateGraphEditor()
+{
+	TSharedPtr<SGraphEditor> NewGraphEditor = SGraphEditor::FindGraphEditorForGraph(Graph.Get());
+	if (NewGraphEditor != GraphEditor)
+	{
+		GraphEditor = NewGraphEditor;
+		if (GraphEditor.IsValid())
+		{
+			if (SGraphPanel* GraphPanel = GraphEditor.Pin()->GetGraphPanel())
+			{
+				GraphPanel->SelectionManager.OnSelectionChanged.BindLambda([this](const TSet<UObject*>&)
+				{
+					bSelectionDirty = true;
+				});
+			}
+		}
+	}
+}
+
+void FASCGraphHandlerData::HandleSelectionChanged(const TSet<UObject*>& NewSet)
+{
+	if (!GraphEditor.IsValid() || !Graph.IsValid())
+	{
+		return;
+	}
+
+	bool bHasSelectedComment = false;
+
+	TSet<UEdGraphNode*> SelectedNodes;
+	for (UObject* Obj : NewSet)
+	{
+		if (!bHasSelectedComment && Obj->IsA(UEdGraphNode_Comment::StaticClass()))
+		{
+			bHasSelectedComment = true;
+		}
+
+		if (UEdGraphNode* Node = Cast<UEdGraphNode>(Obj))
+		{
+			SelectedNodes.Add(Node);
+		}
+	}
+
+	// if we deselected everything, clear the unrelated nodes and empty the last selection set
+	if (!bHasSelectedComment)
+	{
+		for (UEdGraphNode* Node : Graph->Nodes)
+		{
+			Node->SetNodeUnrelated(false);
+		}
+	}
+	// otherwise update the related state for all selected nodes
+	else
+	{
+		for (UEdGraphNode* Node : Graph->Nodes)
+		{
+			Node->SetNodeUnrelated(true);
+		}
+
+		for (TWeakObjectPtr<UEdGraphNode> Unrelated : SelectedNodes)
+		{
+			if (auto Comment = Cast<UEdGraphNode_Comment>(Unrelated.Get()))
+			{
+				Comment->SetNodeUnrelated(false);
+
+				for (UEdGraphNode* Node : UASCNodeState::Get(Comment)->GetNodesUnderComment())
+				{
+					Node->SetNodeUnrelated(false);
+				}
+			}
+		}
+	}
+
+	bPreviousSelectionDirty = true;
+
+	CurrentSelection.Empty(SelectedNodes.Num());
+	for (UEdGraphNode* Node : SelectedNodes)
+	{
+		CurrentSelection.Add(Node);
+	}
+}
 
 FAutoSizeCommentGraphHandler& FAutoSizeCommentGraphHandler::Get()
 {
@@ -318,6 +419,20 @@ void FAutoSizeCommentGraphHandler::RegisterActiveGraphPanel(TSharedPtr<SGraphPan
 		}
 
 		ActiveGraphPanels.Add(GraphPanel);
+
+		// update existing graph data
+		if (FASCGraphHandlerData* GraphData = GraphDatas.Find(GraphPanel->GetGraphObj()))
+		{
+			if (!GraphData->GraphEditor.IsValid())
+			{
+				GraphData->UpdateGraphEditor();
+			}
+			// check if graph panel has changed
+			else if (GraphData->GraphEditor.Pin()->GetGraphPanel() != GraphPanel.Get())
+			{
+				GraphData->UpdateGraphEditor();
+			}
+		}
 	}
 }
 
@@ -583,19 +698,9 @@ FASCGraphHandlerData& FAutoSizeCommentGraphHandler::GetGraphHandlerData(UEdGraph
 {
 	if (!GraphDatas.Contains(Graph))
 	{
-		FASCGraphHandlerData GraphData;
-
-		// read comments that already exist in the graph
-		for (auto Node : Graph->Nodes)
-		{
-			if (auto Comment = Cast<UEdGraphNode_Comment>(Node))
-			{
-				GraphData.InitialComments.Add(Comment);
-			}
-		}
-
+		FASCGraphHandlerData GraphData(Graph);
 		GraphData.OnGraphChangedHandle = Graph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::OnGraphChanged));
-		GraphDatas.Add(Graph, GraphData);
+		GraphDatas.Add(Graph, GraphData).Init();
 	}
 
 	return GraphDatas[Graph]; 
@@ -610,7 +715,7 @@ void FAutoSizeCommentGraphHandler::UpdateCommentChangeState(UEdGraphNode_Comment
 	}
 
 	FASCGraphHandlerData& GraphData = GetGraphHandlerData(Graph);
-	GraphData.CommentChangeData.FindOrAdd(Comment->NodeGuid).UpdateComment(Comment);
+	GraphData.CommentChangeData.FindOrAdd(Comment).UpdateComment(Comment);
 }
 
 bool FAutoSizeCommentGraphHandler::HasCommentChangeState(UEdGraphNode_Comment* Comment) const
@@ -619,7 +724,7 @@ bool FAutoSizeCommentGraphHandler::HasCommentChangeState(UEdGraphNode_Comment* C
 	{
 		if (const FASCGraphHandlerData* GraphData = GraphDatas.Find(Graph))
 		{
-			return GraphData->CommentChangeData.Contains(Comment->NodeGuid);
+			return GraphData->CommentChangeData.Contains(Comment);
 		}
 	}
 
@@ -630,7 +735,7 @@ bool FAutoSizeCommentGraphHandler::HasCommentChanged(UEdGraphNode_Comment* Comme
 {
 	if (FASCGraphHandlerData* GraphData = GraphDatas.Find(Comment->GetGraph()))
 	{
-		if (FASCCommentChangeData* CommentChangeData = GraphData->CommentChangeData.Find(Comment->NodeGuid))
+		if (FASCCommentChangeData* CommentChangeData = GraphData->CommentChangeData.Find(Comment))
 		{
 			return CommentChangeData->HasCommentChanged(Comment);
 		}
@@ -673,19 +778,18 @@ TArray<TSharedPtr<SGraphPanel>> FAutoSizeCommentGraphHandler::GetActiveGraphPane
 
 bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 {
-	UpdateNodeUnrelatedState();
+	UpdateGraphData();
 
 	return true;
 }
 
-void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
+void FAutoSizeCommentGraphHandler::UpdateGraphData()
 {
 	if (!UAutoSizeCommentsSettings::Get().bHighlightContainingNodesOnSelection)
 	{
 		return;
 	}
 
-	// iterate by graph panel to access the selection manager (otherwise we could use the graph)
 	for (int i = ActiveGraphPanels.Num() - 1; i >= 0; --i)
 	{
 		// remove any invalid graph panels
@@ -700,91 +804,19 @@ void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
 
 		if (FASCGraphHandlerData* GraphData = GraphDatas.Find(Graph))
 		{
-			// gather selected comments
-			TArray<UEdGraphNode_Comment*> SelectedComments;
-
-			bool bSelectedNonComment = false;
-			for (UObject* SelectedObj : GraphPanel->SelectionManager.SelectedNodes)
+			if (GraphData->bPreviousSelectionDirty)
 			{
-				if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(SelectedObj))
-				{
-					SelectedComments.Add(SelectedComment);
-				}
-				else
-				{
-					bSelectedNonComment = true;
-					break;
-				}
+				GraphData->PreviousSelection = GraphData->CurrentSelection;
+				GraphData->bPreviousSelectionDirty = false;
 			}
 
-			// if we deselected everything, clear the unrelated nodes and empty the last selection set
-			if (SelectedComments.Num() == 0 && GraphData->LastSelectionSet.Num() != 0)
+			if (GraphData->bSelectionDirty)
 			{
-				for (UEdGraphNode* Node : Graph->Nodes)
+				if (GraphData->GraphEditor.IsValid())
 				{
-					Node->SetNodeUnrelated(false);
-				}
-
-				GraphData->LastSelectionSet.Empty();
-				continue;
-			}
-
-			bool bRefreshSelectedNodes = false;
-
-			// check if we need to refresh the selected nodes by seeing if we have deselected any nodes
-			for (TWeakObjectPtr<UEdGraphNode_Comment> LastSelected : GraphData->LastSelectionSet)
-			{
-				if (LastSelected.IsValid())
-				{
-					if (!SelectedComments.Contains(LastSelected.Get()))
-					{
-						bRefreshSelectedNodes = true;
-						break;
-					}
-				}
-			}
-
-			// update the selection set
-			TArray<TWeakObjectPtr<UEdGraphNode_Comment>> LastSelection = GraphData->LastSelectionSet;
-			GraphData->LastSelectionSet.Empty();
-			for (UEdGraphNode_Comment* SelectedComment : SelectedComments)
-			{
-				GraphData->LastSelectionSet.Add(SelectedComment);
-
-				// also check if we need to refresh the selected nodes
-				if (!bRefreshSelectedNodes && !LastSelection.Contains(SelectedComment))
-				{
-					bRefreshSelectedNodes = true;
-				}
-			}
-
-			TArray<TWeakObjectPtr<UEdGraphNode_Comment>> UpdateUnrelated = GraphData->LastSelectionSet;
-
-			// TArray<TSharedPtr<SAutoSizeCommentsGraphNode>> ASCComments = FASCUtils::GetASCCommentsFromGraph(Graph);
-			// for (auto ASCC : ASCComments)
-			// {
-			// 	if (ASCC->IsHovered())
-			// 	{
-			// 		UpdateUnrelated.Add(ASCC->GetCommentNodeObj());
-			// 		bRefreshSelectedNodes = true;
-			// 	}
-			// }
-
-			if (bRefreshSelectedNodes)
-			{
-				for (UEdGraphNode* Node : Graph->Nodes)
-				{
-					Node->SetNodeUnrelated(true);
-				}
-
-				for (TWeakObjectPtr<UEdGraphNode_Comment> Comment : UpdateUnrelated)
-				{
-					Comment->SetNodeUnrelated(false);
-
-					for (UEdGraphNode* Node : UASCNodeState::Get(Comment.Get())->GetNodesUnderComment())
-					{
-						Node->SetNodeUnrelated(false);
-					}
+					FGraphPanelSelectionSet CurrSelection = GraphData->GraphEditor.Pin()->GetSelectedNodes();
+					GraphData->HandleSelectionChanged(CurrSelection);
+					GraphData->bSelectionDirty = false;
 				}
 			}
 		}
@@ -1067,6 +1099,16 @@ void FAutoSizeCommentGraphHandler::OnPostGarbageCollect()
 		{
 			It.RemoveCurrent();
 			UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("\tRemoved graph"));
+		}
+		else
+		{
+			for (auto ChangeIt = It.Value().CommentChangeData.CreateIterator(); It; ++It)
+			{
+				if (!ChangeIt.Key().IsValid())
+				{
+					ChangeIt.RemoveCurrent();
+				}
+			}
 		}
 	}
 }

@@ -22,19 +22,12 @@ struct AUTOSIZECOMMENTS_API FASCCommentData
 	void SetHeader(bool bValue) { bHeader = bValue != 0; }
 	bool IsHeader() const { return static_cast<bool>(bHeader); }
 
-	void SetInitialized(bool bValue) { bInit = bValue != 0; }
-	bool HasBeenInitialized() const { return static_cast<bool>(bInit); }
-
 	void UpdateNodesUnderComment(UEdGraphNode_Comment* Comment);
 
 private:
 	/* Is this node a header node */
 	UPROPERTY()
 	uint32 bHeader = 0;
-
-	/* Has the node been initialized */
-	UPROPERTY()
-	uint32 bInit = 0;
 };
 
 USTRUCT()
@@ -107,6 +100,7 @@ public:
 
 	void UpdateNodesUnderComment(UEdGraphNode_Comment* Comment);
 
+	bool HasCommentData(UEdGraphNode_Comment* Comment);
 	FASCCommentData& GetCommentData(UEdGraphNode_Comment* Comment);
 	FASCGraphData& GetGraphData(UEdGraph* Graph);
 	bool RemoveGraphData(UEdGraph* Graph);
@@ -119,7 +113,6 @@ public:
 	FString GetCachePath(bool bFullPath = false);
 	FString GetAlternateCachePath(bool bFullPath = false);
 
-	bool GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 	bool GetNodesUnderComment(UEdGraphNode_Comment* CommentNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 
 	FASCCommentData& GetCommentData(UEdGraphNode* CommentNode);

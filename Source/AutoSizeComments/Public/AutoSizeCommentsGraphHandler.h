@@ -12,16 +12,33 @@ class SGraphPanel;
 
 struct FASCGraphHandlerData
 {
-	TArray<TWeakObjectPtr<UEdGraphNode_Comment>> LastSelectionSet;
-	FDelegateHandle OnGraphChangedHandle;
+	FASCGraphHandlerData(UEdGraph* InGraph);
 
-	TMap<FGuid, FASCCommentChangeData> CommentChangeData;
+	void Init();
+	void UpdateGraphEditor();
+
+	TWeakObjectPtr<UEdGraph> Graph;
+	TWeakPtr<SGraphEditor> GraphEditor;
+
+	// TODO check if we still need PreviousSelection, now that we are delaying the selection
+	bool bPreviousSelectionDirty = false;
+	TSet<TWeakObjectPtr<UEdGraphNode>> PreviousSelection;
+
+	TSet<TWeakObjectPtr<UEdGraphNode>> CurrentSelection;
+	FDelegateHandle OnGraphChangedHandle;
+	FDelegateHandle OnSelectionChanged;
+
+	TMap<TWeakObjectPtr<UEdGraphNode_Comment>, FASCCommentChangeData> CommentChangeData;
 	FASCGraphData GraphCacheData;
 
 	TArray<TWeakObjectPtr<UEdGraphNode_Comment>> InitialComments;
 
 	float LastZoomLevel = -1;
 	EGraphRenderingLOD::Type LastLOD = EGraphRenderingLOD::Type::DefaultDetail;
+
+	bool bSelectionDirty = true;
+
+	void HandleSelectionChanged(const TSet<UObject*>& NewSet);
 };
 
 class FAutoSizeCommentGraphHandler
@@ -76,7 +93,7 @@ private:
 
 	bool Tick(float DeltaTime);
 
-	void UpdateNodeUnrelatedState();
+	void UpdateGraphData();
 
 	void OnNodeAdded(TWeakObjectPtr<UEdGraphNode> NewNodePtr);
 

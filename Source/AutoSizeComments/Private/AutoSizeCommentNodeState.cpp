@@ -205,10 +205,17 @@ void UASCNodeState::PostEditUndo()
 
 void UASCNodeState::InitializeFromCache()
 {
+	// if the cache doesn't have comment data, then flag ourselves as requiring initialization (used for color init)
+	if (!FAutoSizeCommentsCacheFile::Get().HasCommentData(CommentNode.Get()))
+	{
+		bRequestInit = true;
+	}
+
 	TArray<UEdGraphNode*> OutNodesUnder;
+
 	if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(CommentNode.Get(), OutNodesUnder))
 	{
-		ReplaceNodes(OutNodesUnder, true);
+		ReplaceNodes(OutNodesUnder, false);
 	}
 }
 
@@ -229,7 +236,7 @@ bool UASCNodeState::WriteNodesToComment()
 		}
 	}
 
-	UE_LOG(LogAutoSizeComments, Warning, TEXT("WriteNodesToComment %s %d,%d %d,%d"), *CommentNode->NodeComment, CommentNode->NodePosX, CommentNode->NodePosY, CommentNode->NodeWidth, CommentNode->NodeHeight);
+	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("WriteNodesToComment %s %d,%d %d,%d"), *CommentNode->NodeComment, CommentNode->NodePosX, CommentNode->NodePosY, CommentNode->NodeWidth, CommentNode->NodeHeight);
 
 	CommentNode->ClearNodesUnderComment();
 	for (UEdGraphNode* Node : NodesUnderComment)
@@ -337,6 +344,16 @@ bool UASCNodeState::AddNode(UEdGraphNode* Node, bool bUpdateComment)
 	}
 
 	FASCUtils::ModifyObject(this);
+
+	// if we are adding another comment, add it as a child instead
+	if (UEdGraphNode_Comment* OtherComment = Cast<UEdGraphNode_Comment>(Node))
+	{
+		if (UASCNodeState* OtherState = UASCNodeState::Get(OtherComment))
+		{
+			AddChild(OtherState);
+		}
+	}
+
 	NodesUnderComment.Add(Node);
 
 	if (bUpdateComment)
@@ -490,6 +507,8 @@ void UASCNodeState::UpdateParentComments()
 			continue;
 		}
 
+		// UE_LOG(LogTemp, Warning, TEXT("PARENT: Checking other comment %p %s"), OtherComment, *OtherComment->NodeComment);
+
 		UASCNodeState* OtherCommentState = Get(OtherComment);
 
 		TSet<UEdGraphNode*> OtherMajorNodes = OtherCommentState->GetMajorNodesUnderComment();
@@ -530,6 +549,7 @@ void UASCNodeState::UpdateParentComments()
 			// if we have more nodes than the other comment, then try to add the other comment
 			if (bShouldAddOtherNode && MajorNodes.Num() > OtherMajorNodes.Num())
 			{
+				// UE_LOG(LogTemp, Warning, TEXT("We have more nodes"));
 				// if we contain the other comment, add the other comment
 				if (!OtherMajorNodes.IsEmpty() && MajorNodes.Includes(OtherMajorNodes))
 				{
@@ -540,6 +560,7 @@ void UASCNodeState::UpdateParentComments()
 			// otherwise check if the other comment contains us
 			else if (!MajorNodes.IsEmpty() && !OtherMajorNodes.IsEmpty())
 			{
+				// UE_LOG(LogTemp, Warning, TEXT("Other node contains us?"));
 				// otherwise check if the other comment contains us
 				if (OtherMajorNodes.Includes(MajorNodes))
 				{

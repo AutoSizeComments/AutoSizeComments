@@ -32,6 +32,8 @@ public:
 	UPROPERTY()
 	TWeakObjectPtr<UEdGraphNode_Comment> CommentNode;
 
+	bool bRequestInit = false;
+
 	virtual void PostEditUndo() override;
 
 	void InitializeFromCache();

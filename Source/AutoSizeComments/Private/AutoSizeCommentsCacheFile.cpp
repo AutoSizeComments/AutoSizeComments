@@ -254,6 +254,11 @@ void FAutoSizeCommentsCacheFile::UpdateNodesUnderComment(UEdGraphNode_Comment* C
 	GetCommentData(Comment).UpdateNodesUnderComment(Comment);
 }
 
+bool FAutoSizeCommentsCacheFile::HasCommentData(UEdGraphNode_Comment* Comment)
+{
+	return GetGraphData(Comment->GetGraph()).CommentData.Contains(FASCNodeId(Comment));
+}
+
 FASCCommentData& FAutoSizeCommentsCacheFile::GetCommentData(UEdGraphNode_Comment* Comment)
 {
 	return GetGraphData(Comment->GetGraph()).GetCommentData(Comment);
@@ -365,11 +370,6 @@ FString FAutoSizeCommentsCacheFile::GetAlternateCachePath(bool bFullPath)
 	return bIsProject ? GetPluginCachePath(bFullPath) : GetProjectCachePath(bFullPath);
 }
 
-bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(TSharedPtr<SAutoSizeCommentsGraphNode> ASCNode, TArray<UEdGraphNode*>& OutNodesUnderComment)
-{
-	return GetNodesUnderComment(ASCNode->GetCommentNodeObj(), OutNodesUnderComment);
-}
-
 bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(UEdGraphNode_Comment* CommentNode, TArray<UEdGraphNode*>& OutNodesUnderComment)
 {
 	if (!CommentNode)
@@ -465,7 +465,13 @@ void FASCCommentData::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
 		return;
 	}
 
-	const TSet<UEdGraphNode*>& NodesUnder = UASCNodeState::Get(Comment)->GetNodesUnderComment();
+	UASCNodeState* NodeState = UASCNodeState::Get(Comment);
+	if (!NodeState)
+	{
+		return;
+	}
+
+	const TSet<UEdGraphNode*>& NodesUnder = NodeState->GetNodesUnderComment();
 	NodeGuids.Reset(NodesUnder.Num());
 
 	// update nodes under
@@ -476,6 +482,8 @@ void FASCCommentData::UpdateNodesUnderComment(UEdGraphNode_Comment* Comment)
 			NodeGuids.Add(FASCNodeId(Node));
 		}
 	}
+
+	bHeader = NodeState->IsHeader();
 }
 
 void FASCGraphData::CleanupGraph(UEdGraph* Graph)

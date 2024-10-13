@@ -7,15 +7,42 @@
 #include "AutoSizeCommentsModule.h"
 #include "AutoSizeCommentsSettings.h"
 #include "EdGraphNode_Comment.h"
+#include "Editor.h"
 #include "EdGraph/EdGraph.h"
+#include "Editor/Transactor.h"
+#include "Framework/Commands/GenericCommands.h"
 
 TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class UEdGraphNode* InNode) const
 {
-	if (InNode)
+	if (!InNode)
 	{
-		// init graph handler for containing graph
-		FAutoSizeCommentGraphHandler::Get().BindToGraph(InNode->GetGraph());
+		return nullptr;
 	}
+
+	// check if the node was copy-pasted by checking if it was in the last transaction and it matches the undo description
+	bool bWasCopyPasted = false;
+	if (GEditor && GEditor->Trans)
+	{
+		const int Index = GEditor->Trans->GetQueueLength() - GEditor->Trans->GetUndoCount() - 1;
+		if (const FTransaction* LastTransaction = GEditor->Trans->GetTransaction(Index))
+		{
+			const FTransactionContext Context = LastTransaction->GetContext();
+
+			if (LastTransaction->ContainsObject(InNode))
+			{
+				if (Context.Title.EqualTo(FGenericCommands::Get().Paste->GetDescription()))
+				{
+					bWasCopyPasted = true;
+					// UE_LOG(LogTemp, Warning, TEXT("Last transaction Context %s Title %s"), *Context.Context, *Context.Title.ToString());
+				}
+			}
+		}
+	}
+
+	// init graph handler for containing graph
+	FAutoSizeCommentGraphHandler::Get().BindToGraph(InNode->GetGraph());
+
+	const FASCGraphHandlerData& GraphData = FAutoSizeCommentGraphHandler::Get().GetGraphHandlerData(InNode->GetGraph());
 
 	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
@@ -46,11 +73,12 @@ TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class 
 					}
 				}
 			}
-		}
 
-		TSharedRef<SAutoSizeCommentsGraphNode> GraphNode = SNew(SAutoSizeCommentsGraphNode, InNode);
-		GraphNode->SlatePrepass();
-		return GraphNode;
+			TSharedRef<SAutoSizeCommentsGraphNode> GraphNode = SNew(SAutoSizeCommentsGraphNode, InNode);
+			GraphNode->InitialSelection = GraphData.PreviousSelection;
+			GraphNode->bWasCopyPasted = bWasCopyPasted;
+			return GraphNode;
+		}
 	}
 
 	return nullptr;

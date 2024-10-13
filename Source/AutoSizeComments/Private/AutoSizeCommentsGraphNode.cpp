@@ -33,6 +33,7 @@
 
 void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGraphNode* InNode)
 {
+	// UE_LOG(LogTemp, Warning, TEXT("ASC Construct %p %p"), this, InNode);
 	GraphNode = InNode;
 
 	CommentNode = Cast<UEdGraphNode_Comment>(InNode);
@@ -48,21 +49,6 @@ void SAutoSizeCommentsGraphNode::Construct(const FArguments& InArgs, class UEdGr
 	CachedCommentTitle = GetNodeComment();
 
 	const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
-
-	const bool bIsPresetStyle = IsPresetStyle();
-
-	ASCNodeState = FASCNodeStateManager::Get().GetCommentState(CommentNode);
-
-	const bool bIsHeader = ASCNodeState->IsHeader();
-
-	// init color
-	InitializeColor(ASCSettings, bIsPresetStyle, bIsHeader);
-
-	// use default font
-	if (ASCSettings.bUseDefaultFontSize && !bIsHeader && !bIsPresetStyle)
-	{
-		CommentNode->FontSize = ASCSettings.DefaultFontSize;
-	}
 
 	bCachedBubbleVisibility = CommentNode->bCommentBubbleVisible;
 	bCachedColorCommentBubble = CommentNode->bColorCommentBubble;
@@ -156,6 +142,19 @@ void SAutoSizeCommentsGraphNode::ApplyDefaultCommentColorMethod()
 			break;
 		}
 		default: ;
+	}
+}
+
+void SAutoSizeCommentsGraphNode::InitializeFontSize()
+{
+	const bool bIsPresetStyle = IsPresetStyle();
+
+	const bool bIsHeader = GetASCNodeState()->IsHeader();
+
+	// use default font
+	if (UAutoSizeCommentsSettings::Get().bUseDefaultFontSize && !bIsHeader && !bIsPresetStyle)
+	{
+		CommentNode->FontSize = UAutoSizeCommentsSettings::Get().DefaultFontSize;
 	}
 }
 
@@ -264,7 +263,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 
 	FAutoSizeCommentsCacheFile::Get().PrintCache();
 
-	// UE_LOG(LogTemp, Warning, TEXT("%p %p"), this, UASCNodeState::Get(CommentNode));
+	// UE_LOG(LogTemp, Warning, TEXT("%p %p %s"), this, UASCNodeState::Get(CommentNode), *FASCNodeId(CommentNode).ToString());
 	// for (UObject* NodesUnderComment : CommentNode->GetNodesUnderComment())
 	// {
 	// 	UE_LOG(LogTemp, Warning, TEXT("\t%s"), *GetNameSafe(NodesUnderComment));
@@ -759,27 +758,21 @@ void SAutoSizeCommentsGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPa
 		return;
 	}
 
-	TArray<TWeakObjectPtr<UObject>> InitialSelectedNodes;
-	for (UObject* SelectedNode : OwnerPanel->SelectionManager.GetSelectedNodes())
-	{
-		InitialSelectedNodes.Add(SelectedNode);
-	}
-
 	// since the graph node is created twice, we need to delay initialization so the correct graph node gets initialized
-	const auto InitNode = [](TWeakPtr<SAutoSizeCommentsGraphNode> NodePtr, const TArray<TWeakObjectPtr<UObject>>& SelectedNodes)
+	const auto InitNode = [](TWeakPtr<SAutoSizeCommentsGraphNode> NodePtr)
 	{
 		if (NodePtr.IsValid())
 		{
-			NodePtr.Pin()->InitializeASCNode(SelectedNodes);
+			NodePtr.Pin()->InitializeASCNode();
 		}
 	};
 
-	const auto Delegate = FTimerDelegate::CreateLambda(InitNode, SharedThis(this), InitialSelectedNodes);
+	const auto Delegate = FTimerDelegate::CreateLambda(InitNode, SharedThis(this));
 	GEditor->GetTimerManager()->SetTimerForNextTick(Delegate);
 }
 
 
-void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes)
+void SAutoSizeCommentsGraphNode::InitializeASCNode()
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 	if (!CommentNode || !OwnerPanel)
@@ -802,21 +795,21 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 		}
 	}
 
-	// if this node is selected then we have been copy pasted, don't add all selected nodes
-	bool bHasBeenCopyPasted = InitialSelectedNodes.Contains(CommentNode);
-
 	if (!bInitialized)
 	{
-		UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("Init ASC node %p %s %d %d"), this, *CommentNode->NodeGuid.ToString(), IsExistingComment(), bHasBeenCopyPasted);
-
 		bInitialized = true;
+
+		// initializes the comment state
+		FASCNodeStateManager::Get().GetCommentState(CommentNode);
+
+		UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("Init ASC node %p %s %d %d"), this, *CommentNode->NodeGuid.ToString(), IsExistingComment(), bWasCopyPasted);
+
+		InitializeFontSize();
 
 		// register graph
 		FASCState::Get().RegisterComment(SharedThis(this));
 
 		FAutoSizeCommentGraphHandler::Get().RegisterActiveGraphPanel(GetOwnerPanel());
-
-		InitializeNodesUnderComment(InitialSelectedNodes);
 
 		// make sure to init change state after setting the nodes under comments (if we don't have a state aleady)
 		if (!FAutoSizeCommentGraphHandler::Get().HasCommentChangeState(CommentNode))
@@ -824,23 +817,26 @@ void SAutoSizeCommentsGraphNode::InitializeASCNode(const TArray<TWeakObjectPtr<U
 			FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
 		}
 
-		FASCCommentData& CommentData = GetCommentData();
-		if (!CommentData.HasBeenInitialized())
+		if (GetASCNodeState()->bRequestInit)
 		{
-			CommentData.SetInitialized(true);
+			InitializeNodesUnderComment();
+
+			GetASCNodeState()->bRequestInit = false;
 
 			// don't initialize without any selected nodes!
-			const bool bShouldApplyColor = !bHasBeenCopyPasted && (!IsExistingComment() || UAutoSizeCommentsSettings::Get().bApplyColorToExistingNodes);
+			const bool bShouldApplyColor = !bWasCopyPasted && (!IsExistingComment() || UAutoSizeCommentsSettings::Get().bApplyColorToExistingNodes);
 			if (bShouldApplyColor)
 			{
 				InitializeCommentBubbleSettings();
-				InitializeColor(UAutoSizeCommentsSettings::Get(), false, GetCommentData().IsHeader());
+				InitializeColor(UAutoSizeCommentsSettings::Get(), false, GetASCNodeState()->IsHeader());
 			}
 		}
 	}
+
+	UpdateGraphNode();
 }
 
-void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes)
+void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment()
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
 	if (!OwnerPanel)
@@ -858,16 +854,10 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 		return;
 	}
 
-	FASCCommentData& CommentData = GetCommentData();
-	if (CommentData.HasBeenInitialized())
+	// if this node was selected, refresh nodes
+	if (bWasCopyPasted)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Skip comment already init? %s"), *FASCNodeId(CommentNode).ToString());
-
-		for (auto Data : FAutoSizeCommentsCacheFile::Get().GetGraphData(CommentNode->GetGraph()).CommentData)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Existing %s"), *Data.Key.ToString());
-		}
-
+		RefreshNodesDelay = 2;
 		return;
 	}
 
@@ -877,15 +867,8 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 		return;
 	}
 
-	// if this node is selected then we have been copy pasted, don't add all selected nodes
-	if (InitialSelectedNodes.Contains(CommentNode))
-	{
-		RefreshNodesDelay = 2;
-		return;
-	}
-
-	TSet<UObject*> SelectedNodes;
-	for (TWeakObjectPtr<UObject> Node : InitialSelectedNodes)
+	TArray<UEdGraphNode*> SelectedNodes;
+	for (TWeakObjectPtr<UEdGraphNode> Node : InitialSelection)
 	{
 		if (Node.IsValid())
 		{
@@ -908,8 +891,8 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 			}
 		}
 
-		AddAllNodesUnderComment(SelectedNodes.Array());
-		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &SAutoSizeCommentsGraphNode::ResizeToFit, false));
+		GetASCNodeState()->AddNodes(SelectedNodes);
+		ResizeToFit(false);
 		return;
 	}
 
@@ -997,13 +980,13 @@ FReply SAutoSizeCommentsGraphNode::HandleResizeButtonClicked()
 FReply SAutoSizeCommentsGraphNode::HandleHeaderButtonClicked()
 {
 	FScopedTransaction Transaction(INVTEXT("Toggle comment header state"));
-	ASCNodeState->SetIsHeader(!ASCNodeState->IsHeader());
+	GetASCNodeState()->SetIsHeader(!GetASCNodeState()->IsHeader());
 	return FReply::Handled();
 }
 
 FReply SAutoSizeCommentsGraphNode::HandleRefreshButtonClicked()
 {
-	ASCNodeState->ReplaceNodes(FASCUtils::GetSelectedNodes(GetOwnerPanel(), true).Array());
+	GetASCNodeState()->ReplaceNodes(FASCUtils::GetSelectedNodes(GetOwnerPanel(), true).Array());
 	return FReply::Handled();
 }
 
@@ -1031,7 +1014,7 @@ FReply SAutoSizeCommentsGraphNode::HandleSubtractButtonClicked()
 FReply SAutoSizeCommentsGraphNode::HandleClearButtonClicked()
 {
 	FScopedTransaction Transaction(INVTEXT("Clear all nodes from comment"));
-	ASCNodeState->ClearNodes();
+	GetASCNodeState()->ClearNodes();
 	return FReply::Handled();
 }
 
@@ -1044,15 +1027,7 @@ bool SAutoSizeCommentsGraphNode::AddAllSelectedNodes(bool bExpandComments)
 	}
 
 	TSet<UEdGraphNode*> NodesToAdd = FASCUtils::GetSelectedNodes(GetOwnerPanel(), bExpandComments);
-	return ASCNodeState->AddNodes(NodesToAdd.Array());
-}
-
-bool SAutoSizeCommentsGraphNode::AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments)
-{
-	TArray<UEdGraphNode*> EdGraphNodes;
-	Algo::Transform(Nodes, EdGraphNodes, [](UObject* Obj) { return Cast<UEdGraphNode>(Obj); });
-
-	return ASCNodeState->AddNodes(EdGraphNodes);
+	return GetASCNodeState()->AddNodes(NodesToAdd.Array());
 }
 
 bool SAutoSizeCommentsGraphNode::IsValidGraphPanel(TSharedPtr<SGraphPanel> GraphPanel)
@@ -1079,7 +1054,7 @@ bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes(bool bExpandComments)
 
 	// const FGraphPanelSelectionSet SelectedNodes = OwnerPanel->SelectionManager.GetSelectedNodes();
 	TSet<UEdGraphNode*> SelectedNodes = FASCUtils::GetSelectedNodes(GetOwnerPanel(), bExpandComments);
-	ASCNodeState->RemoveNodes(SelectedNodes.Array());
+	GetASCNodeState()->RemoveNodes(SelectedNodes.Array());
 
 	// TArray<UEdGraphNode*> NodesUnderComment = GetNodesUnderComment();
 
@@ -1111,7 +1086,7 @@ bool SAutoSizeCommentsGraphNode::RemoveAllSelectedNodes(bool bExpandComments)
 
 bool SAutoSizeCommentsGraphNode::AddNode(UEdGraphNode* Node) 
 {
-	return ASCNodeState->AddNode(Node);
+	return GetASCNodeState()->AddNode(Node);
 	// if (CanAddNode(Node))
 	// {
 	// 	if (FASCUtils::AddNodeIntoComment(CommentNode, Node, true))
@@ -1126,15 +1101,15 @@ bool SAutoSizeCommentsGraphNode::AddNode(UEdGraphNode* Node)
 
 bool SAutoSizeCommentsGraphNode::RemoveNode(UEdGraphNode* Node)
 {
-	return ASCNodeState->RemoveNode(Node);
+	return GetASCNodeState()->RemoveNode(Node);
 }
 
 bool SAutoSizeCommentsGraphNode::ReplaceNodes(TSet<UObject*> Nodes)
 {
-	// return ASCNodeState->ReplaceNodes(Node);
+	// return GetASCNodeState()->ReplaceNodes(Node);
 	// Clear all nodes under comment
 	
-	// ASCNodeState->ReplaceNodes();
+	// GetASCNodeState()->ReplaceNodes();
 	// FASCUtils::ClearCommentNodes(CommentNode, false);
 	// FASCUtils::AddNodesIntoComment(CommentNode, Nodes, false);
 	// UpdateCache();
@@ -1148,7 +1123,7 @@ void SAutoSizeCommentsGraphNode::HandleCommentNodeStateChanged(UASCNodeState* No
 
 	if (IsSingleSelectedNode())
 	{
-		SetNodesRelated(ASCNodeState->GetNodesUnderComment().Array());
+		SetNodesRelated(GetASCNodeState()->GetNodesUnderComment().Array());
 	}
 
 	// UpdateExistingCommentNodes();
@@ -1243,6 +1218,12 @@ FSlateColor SAutoSizeCommentsGraphNode::GetCommentTextColor() const
 	return IsNodeUnrelated() ? TransparentGray : FLinearColor::White;
 }
 
+UASCNodeState* SAutoSizeCommentsGraphNode::GetASCNodeState() const
+{
+	check(bInitialized); // this should only be called after we have been initialized
+	return UASCNodeState::Get(CommentNode);
+}
+
 void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 {
 	if (GetDesiredSize().IsZero())
@@ -1263,12 +1244,12 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 
 		if (RefreshNodesDelay == 0)
 		{
-			RefreshNodesInsideComment(ECommentCollisionMethod::Point, false, false);
+			RefreshNodesInsideComment(ECommentCollisionMethod::Point, false, true);
 
 			// so that it doesn't trigger the auto resize check
 			FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
 
-			if (IsExistingComment() && UAutoSizeCommentsSettings::Get().bResizeExistingNodes)
+			if (!IsExistingComment() || (IsExistingComment() && UAutoSizeCommentsSettings::Get().bResizeExistingNodes))
 			{
 				ResizeToFit();
 			}
@@ -1308,9 +1289,7 @@ void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisi
 	// 	return;
 	// }
 
-	ASCNodeState->ReplaceNodes(OutNodes, bUpdateExistingComments);
-	// ASCNodeState->ClearNodes(false);
-	// ASCNodeState->AddNodes(OutNodes, true);
+	GetASCNodeState()->ReplaceNodes(OutNodes, bUpdateExistingComments);
 	// FASCUtils::ClearCommentNodes(CommentNode, false);
 	// for (UEdGraphNode* Node : OutNodes)
 	// {
@@ -1331,137 +1310,6 @@ void SAutoSizeCommentsGraphNode::RefreshNodesInsideComment(const ECommentCollisi
 float SAutoSizeCommentsGraphNode::GetTitleBarHeight() const
 {
 	return TitleBar.IsValid() ? TitleBar->GetDesiredSize().Y : 0.0f;
-}
-
-void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes()
-{
-	UpdateExistingCommentNodes(nullptr, nullptr);
-}
-
-void SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes(const TArray<UEdGraphNode_Comment*>* OldParentComments, const TArray<UObject*>* OldCommentContains)
-{
-	return;
-	// DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::UpdateExistingCommentNodes"), STAT_ASC_UpdateExistingCommentNodes, STATGROUP_AutoSizeComments);
-	//
-	// // Get list of all other comment nodes
-	// TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> OtherCommentNodes = GetOtherCommentNodes();
-	//
-	// TArray<UEdGraphNode*> OurMainNodes = GetNodesUnderComment().FilterByPredicate(IsMajorNode);
-	//
-	// TArray<UEdGraphNode_Comment*> CurrentParentComments = GetParentComments();
-	//
-	// // Remove ourselves from our parent comments, as we will be adding ourselves later if required
-	// for (UEdGraphNode_Comment* ParentComment : CurrentParentComments)
-	// {
-	// 	// TSet<UObject*> NodesToRemove = { CommentNode };
-	// 	// FASCUtils::RemoveNodesFromComment(ParentComment, NodesToRemove);
-	// 	UASCNodeState* ParentState = FASCNodeStateManager::Get().GetCommentState(ParentComment);
-	// 	ParentState->RemoveNode(CommentNode, false);
-	// }
-	//
-	// // Remove any comment nodes which have nodes we don't contain
-	// TSet<UEdGraphNode*> NodesToRemove;
-	// for (UEdGraphNode* Obj : GetNodesUnderComment())
-	// {
-	// 	if (UEdGraphNode_Comment* OtherComment = Cast<UEdGraphNode_Comment>(Obj))
-	// 	{
-	// 		const auto OtherMainNodes = FASCUtils::GetNodesUnderCommentUnsafe(OtherComment).FilterByPredicate(IsMajorNode);
-	// 		for (UEdGraphNode* OtherMain : OtherMainNodes)
-	// 		{
-	// 			// if we don't contain any node in the other node node, the comment should be removed
-	// 			if (!OurMainNodes.Contains(OtherMain))
-	// 			{
-	// 				if (!IsHeaderComment(OtherComment))
-	// 				{
-	// 					NodesToRemove.Add(OtherComment);
-	// 				}
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// }
-	//
-	// ASCNodeState->RemoveNodes(NodesToRemove.Array());
-	// // FASCUtils::RemoveNodesFromComment(CommentNode, NodesToRemove);
-	//
-	// // Do nothing if we have no nodes under ourselves
-	// if (GetNodesUnderComment().Num() == 0)
-	// {
-	// 	return;
-	// }
-	//
-	// bool bNeedsPurging = false;
-	// for (TSharedPtr<SAutoSizeCommentsGraphNode> OtherCommentNode : OtherCommentNodes)
-	// {
-	// 	UEdGraphNode_Comment* OtherComment = OtherCommentNode->GetCommentNodeObj();
-	//
-	// 	if (OtherComment == CommentNode)
-	// 	{
-	// 		continue;
-	// 	}
-	//
-	// 	const auto OtherMainNodes = FASCUtils::GetNodesUnderCommentUnsafe(OtherComment).FilterByPredicate(IsMajorNode);
-	//
-	// 	if (OtherMainNodes.Num() == 0)
-	// 	{
-	// 		continue;
-	// 	}
-	//
-	// 	// check if all nodes in the other comment box are within our comment box AND we are not inside the other comment already
-	// 	const bool bAllNodesContainedUnderSelf = !OtherMainNodes.ContainsByPredicate([&OurMainNodes](UObject* NodeUnderOther)
-	// 	{
-	// 		return !OurMainNodes.Contains(NodeUnderOther);
-	// 	});
-	//
-	// 	bool bDontAddSameSet;
-	//
-	// 	// Check if we should add the comment if the same main node set
-	// 	if (OldParentComments && OldCommentContains)
-	// 	{
-	// 		const bool bPreviouslyWasParent = OldParentComments->Contains(OtherComment);
-	// 		const bool bWeAreFreshNode = OldParentComments->Num() == 0 && OldCommentContains->Num() == 0;
-	// 		bDontAddSameSet = OurMainNodes.Num() == OtherMainNodes.Num() && (bPreviouslyWasParent || bWeAreFreshNode);
-	// 	}
-	// 	else
-	// 	{
-	// 		const bool bPreviouslyWasParent = CurrentParentComments.Contains(OtherComment);
-	// 		bDontAddSameSet = OurMainNodes.Num() == OtherMainNodes.Num() && bPreviouslyWasParent;
-	// 	}
-	//
-	// 	// we contain all of the other comment, add the other comment (unless we already contain it)
-	// 	if (bAllNodesContainedUnderSelf && !bDontAddSameSet)
-	// 	{
-	// 		// add the other comment into ourself
-	// 		ASCNodeState->AddNode(OtherComment, false);
-	// 		// FASCUtils::AddNodeIntoComment(CommentNode, OtherComment);
-	// 		bNeedsPurging = true;
-	// 	}
-	// 	else
-	// 	{
-	// 		// check if all nodes in the other comment box are within our comment box
-	// 		const bool bAllNodesContainedUnderOther = !OurMainNodes.ContainsByPredicate([&OtherMainNodes](UObject* NodeUnderSelf)
-	// 		{
-	// 			return !OtherMainNodes.Contains(NodeUnderSelf);
-	// 		});
-	//
-	// 		// other comment contains all of our nodes, add ourself into the other comment
-	// 		if (bAllNodesContainedUnderOther) 
-	// 		{
-	// 			// add the ourselves into the other comment
-	// 			UASCNodeState* OtherCommentState = FASCNodeStateManager::Get().GetCommentState(OtherComment);
-	// 			OtherCommentState->AddNode(CommentNode, true);
-	// 			// FASCUtils::AddNodeIntoComment(OtherComment, CommentNode);
-	// 			bNeedsPurging = true;
-	// 		}
-	// 	}
-	// }
-	//
-	// ASCNodeState->WriteToComment();
-	//
-	// if (bNeedsPurging && UAutoSizeCommentsSettings::Get().bEnableFixForSortDepthIssue)
-	// {
-	// 	FAutoSizeCommentGraphHandler::Get().RequestGraphVisualRefresh(GetOwnerPanel());
-	// }
 }
 
 FSlateColor SAutoSizeCommentsGraphNode::GetCommentBodyColor() const
@@ -1564,14 +1412,14 @@ void SAutoSizeCommentsGraphNode::ResizeToFit(bool bCheckTwice)
 			UserSize = CurrSize;
 			ResizeNode(UserSize);
 
-			if (bCheckTwice)
-			{
-				FTimerHandle OutHandle;
-				GEditor->GetTimerManager()->SetTimer(OutHandle, [&]()
-				{
-					ResizeToFit(false);
-				}, 0.2, false);
-			}
+			// if (bCheckTwice)
+			// {
+			// 	FTimerHandle OutHandle;
+			// 	GEditor->GetTimerManager()->SetTimer(OutHandle, [&]()
+			// 	{
+			// 		ResizeToFit(false);
+			// 	}, 0.2, false);
+			// }
 		}
 
 		// check if location has changed
@@ -1615,7 +1463,7 @@ void SAutoSizeCommentsGraphNode::ApplyPresetStyle(const FPresetCommentStyle& Sty
 {
 	if (Style.bSetHeader)
 	{
-		ASCNodeState->SetIsHeader(Style.bSetHeader);
+		GetASCNodeState()->SetIsHeader(Style.bSetHeader);
 	}
 	else
 	{
@@ -2089,7 +1937,7 @@ void SAutoSizeCommentsGraphNode::SetHeaderStyle(bool bIsHeader, bool bUpdateStyl
 
 bool SAutoSizeCommentsGraphNode::IsHeaderComment() const
 {
-	return ASCNodeState->IsHeader();
+	return bInitialized ? GetASCNodeState()->IsHeader() : false;
 }
 
 bool SAutoSizeCommentsGraphNode::IsHeaderComment(UEdGraphNode_Comment* OtherComment)
@@ -2498,7 +2346,7 @@ FSlateRect SAutoSizeCommentsGraphNode::GetBoundsForNodesInside()
 
 TSet<UEdGraphNode*>& SAutoSizeCommentsGraphNode::GetNodesUnderComment() const
 {
-	return ASCNodeState->GetNodesUnderCommentMut();
+	return GetASCNodeState()->GetNodesUnderCommentMut();
 }
 
 bool SAutoSizeCommentsGraphNode::IsMajorNode(UObject* Object)
