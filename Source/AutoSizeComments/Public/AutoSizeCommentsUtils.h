@@ -59,4 +59,6 @@ struct FASCUtils
 	static UPackage* GetPackage(UObject* Obj);
 
 	static bool HasReliableGuid(UEdGraph* Graph);
+
+	static bool IsMajorNode(UEdGraphNode* Node);
 };

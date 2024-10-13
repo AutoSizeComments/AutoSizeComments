@@ -457,7 +457,7 @@ TSet<UEdGraphNode*> UASCNodeState::GetMajorNodesUnderComment()
 
 	for (UEdGraphNode* Node : NodesUnderComment)
 	{
-		if (SAutoSizeCommentsGraphNode::IsMajorNode(Node))
+		if (FASCUtils::IsMajorNode(Node))
 		{
 			OutNodes.Add(Node);
 		}

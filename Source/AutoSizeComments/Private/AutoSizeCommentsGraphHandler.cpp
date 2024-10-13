@@ -632,7 +632,7 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 		{
 			TArray<UEdGraphNode*> OutNodes;
 			ASCGraphNode->QueryNodesUnderComment(OutNodes, AltCollisionMethod);
-			OutNodes = OutNodes.FilterByPredicate(SAutoSizeCommentsGraphNode::IsMajorNode);
+			OutNodes = OutNodes.FilterByPredicate(FASCUtils::IsMajorNode);
 
 			TSet<UObject*> NewSelection(CommentNode->GetNodesUnderComment());
 			bool bChanged = false;
@@ -672,8 +672,6 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 				{
 					ASCGraphNode->ResizeToFit();
 				}
-
-				ASCGraphNode->UpdateCache();
 			}
 		}
 	}

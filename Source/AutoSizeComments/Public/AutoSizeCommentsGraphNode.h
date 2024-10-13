@@ -45,8 +45,6 @@ public:
 
 	bool bIsMoving = false;
 
-	bool bPreviousAltDown = false;
-
 	/** Variables related to resizing the comment box by dragging anchor corner points */
 	FVector2D DragSize;
 	bool bUserIsDragging = false;
@@ -118,7 +116,6 @@ public:
 	bool HasNode(UEdGraphNode* Node) const;
 	bool AddNode(UEdGraphNode* Node);
 	bool RemoveNode(UEdGraphNode* Node);
-	bool ReplaceNodes(TSet<UObject*> Nodes);
 
 	void HandleCommentNodeStateChanged(UASCNodeState* NodeState);
 
@@ -133,8 +130,6 @@ public:
 	FSlateRect GetBoundsForNodesInside();
 	FSlateRect GetNodeBounds(UEdGraphNode* Node);
 	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> GetOtherCommentNodes();
-	TArray<UEdGraphNode_Comment*> GetParentComments() const;
-	bool AnySelectedNodes();
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
 	void SnapVectorToGrid(FVector2D& Vector);
 	void SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier);
@@ -148,9 +143,6 @@ public:
 	bool IsHeaderComment() const;
 	bool IsPresetStyle();
 
-	bool LoadCache();
-	void UpdateCache();
-
 	void QueryNodesUnderComment(TArray<UEdGraphNode*>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
 	void QueryNodesUnderComment(TArray<TSharedPtr<SGraphNode>>& OutNodesUnderComment, const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false);
 
@@ -162,11 +154,7 @@ public:
 
 	bool CanAddNode(const TSharedPtr<SGraphNode> OtherGraphNode, const bool bIgnoreKnots = false) const;
 	bool CanAddNode(const UObject* Node, const bool bIgnoreKnots = false) const;
-	void OnAltReleased();
 
-	static bool IsCommentNode(UObject* Object);
-	static bool IsNotCommentNode(UObject* Object) { return !IsCommentNode(Object); }
-	static bool IsMajorNode(UObject* Object);
 	static bool IsHeaderComment(UEdGraphNode_Comment* OtherComment);
 
 	FKey GetResizeKey() const;

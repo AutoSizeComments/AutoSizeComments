@@ -561,3 +561,23 @@ bool FASCUtils::HasReliableGuid(UEdGraph* Graph)
 	return true;
 }
 
+bool FASCUtils::IsMajorNode(UEdGraphNode* Node)
+{
+	if (UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(Node))
+	{
+		if (auto NodeState = UASCNodeState::Get(CommentNode))
+		{
+			if (NodeState->IsHeader())
+			{
+				return true;
+			}
+		}
+	}
+	else if (Node->IsA(UEdGraphNode::StaticClass()))
+	{
+		return true;
+	}
+
+	return false;
+}
+
