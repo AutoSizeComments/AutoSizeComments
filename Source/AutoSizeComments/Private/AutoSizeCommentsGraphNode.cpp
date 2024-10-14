@@ -19,8 +19,6 @@
 #include "SGraphPanel.h"
 #include "TutorialMetaData.h"
 #include "Framework/Application/SlateApplication.h"
-#include "MaterialGraph/MaterialGraphNode_Comment.h"
-#include "Materials/MaterialExpressionComment.h"
 #include "Runtime/Engine/Classes/EdGraph/EdGraph.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Images/SImage.h"
@@ -232,24 +230,14 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 #if ASC_UE_VERSION_OR_LATER(4, 27)
 							Node->Modify(bMarkDirty);
 #else
-								Node->Modify();
+							Node->Modify();
 #endif
-							Node->NodePosX += PositionDelta.X;
-							Node->NodePosY += PositionDelta.Y;
+							OffsetPosition(Node, PositionDelta, false);
 						}
 					}
 				}
 			}
 		}
-	}
-
-	// from SGraphNodeMaterialComment
-	if (UMaterialGraphNode_Comment* MaterialComment = Cast<UMaterialGraphNode_Comment>(CommentNode))
-	{
-		MaterialComment->MaterialExpressionComment->MaterialExpressionEditorX = CommentNode->NodePosX;
-		MaterialComment->MaterialExpressionComment->MaterialExpressionEditorY = CommentNode->NodePosY;
-		MaterialComment->MaterialExpressionComment->MarkPackageDirty();
-		MaterialComment->MaterialDirtyDelegate.ExecuteIfBound();
 	}
 }
 
@@ -386,17 +374,22 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 
 			if (ResizeNode(UserSize))
 			{
+				int32 NewX = CommentNode->NodePosX;
+				int32 NewY = CommentNode->NodePosY;
+
 				if (bAnchorLeft)
 				{
 					int32 DeltaWidth = CommentNode->NodeWidth - OldNodeWidth;
-					CommentNode->NodePosX -= DeltaWidth;
+					NewX -= DeltaWidth;
 				}
 
 				if (bAnchorTop)
 				{
 					int32 DeltaHeight = CommentNode->NodeHeight - OldNodeHeight;
-					CommentNode->NodePosY -= DeltaHeight;
+					NewY -= DeltaHeight;
 				}
+
+				SetNodePosition(CommentNode, NewX, NewY, false);
 			}
 		}
 
@@ -489,7 +482,7 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 	if (IsHeaderComment())
 	{
 		UserSize.Y = GetTitleBarHeight();
-		CommentNode->NodeHeight = UserSize.Y;
+		ResizeNode(CommentNode->NodeWidth, UserSize.Y);
 	}
 
 	// Update cached title
@@ -1106,38 +1099,35 @@ bool SAutoSizeCommentsGraphNode::ResizeNode(int32 NewWidth, int32 NewHeight, boo
 		{
 			FASCUtils::ModifyObject(CommentNode);
 		}
-		CommentNode->NodeWidth = NewWidth;
-		CommentNode->NodeHeight = NewHeight;
+
+		CommentNode->ResizeNode(FVector2D(NewWidth, NewHeight));
+
 		return true;
 	}
 
 	return false;
 }
 
-bool SAutoSizeCommentsGraphNode::MoveNodeTo(const FVector2D& NewPos, bool bModify)
+bool SAutoSizeCommentsGraphNode::SetNodePosition(UEdGraphNode* Node, int32 NodePosX, int32 NodePosY, bool bModify) const
 {
-	return MoveNodeTo(FMath::RoundToInt(NewPos.X), FMath::RoundToInt(NewPos.Y), bModify);
-}
-
-bool SAutoSizeCommentsGraphNode::MoveNodeTo(int32 NodePosX, int32 NodePosY, bool bModify)
-{
-	if (CommentNode->NodePosX != NodePosX || CommentNode->NodePosY != NodePosY)
+	if (Node->NodePosX == NodePosX && Node->NodePosY == NodePosY)
 	{
-		if (bModify)
-		{
-			FASCUtils::ModifyObject(CommentNode);
-		}
-		CommentNode->NodePosX = NodePosX;
-		CommentNode->NodePosY = NodePosY;
-		return true;
+		return false;
 	}
 
-	return false;
+	if (bModify)
+	{
+		FASCUtils::ModifyObject(CommentNode);
+	}
+
+	Node->NodePosX = NodePosX;
+	Node->NodePosY = NodePosY;
+	return true;
 }
 
-bool SAutoSizeCommentsGraphNode::OffsetPosition(const FVector2D& Offset, bool bModify)
+bool SAutoSizeCommentsGraphNode::OffsetPosition(UEdGraphNode* Node, const FVector2D& Offset, bool bModify) const
 {
-	return MoveNodeTo(CommentNode->NodePosX + FMath::RoundToInt(Offset.X), CommentNode->NodePosY + FMath::RoundToInt(Offset.Y), bModify);
+	return SetNodePosition(Node, Node->NodePosX + FMath::RoundToInt(Offset.X), Node->NodePosY + FMath::RoundToInt(Offset.Y), bModify);
 }
 
 FSlateRect SAutoSizeCommentsGraphNode::GetTitleRect() const
@@ -1346,7 +1336,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit_Impl()
 		// move to desired pos
 		if (!GetPosition().Equals(DesiredPos, .1f))
 		{
-			MoveNodeTo(DesiredPos);
+			SetNodePosition(CommentNode, DesiredPos.X, DesiredPos.Y, true);
 		}
 	}
 	else
@@ -1501,7 +1491,7 @@ void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 		}
 
 		TotalMovement *= UAutoSizeCommentsSettings::Get().EmptyCommentBoxSpeed;
-		OffsetPosition(TotalMovement, false);
+		OffsetPosition(CommentNode, TotalMovement, false);
 	}
 }
 
