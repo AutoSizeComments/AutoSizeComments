@@ -41,6 +41,7 @@ public:
 	bool WriteHeaderToComment();
 	bool SyncStateToComment();
 	void UpdateCommentStateChange(bool bUpdateParentComments = true);
+	void ResizeGraphNode();
 
 	bool CanAddNode(UEdGraphNode* Node, bool bIgnoreKnots = false);
 
@@ -51,9 +52,14 @@ public:
 	void ClearNodes(bool bUpdateComment = true);
 	bool ReplaceNodes(const TArray<UEdGraphNode*>& Nodes, bool bUpdateComment = true);
 
-	const TSet<UEdGraphNode*>& GetNodesUnderComment() { return NodesUnderComment; }
+	const TSet<UEdGraphNode*>& GetNodesUnderComment() const { return NodesUnderComment; }
 	TSet<UEdGraphNode*>& GetNodesUnderCommentMut() { return NodesUnderComment; }
 	TSet<UEdGraphNode*> GetMajorNodesUnderComment();
+
+	const TArray<UASCNodeState*>& GetParents() const { return ParentComments; };
+	const TArray<UASCNodeState*>& GetChildren() const { return ChildComments; };
+
+	int GetDepth() const;
 
 	void AddChild(UASCNodeState* ChildNodeState);
 	void RemoveChild(UASCNodeState* ChildNodeState);
@@ -64,6 +70,8 @@ public:
 	bool IsHeader() const { return bIsHeader; }
 
 	void SetStyle(UEdGraphNode_Comment* Comment);
+
+	FString ToString() const;
 
 protected:
 	UPROPERTY()

@@ -268,6 +268,11 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 	// 	UE_LOG(LogTemp, Warning, TEXT("\t%s"), *GetNameSafe(NodesUnderComment));
 	// }
 
+	// for (UASCNodeState* Child : UASCNodeState::Get(CommentNode)->GetChildren())
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("%s"), *Child->ToString());
+	// }
+
 	if (MouseEvent.GetEffectingButton() == GetResizeKey() && AreResizeModifiersDown())
 	{
 		CachedAnchorPoint = GetAnchorPoint(MyGeometry, MouseEvent);
@@ -877,7 +882,7 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment()
 		}
 
 		GetASCNodeState()->AddNodes(SelectedNodes);
-		ResizeToFit(false);
+		ResizeToFit();
 		return;
 	}
 
@@ -1055,8 +1060,6 @@ bool SAutoSizeCommentsGraphNode::RemoveNode(UEdGraphNode* Node)
 
 void SAutoSizeCommentsGraphNode::HandleCommentNodeStateChanged(UASCNodeState* NodeState)
 {
-	ResizeToFit();
-
 	if (IsSingleSelectedNode())
 	{
 		SetNodesRelated(GetASCNodeState()->GetNodesUnderComment().Array());
@@ -1291,7 +1294,20 @@ FASCCommentData& SAutoSizeCommentsGraphNode::GetCommentData() const
 	return FAutoSizeCommentsCacheFile::Get().GetCommentData(CommentNode);
 }
 
-void SAutoSizeCommentsGraphNode::ResizeToFit(bool bCheckTwice)
+void SAutoSizeCommentsGraphNode::ResizeToFit()
+{
+	if (UASCNodeState* NodeState = GetASCNodeState())
+	{
+		// UE_LOG(LogTemp, Warning, TEXT("Resize to fit %s"), *NodeState->ToString());
+		NodeState->ResizeGraphNode();
+	}
+	else
+	{
+		check(false);
+	}
+}
+
+void SAutoSizeCommentsGraphNode::ResizeToFit_Impl()
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::ResizeToFit"), STAT_ASC_ResizeToFit, STATGROUP_AutoSizeComments);
 
@@ -1321,15 +1337,6 @@ void SAutoSizeCommentsGraphNode::ResizeToFit(bool bCheckTwice)
 		{
 			UserSize = CurrSize;
 			ResizeNode(UserSize);
-
-			// if (bCheckTwice)
-			// {
-			// 	FTimerHandle OutHandle;
-			// 	GEditor->GetTimerManager()->SetTimer(OutHandle, [&]()
-			// 	{
-			// 		ResizeToFit(false);
-			// 	}, 0.2, false);
-			// }
 		}
 
 		// check if location has changed
@@ -2122,6 +2129,12 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 	{
 		Pos = LocalGraphNode->GetPosition();
 		Size = LocalGraphNode->GetDesiredSize();
+
+		if (Node->bCanResizeNode)
+		{
+			Size.X = Node->NodeWidth;
+			Size.Y = Node->NodeHeight;
+		}
 
 		if (UAutoSizeCommentsSettings::Get().bUseCommentBubbleBounds && Node->bCommentBubbleVisible)
 		{

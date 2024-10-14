@@ -106,7 +106,8 @@ public:
 
 	FASCCommentData& GetCommentData() const;
 
-	void ResizeToFit(bool bCheckTwice = true);
+	void ResizeToFit();
+	void ResizeToFit_Impl();
 
 	void ApplyHeaderStyle();
 	void ApplyPresetStyle(const FPresetCommentStyle& Style);

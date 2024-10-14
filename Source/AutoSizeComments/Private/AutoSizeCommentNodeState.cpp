@@ -162,7 +162,7 @@ UASCNodeState::UASCNodeState()
 UASCNodeState::~UASCNodeState()
 {
 	// TODO is this required?
-	// Cleanup();
+	Cleanup();
 }
 
 UASCNodeState* UASCNodeState::Get(UEdGraphNode_Comment* Comment)
@@ -288,6 +288,8 @@ void UASCNodeState::UpdateCommentStateChange(bool bUpdateParentComments)
 
 	if (WriteNodesToComment())
 	{
+		// UE_LOG(LogTemp, Warning, TEXT("Update comment state change %s"), *FASCUtils::GetNodeName(CommentNode.Get()));
+
 		// don't update the graph node if it's been deleted off the graph
 		TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode.Get());
 		if (ASCGraphNode.IsValid())
@@ -295,7 +297,34 @@ void UASCNodeState::UpdateCommentStateChange(bool bUpdateParentComments)
 			if (!FASCUtils::HasNodeBeenDeleted(CommentNode.Get()))
 			{
 				ASCGraphNode->HandleCommentNodeStateChanged(this);
+				ResizeGraphNode();
 			}
+		}
+	}
+}
+
+void UASCNodeState::ResizeGraphNode()
+{
+	if (!CommentNode.IsValid())
+	{
+		return;
+	}
+
+	// TODO optimize this
+	// in order to get an accurate size, we need to resize all our children first
+	for (UASCNodeState* ChildComment : ChildComments)
+	{
+		ChildComment->ResizeGraphNode();
+	}
+
+	// then do the resize
+	TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode.Get());
+	if (ASCGraphNode.IsValid())
+	{
+		if (!FASCUtils::HasNodeBeenDeleted(CommentNode.Get()))
+		{
+			// UE_LOG(LogTemp, Warning, TEXT("Resize graph node %s"), *ToString());
+			ASCGraphNode->ResizeToFit_Impl();
 		}
 	}
 }
@@ -466,6 +495,18 @@ TSet<UEdGraphNode*> UASCNodeState::GetMajorNodesUnderComment()
 	return OutNodes;
 }
 
+int UASCNodeState::GetDepth() const
+{
+	int ParentDepth = 0;
+
+	for (UASCNodeState* Parent : GetParents())
+	{
+		ParentDepth = FMath::Max(ParentDepth, Parent->GetDepth() + 1);
+	}
+
+	return ParentDepth;
+}
+
 void UASCNodeState::AddChild(UASCNodeState* ChildNodeState)
 {
 	if (ChildNodeState)
@@ -493,6 +534,8 @@ void UASCNodeState::RemoveChild(UASCNodeState* ChildNodeState)
 
 void UASCNodeState::UpdateParentComments()
 {
+	// UE_LOG(LogTemp, Warning, TEXT("Update parent comments for %s %s"), *GetNameSafe(this), *FASCUtils::GetNodeName(CommentNode.Get()));
+
 	// check all the comments in our graph
 	TArray<UEdGraphNode_Comment*> AllComments = FASCUtils::GetCommentsFromGraph(CommentNode->GetGraph());
 
@@ -609,4 +652,9 @@ bool UASCNodeState::SetIsHeader(bool bNewValue)
 void UASCNodeState::SetStyle(UEdGraphNode_Comment* Comment)
 {
 	
+}
+
+FString UASCNodeState::ToString() const
+{
+	return FString::Printf(TEXT("%s %d %s"), *FASCUtils::GetNodeName(CommentNode.Get()), GetDepth(), *FASCNodeId(CommentNode.Get()).ToString());
 }

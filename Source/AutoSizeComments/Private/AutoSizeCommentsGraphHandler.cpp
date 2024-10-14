@@ -567,54 +567,38 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 	TArray<UEdGraphNode_Comment*> CommentNodes;
 	Graph->GetNodesOfClass(CommentNodes);
 
-	TSet<UObject*> SelectedNodes;
-	for (auto Node : GraphPanel->SelectionManager.GetSelectedNodes())
+	TSet<UEdGraphNode*> SelectedNodes;
+	for (auto Node : FASCUtils::GetSelectedNodes(GraphPanel, false))
 	{
 		SelectedNodes.Add(Node);
 		if (UEdGraphNode_Comment* SelectedComment = Cast<UEdGraphNode_Comment>(Node))
 		{
-			SelectedNodes.Append(SelectedComment->GetNodesUnderComment());
+			if (auto NodeState = UASCNodeState::Get(SelectedComment))
+			{
+				SelectedNodes.Append(NodeState->GetNodesUnderComment());
+			}
 		}
 	}
 
-	// TMap<TSharedPtr<SAutoSizeCommentsGraphNode>, const TArray<UObject*>> OldCommentContains;
-	// TMap<UEdGraphNode_Comment*, TArray<UEdGraphNode_Comment*>> OldParentMap;
-
 	TArray<TSharedPtr<SAutoSizeCommentsGraphNode>> ASCGraphNodes;
-	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> ChangedGraphNodes; 
+	TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> ChangedGraphNodes;
 
-	// // gather asc graph nodes and store the comment data for later
-	// for (UEdGraphNode_Comment* CommentNode : CommentNodes)
-	// {
-	// 	TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode);
-	// 	if (!ASCGraphNode)
-	// 	{
-	// 		continue;
-	// 	}
-	//
-	// 	if (ASCGraphNode->IsHeaderComment())
-	// 	{
-	// 		continue;
-	// 	}
-	//
-	// 	ASCGraphNodes.Add(ASCGraphNode);
-	//
-	// 	OldCommentContains.Add(ASCGraphNode, CommentNode->GetNodesUnderComment());
-	//
-	// 	for (UObject* ContainedObj : CommentNode->GetNodesUnderComment())
-	// 	{
-	// 		if (UEdGraphNode_Comment* ContainedComment = Cast<UEdGraphNode_Comment>(ContainedObj))
-	// 		{
-	// 			OldParentMap.FindOrAdd(ContainedComment).Add(CommentNode);
-	// 		}
-	// 	}
-	// }
+	// in order to preseve comment heirachy, we need to add nodes into the highest comments first
+	CommentNodes.Sort([](UEdGraphNode_Comment& A, UEdGraphNode_Comment& B)
+	{
+		UASCNodeState* StateA = UASCNodeState::Get(&A);
+		UASCNodeState* StateB = UASCNodeState::Get(&B);
+		if (StateA && StateB)
+		{
+			return StateA->GetDepth() < StateB->GetDepth();
+		}
+
+		return false;
+	});
 
 	// update their containing nodes
-	// for (TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode : ASCGraphNodes)
 	for (UEdGraphNode_Comment* CommentNode : CommentNodes)
 	{
-		// UEdGraphNode_Comment* CommentNode = ASCGraphNode->GetCommentNodeObj();
 		TSharedPtr<SAutoSizeCommentsGraphNode> ASCGraphNode = FASCState::Get().GetASCComment(CommentNode);
 		if (!ASCGraphNode.IsValid())
 		{
@@ -623,20 +607,20 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 
 		const ECommentCollisionMethod& AltCollisionMethod = UAutoSizeCommentsSettings::Get().AltCollisionMethod;
 
+		// if we are dragging a comment node, refresh the nodes inside this comment
 		if (SelectedNodes.Contains(CommentNode))
 		{
 			ASCGraphNode->RefreshNodesInsideComment(AltCollisionMethod, UAutoSizeCommentsSettings::Get().bIgnoreKnotNodesWhenPressingAlt, false);
 			ChangedGraphNodes.Add(ASCGraphNode);
 		}
-		else
+		else // check if any of the comments on the graph contain our node 
 		{
 			TArray<UEdGraphNode*> OutNodes;
 			ASCGraphNode->QueryNodesUnderComment(OutNodes, AltCollisionMethod);
 			OutNodes = OutNodes.FilterByPredicate(FASCUtils::IsMajorNode);
-
-			TSet<UObject*> NewSelection(CommentNode->GetNodesUnderComment());
+			TSet<UEdGraphNode*> NewSelection(ASCGraphNode->GetNodesUnderComment());
 			bool bChanged = false;
-			for (UObject* Node : SelectedNodes)
+			for (UEdGraphNode* Node : SelectedNodes)
 			{
 				if (OutNodes.Contains(Node))
 				{
@@ -665,13 +649,8 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 					}
 				}
 
-				ASCGraphNode->GetASCNodeState()->ReplaceNodes(NewNodes, true);
+				ASCGraphNode->GetASCNodeState()->ReplaceNodes(NewNodes, false);
 				ChangedGraphNodes.Add(ASCGraphNode);
-
-				if (UAutoSizeCommentsSettings::Get().ResizingMode != EASCResizingMode::Disabled)
-				{
-					ASCGraphNode->ResizeToFit();
-				}
 			}
 		}
 	}
@@ -679,14 +658,10 @@ void FAutoSizeCommentGraphHandler::ProcessAltReleased(TSharedPtr<SGraphPanel> Gr
 	// update existing comment nodes using the parent comments stored earlier 
 	for (TSharedPtr<SAutoSizeCommentsGraphNode> GraphNode : ChangedGraphNodes)
 	{
-		// const TArray<UEdGraphNode_Comment*>* OldParents = OldParentMap.Find(GraphNode->GetCommentNodeObj());
-		// const TArray<UObject*>* OldContains = OldCommentContains.Find(GraphNode);
-		// GraphNode->UpdateExistingCommentNodes(OldParents, OldContains);
 		GraphNode->GetASCNodeState()->UpdateCommentStateChange();
-		GraphNode->ResizeToFit();
 	}
 
-	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([&]
+	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([this]
 	{
 		bProcessedAltReleased = false;
 	}));
@@ -1117,6 +1092,7 @@ void FAutoSizeCommentGraphHandler::SaveSizeCache()
 	bPendingSave = false;
 }
 
+// called from this node transacting
 void FAutoSizeCommentGraphHandler::UpdateContainingComments(TWeakObjectPtr<UEdGraphNode> Node)
 {
 	if (!Node.IsValid() || !IsValid(Node.Get()))
@@ -1143,15 +1119,5 @@ void FAutoSizeCommentGraphHandler::UpdateContainingComments(TWeakObjectPtr<UEdGr
 				ASCComment->ResizeToFit();
 			}
 		}
-		// if (TSharedPtr<SAutoSizeCommentsGraphNode> ASCComment = FASCState::Get().GetASCComment(Comment))
-		// {
-		// 	TArray<UEdGraphNode*> NodesUnderComment;
-		// 	
-		// 	FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(ASCComment, NodesUnderComment);
-		// 	if (NodesUnderComment.Contains(Node))
-		// 	{
-		// 		ASCComment->ResizeToFit();
-		// 	}
-		// }
 	}
 }
