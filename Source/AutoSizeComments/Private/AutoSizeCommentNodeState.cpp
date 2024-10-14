@@ -127,7 +127,6 @@ void FASCNodeStateManager::CleanupOnAssetClosed(UObject* Asset, EAssetEditorClos
 		return;
 	}
 
-	check(false); // does this even get called?
 	CleanupCommentStateMap();
 }
 

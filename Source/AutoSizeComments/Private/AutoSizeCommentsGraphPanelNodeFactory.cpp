@@ -11,6 +11,9 @@
 #include "EdGraph/EdGraph.h"
 #include "Editor/Transactor.h"
 #include "Framework/Commands/GenericCommands.h"
+#include "MaterialGraph/MaterialGraphNode_Comment.h"
+#include "OtherGraphs/ASCComment_ControlRig.h"
+#include "OtherGraphs/ASCComment_Material.h"
 
 TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class UEdGraphNode* InNode) const
 {
@@ -51,7 +54,7 @@ TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class 
 		return nullptr;
 	}
 
-	if (Cast<UEdGraphNode_Comment>(InNode))
+	if (UEdGraphNode_Comment* CommentNode = Cast<UEdGraphNode_Comment>(InNode))
 	{
 		if (UEdGraph* Graph = InNode->GetGraph())
 		{
@@ -74,10 +77,23 @@ TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class 
 				}
 			}
 
-			TSharedRef<SAutoSizeCommentsGraphNode> GraphNode = SNew(SAutoSizeCommentsGraphNode, InNode);
-			GraphNode->InitialSelection = GraphData.PreviousSelection;
-			GraphNode->bWasCopyPasted = bWasCopyPasted;
-			return GraphNode;
+			TSharedPtr<SAutoSizeCommentsGraphNode> GraphNode;
+			if (CommentNode->IsA(UMaterialGraphNode_Comment::StaticClass()))
+			{
+				GraphNode = SNew(SASCComment_Material, InNode);
+			}
+			else
+			{
+				GraphNode = SNew(SAutoSizeCommentsGraphNode, InNode);
+			}
+
+			if (GraphNode)
+			{
+				GraphNode->InitialSelection = GraphData.PreviousSelection;
+				GraphNode->bWasCopyPasted = bWasCopyPasted;
+				GraphNode->SlatePrepass();
+				return GraphNode; 
+			}
 		}
 	}
 

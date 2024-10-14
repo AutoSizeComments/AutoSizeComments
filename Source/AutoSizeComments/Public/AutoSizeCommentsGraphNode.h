@@ -35,7 +35,7 @@ enum class EASCAnchorPoint : uint8
 	None
 };
 
-class AUTOSIZECOMMENTS_API SAutoSizeCommentsGraphNode final : public SGraphNode
+class AUTOSIZECOMMENTS_API SAutoSizeCommentsGraphNode : public SGraphNode
 {
 public:
 	/** This delay is to ensure that all nodes exist on the graph and have their bounds properly set */
@@ -203,12 +203,12 @@ protected:
 	void UpdateColors(const float InDeltaTime);
 
 	bool ResizeNode(const FVector2D& NewSize, bool bModify = true);
-	bool ResizeNode(int32 NewWidth, int32 NewHeight, bool bModify = true);
+	virtual bool ResizeNode(int32 NewWidth, int32 NewHeight, bool bModify = true);
 
-	bool MoveNodeTo(const FVector2D& NewPos, bool bModify = true);
-	bool MoveNodeTo(int32 NodePosX, int32 NodePosY, bool bModify = true);
+	virtual bool SetNodePosition(UEdGraphNode* Node, int32 NodePosX, int32 NodePosY, bool bModify = true) const;
+	bool OffsetPosition(UEdGraphNode* Node, const FVector2D& Offset, bool bModify = true) const;
 
-	bool OffsetPosition(const FVector2D& Offset, bool bModify = true);
+	UEdGraphNode_Comment* GetCommentNode() const { return CommentNode; }
 
 private:
 	/** @return the color to tint the comment body */
