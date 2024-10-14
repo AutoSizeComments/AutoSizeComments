@@ -1075,7 +1075,7 @@ void FAutoSizeCommentGraphHandler::OnPostGarbageCollect()
 		}
 		else
 		{
-			for (auto ChangeIt = It.Value().CommentChangeData.CreateIterator(); It; ++It)
+			for (auto ChangeIt = It.Value().CommentChangeData.CreateIterator(); ChangeIt; ++ChangeIt)
 			{
 				if (!ChangeIt.Key().IsValid())
 				{
