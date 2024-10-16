@@ -35,8 +35,19 @@ public class AutoSizeComments : ModuleRules
 				"JsonUtilities",
 				"EngineSettings",
 				"AssetRegistry",
-				"MaterialEditor"
+				"MaterialEditor", 
 			}
 		);
+
+		if (true)
+		{
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					"RigVMDeveloper",
+					"RigVMEditor",
+				}
+			);
+		}
 	}
 }

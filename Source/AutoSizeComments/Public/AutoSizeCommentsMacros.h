@@ -24,3 +24,5 @@
 #else
 #define ASC_GET_FONT_STYLE FEditorStyle::GetFontStyle
 #endif
+
+#define ASC_ENABLE_CONTROLRIG 1

@@ -15,6 +15,11 @@
 #include "OtherGraphs/ASCComment_ControlRig.h"
 #include "OtherGraphs/ASCComment_Material.h"
 
+#if ASC_ENABLE_CONTROLRIG
+#include "RigVMEditor/Public/Widgets/SRigVMGraphNodeComment.h"
+#include "EdGraph/RigVMEdGraphSchema.h"
+#endif
+
 TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class UEdGraphNode* InNode) const
 {
 	if (!InNode)
@@ -82,6 +87,12 @@ TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class 
 			{
 				GraphNode = SNew(SASCComment_Material, InNode);
 			}
+#if ASC_ENABLE_CONTROLRIG
+			else if (CommentNode->GetSchema() && CommentNode->GetSchema()->IsA(URigVMEdGraphSchema::StaticClass()))
+			{
+				GraphNode = SNew(SASCComment_ControlRig, InNode);
+			}
+#endif
 			else
 			{
 				GraphNode = SNew(SAutoSizeCommentsGraphNode, InNode);
