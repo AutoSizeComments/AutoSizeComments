@@ -458,26 +458,6 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 	UpdateRefreshDelay();
 
-	if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
-	{
-		const FModifierKeysState& KeysState = FSlateApplication::Get().GetModifierKeys();
-
-		if (!KeysState.IsAltDown())
-		{
-			if (ResizingMode == EASCResizingMode::Always)
-			{
-				ResizeToFit();
-			}
-			else if (ResizingMode == EASCResizingMode::Reactive && FAutoSizeCommentGraphHandler::Get().HasCommentChanged(CommentNode))
-			{
-				FAutoSizeCommentGraphHandler::Get().UpdateCommentChangeState(CommentNode);
-				ResizeToFit();
-			}
-
-			MoveEmptyCommentBoxes();
-		}
-	}
-
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
 	if (IsHeaderComment())
