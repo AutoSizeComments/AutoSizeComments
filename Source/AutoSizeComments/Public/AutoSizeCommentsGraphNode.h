@@ -208,8 +208,6 @@ protected:
 	virtual bool SetNodePosition(UEdGraphNode* Node, int32 NodePosX, int32 NodePosY, bool bModify = true) const;
 	bool OffsetPosition(UEdGraphNode* Node, const FVector2D& Offset, bool bModify = true) const;
 
-	UEdGraphNode_Comment* GetCommentNode() const { return CommentNode; }
-
 private:
 	/** @return the color to tint the comment body */
 	FSlateColor GetCommentBodyColor() const;
