@@ -187,13 +187,14 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 
 	FVector2D PositionDelta = NewPosition - GetPosition();
 
-	FVector2D NewPos = GetPosition() + PositionDelta;
-
-#if ASC_UE_VERSION_OR_LATER(4, 27)
-	SGraphNode::MoveTo(NewPos, NodeFilter, bMarkDirty);
-#else
-	SGraphNode::MoveTo(NewPos, NodeFilter);
-#endif
+	if (!NodeFilter.Find(SharedThis(this)))
+	{
+		if (GraphNode && !RequiresSecondPassLayout())
+		{
+			NodeFilter.Add(SharedThis(this));
+			SetNodePosition(GraphNode, NewPosition.X, NewPosition.Y, true);
+		}
+	}
 
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 
