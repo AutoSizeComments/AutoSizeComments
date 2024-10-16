@@ -11,6 +11,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "MaterialGraph/MaterialGraph.h"
+#include "RigVMModel/RigVMGraph.h"
 
 TArray<UEdGraphNode_Comment*> FASCUtils::GetContainingCommentNodes(const TArray<UEdGraphNode_Comment*>& Comments, UEdGraphNode* Node)
 {
@@ -554,6 +555,11 @@ UPackage* FASCUtils::GetPackage(UObject* Obj)
 bool FASCUtils::HasReliableGuid(UEdGraph* Graph)
 {
 	if (Graph->IsA(UMaterialGraph::StaticClass()))
+	{
+		return false;
+	}
+
+	if (Graph->IsA(URigVMGraph::StaticClass()))
 	{
 		return false;
 	}
