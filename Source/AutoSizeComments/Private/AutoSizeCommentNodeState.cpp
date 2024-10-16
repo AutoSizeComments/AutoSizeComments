@@ -215,6 +215,7 @@ void UASCNodeState::InitializeFromCache()
 	if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(CommentNode.Get(), OutNodesUnder))
 	{
 		ReplaceNodes(OutNodesUnder, false);
+		WriteNodesToComment();
 	}
 }
 
