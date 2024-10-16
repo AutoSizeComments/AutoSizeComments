@@ -509,7 +509,7 @@ void FASCUtils::ModifyObject(UObject* Obj)
 	// if we have an active transaction, just write to that
 	if (GUndo)
 	{
-		Obj->Modify();
+		Obj->Modify(false);
 		return;
 	}
 
