@@ -12,7 +12,6 @@
 #include "Editor/Transactor.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "MaterialGraph/MaterialGraphNode_Comment.h"
-#include "OtherGraphs/ASCComment_ControlRig.h"
 #include "OtherGraphs/ASCComment_Material.h"
 
 TSharedPtr<SGraphNode> FAutoSizeCommentsGraphPanelNodeFactory::CreateNode(class UEdGraphNode* InNode) const
