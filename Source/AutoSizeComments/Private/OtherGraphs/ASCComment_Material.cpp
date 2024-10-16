@@ -9,7 +9,7 @@
 void SASCComment_Material::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 {
 	SAutoSizeCommentsGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
-	UpdateMaterialCommentLocation(Cast<UMaterialGraphNode_Comment>(GetCommentNode()));
+	UpdateMaterialCommentLocation(Cast<UMaterialGraphNode_Comment>(GetCommentNodeObj()));
 }
 
 bool SASCComment_Material::SetNodePosition(UEdGraphNode* Node, int32 NodePosX, int32 NodePosY, bool bModify) const
