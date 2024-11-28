@@ -20,7 +20,7 @@ class UTransBuffer;
 void UASCNodeState::Cleanup()
 {
 	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("Cleanup ASCNodeState %p"), this);
-	if (IsRooted())
+	if (IsValidLowLevel() && IsRooted())
 	{
 		RemoveFromRoot();
 		MarkAsGarbage();
