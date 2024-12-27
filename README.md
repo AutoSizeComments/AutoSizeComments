@@ -11,6 +11,16 @@ Marketplace link: https://www.unrealengine.com/marketplace/auto-size-comments
 
 This was originally a feature from the [Blueprint Assist Plugin](https://www.unrealengine.com/marketplace/en-US/product/blueprint-assist), a plugin that provides automatic formatting and mouse-free node editing when working with blueprints.
 
+# Graph issues
+
+### Material Graph
+
+Does not correctly remember the nodes inside
+* On reopening the graph the comments try to find contained nodes using a collision check
+
+### Control Rig Graph
+* No support for Control Rig graph due to some oddities in how the graph has been implemented
+
 # Building the plugin
 
 There are two methods of building the plugin. I suggest using the first method if you have a C++ project setup.
