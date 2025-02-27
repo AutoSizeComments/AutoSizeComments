@@ -1892,6 +1892,11 @@ void SAutoSizeCommentsGraphNode::CreateColorControls()
 TSet<TSharedPtr<SAutoSizeCommentsGraphNode>> SAutoSizeCommentsGraphNode::GetOtherCommentNodes()
 {
 	TSharedPtr<SGraphPanel> OwnerPanel = GetOwnerPanel();
+	if (!OwnerPanel || !OwnerPanel.IsValid())
+	{
+		return TSet<TSharedPtr<SAutoSizeCommentsGraphNode>>();
+	}
+
 	FChildren* PanelChildren = OwnerPanel->GetAllChildren();
 	int32 NumChildren = PanelChildren->Num();
 
