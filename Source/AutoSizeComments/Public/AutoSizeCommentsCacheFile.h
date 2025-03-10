@@ -115,8 +115,6 @@ public:
 
 	bool GetNodesUnderComment(UEdGraphNode_Comment* CommentNode, TArray<UEdGraphNode*>& OutNodesUnderComment);
 
-	FASCCommentData& GetCommentData(UEdGraphNode* CommentNode);
-
 	void PrintCache();
 
 	void OnObjectLoaded(UObject* Obj);

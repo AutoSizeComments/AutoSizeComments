@@ -309,7 +309,10 @@ FASCGraphData& FAutoSizeCommentsCacheFile::GetGraphData(UEdGraph* Graph)
 		GraphData.bInitialized = true;
 
 		// write any data we got from the cache file to the meta data
-		GraphData.SaveToPackageMetaData(Graph);
+		if (GraphData.CommentData.Num() > 0)
+		{
+			GraphData.SaveToPackageMetaData(Graph);
+		}
 
 		return GraphData;
 	}
@@ -401,13 +404,6 @@ bool FAutoSizeCommentsCacheFile::GetNodesUnderComment(UEdGraphNode_Comment* Comm
 	}
 
 	return false;
-}
-
-FASCCommentData& FAutoSizeCommentsCacheFile::GetCommentData(UEdGraphNode* CommentNode)
-{
-	UEdGraph* Graph = CommentNode->GetGraph();
-	FASCGraphData& Data = GetGraphData(Graph);
-	return Data.CommentData.FindOrAdd(FASCNodeId(CommentNode) );
 }
 
 void FAutoSizeCommentsCacheFile::PrintCache()

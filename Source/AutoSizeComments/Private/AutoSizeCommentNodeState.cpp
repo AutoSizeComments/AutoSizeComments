@@ -209,13 +209,14 @@ void UASCNodeState::InitializeFromCache()
 	{
 		bRequestInit = true;
 	}
-
-	TArray<UEdGraphNode*> OutNodesUnder;
-
-	if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(CommentNode.Get(), OutNodesUnder))
+	else
 	{
-		ReplaceNodes(OutNodesUnder, false);
-		WriteNodesToComment();
+		TArray<UEdGraphNode*> OutNodesUnder;
+		if (FAutoSizeCommentsCacheFile::Get().GetNodesUnderComment(CommentNode.Get(), OutNodesUnder))
+		{
+			ReplaceNodes(OutNodesUnder, false);
+			WriteNodesToComment();
+		}
 	}
 }
 
