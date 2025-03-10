@@ -101,7 +101,11 @@ public:
 
 	void CleanupCommentStateMap();
 
+	void CleanupCommentStateMapForAsset(UObject* Asset);
+
 	void CleanupOnAssetClosed(UObject* Asset, EAssetEditorCloseReason CloseReason);
+
+	void HandleAssetsPreDelete(const TArray<UObject*>& Objects);
 
 	TMap<TWeakObjectPtr<UEdGraphNode>, UASCNodeState*> CommentStateMap;
 	UASCNodeState* GetCommentState(UEdGraphNode_Comment* Comment);

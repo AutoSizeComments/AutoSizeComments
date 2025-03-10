@@ -2,6 +2,7 @@
 
 #include "AutoSizeCommentsModule.h"
 
+#include "AutoSizeCommentNodeState.h"
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsCommands.h"
 #include "AutoSizeCommentsGraphHandler.h"
@@ -57,6 +58,8 @@ void FAutoSizeCommentsModule::OnPostEngineInit()
 	FAutoSizeCommentsInputProcessor::Create();
 
 	FAutoSizeCommentsNotifications::Get().Initialize();
+
+	FASCNodeStateManager::Get().Init();
 
 	FASCStyle::Initialize();
 }

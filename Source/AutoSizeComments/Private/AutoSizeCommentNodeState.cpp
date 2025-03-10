@@ -29,13 +29,7 @@ void UASCNodeState::Cleanup()
 
 FASCNodeStateManager& FASCNodeStateManager::Get()
 {
-	FASCNodeStateManager& Manager = TLazySingleton<FASCNodeStateManager>::Get();
-	if (!Manager.bInitialized)
-	{
-		Manager.Init();
-	}
-
-	return Manager;
+	return TLazySingleton<FASCNodeStateManager>::Get();
 }
 
 void FASCNodeStateManager::TearDown()
@@ -56,8 +50,11 @@ bool FASCNodeStateManager::Init()
 	FCoreUObjectDelegates::GetPostGarbageCollect().AddRaw(this, &FASCNodeStateManager::CleanupCommentStateMap);
 	if (UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
 	{
+		// TODO: this doesn't reliably work, simple things like clicking close on an asset doesn't trigger this
 		AssetEditorSubsystem->OnAssetEditorRequestClose().AddRaw(this, &FASCNodeStateManager::CleanupOnAssetClosed);
 	}
+
+	FEditorDelegates::OnAssetsPreDelete.AddRaw(this, &FASCNodeStateManager::HandleAssetsPreDelete);
 
 	return true;
 }
@@ -120,14 +117,57 @@ void FASCNodeStateManager::CleanupCommentStateMap()
 	// }
 }
 
+void FASCNodeStateManager::CleanupCommentStateMapForAsset(UObject* Asset)
+{
+	TSet<TWeakObjectPtr<UEdGraphNode>> Nodes;
+	CommentStateMap.GetKeys(Nodes);
+
+	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("CleanupCommentStateMapAsset %d"), CommentStateMap.Num());
+	for (auto It = CommentStateMap.CreateIterator(); It; ++It)
+	{
+		bool bRequiresCleanup = false;
+		TWeakObjectPtr<UEdGraphNode> Node = It.Key();
+		if (!Node.IsValid())
+		{
+			bRequiresCleanup = true;
+		}
+		else
+		{
+			if (Node->GetOutermostObject() == Asset)
+			{
+				bRequiresCleanup = true;
+			}
+		}
+
+		if (bRequiresCleanup)
+		{
+			if (UASCNodeState* NodeState = It.Value())
+			{
+				NodeState->Cleanup();
+			}
+
+			It.RemoveCurrent();
+		}
+	}
+}
+
 void FASCNodeStateManager::CleanupOnAssetClosed(UObject* Asset, EAssetEditorCloseReason CloseReason)
 {
+	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("ASC On Asset Closed %s"), *GetNameSafe(Asset));
 	if (!Asset)
 	{
 		return;
 	}
 
-	CleanupCommentStateMap();
+	CleanupCommentStateMapForAsset(Asset);
+}
+
+void FASCNodeStateManager::HandleAssetsPreDelete(const TArray<UObject*>& Objects)
+{
+	for (UObject* Obj : Objects)
+	{
+		CleanupCommentStateMapForAsset(Obj);
+	}
 }
 
 UASCNodeState* FASCNodeStateManager::GetCommentState(UEdGraphNode_Comment* Comment)
@@ -150,6 +190,7 @@ UASCNodeState* FASCNodeStateManager::GetCommentState(UEdGraphNode_Comment* Comme
 	UASCNodeState* NewState = NewObject<UASCNodeState>();
 	CommentStateMap.Add(Comment, NewState);
 	NewState->Initialize(Comment);
+	UE_LOG(LogAutoSizeComments, VeryVerbose, TEXT("Init new state %s"), *FASCNodeId(Comment).ToString());
 	return NewState;
 }
 
