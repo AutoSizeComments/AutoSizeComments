@@ -448,6 +448,14 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 
 	UpdateRefreshDelay();
 
+	if (TwoPassResizeDelay > 0)
+	{
+		if (--TwoPassResizeDelay == 0)
+		{
+			ResizeToFit_Impl();
+		}
+	}
+
 	if (RefreshNodesDelay == 0 && !IsHeaderComment() && !bUserIsDragging)
 	{
 		const FModifierKeysState& KeysState = FSlateApplication::Get().GetModifierKeys();
@@ -1508,6 +1516,16 @@ FASCCommentData& SAutoSizeCommentsGraphNode::GetCommentData() const
 }
 
 void SAutoSizeCommentsGraphNode::ResizeToFit()
+{
+	ResizeToFit_Impl();
+
+	if (UAutoSizeCommentsSettings::Get().bUseTwoPassResize && GetResizingMode() == EASCResizingMode::Reactive)
+	{
+		TwoPassResizeDelay = 2;
+	}
+}
+
+void SAutoSizeCommentsGraphNode::ResizeToFit_Impl()
 {
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("SAutoSizeCommentsGraphNode::ResizeToFit"), STAT_ASC_ResizeToFit, STATGROUP_AutoSizeComments);
 

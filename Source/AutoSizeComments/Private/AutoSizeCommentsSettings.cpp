@@ -16,6 +16,7 @@ UAutoSizeCommentsSettings::UAutoSizeCommentsSettings(const FObjectInitializer& O
 {
 	ResizingMode = EASCResizingMode::Reactive;
 	ResizeToFitWhenDisabled = false;
+	bUseTwoPassResize = true;
 	AutoInsertComment = EASCAutoInsertComment::Always;
 	bSelectNodeWhenClickingOnPin = true;
 	bAutoRenameNewComments = true;

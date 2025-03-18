@@ -194,6 +194,10 @@ public:
     UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "ResizingMode == EASCResizingMode::Disabled", EditConditionHides))
     bool ResizeToFitWhenDisabled;
 
+	/** In reactive mode, run a 2nd resize so that the title is correctly calculated */
+	UPROPERTY(EditAnywhere, config, Category = Misc, meta = (EditCondition = "ResizingMode == EASCResizingMode::Reactive"))
+	bool bUseTwoPassResize;
+
 	/** Determines when to insert newly created nodes into existing comments */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	EASCAutoInsertComment AutoInsertComment;

@@ -38,7 +38,9 @@ class SAutoSizeCommentsGraphNode final : public SGraphNode
 {
 public:
 	/** This delay is to ensure that all nodes exist on the graph and have their bounds properly set */
-	int RefreshNodesDelay = 0;
+	uint8 RefreshNodesDelay = 0;
+
+	uint8 TwoPassResizeDelay = 0;
 
 	bool bIsDragging = false;
 
@@ -109,6 +111,7 @@ public:
 	FASCCommentData& GetCommentData() const;
 
 	void ResizeToFit();
+	void ResizeToFit_Impl();
 
 	void ApplyHeaderStyle();
 	void ApplyPresetStyle(const FPresetCommentStyle& Style);
