@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "3.4.0",
+  "VersionName": "3.4.1",
   "FriendlyName": "AutoSizeComments",
   "Description": "Comment boxes that auto resize to fit the nodes inside",
   "Category": "Editor",
