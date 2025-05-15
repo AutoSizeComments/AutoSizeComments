@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AutoSizeCommentsMacros.h"
 #include "EdGraph/EdGraphSchema.h" // EGraphType, EEdGraphPinDirection
 
 class UEdGraphNode;
@@ -8,6 +9,7 @@ class UEdGraphPin;
 class UEdGraphNode_Comment;
 class SGraphPin;
 class SGraphPanel;
+class SGraphNode;
 
 struct FASCUtils
 {
@@ -50,4 +52,8 @@ struct FASCUtils
 	static bool AddNodeIntoComment(UEdGraphNode_Comment* Comment, UObject* NewNode, bool bUpdateCache = true);
 	static bool AddNodesIntoComment(UEdGraphNode_Comment* Comment, const TSet<UObject*>& NewNodes, bool bUpdateCache = true);
 	// ~~ Logic that modifies nodes under comment
+
+	static FASCMetaData* GetPackageMetaData(UPackage* Package);
+
+	static FASCVector2 GetNodePos(const SGraphNode* Node);
 };

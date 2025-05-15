@@ -130,7 +130,7 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = Color)
 	EASCDefaultCommentColorMethod HeaderColorMethod;
 
-	/** If Use Random Color is not enabled, comment boxes will spawn with this default color */
+	/** Comment boxes will spawn with this default color */
 	UPROPERTY(EditAnywhere, config, Category = Color, meta=(EditCondition="DefaultCommentColorMethod==EASCDefaultCommentColorMethod::Default", EditConditionHides))
 	FLinearColor DefaultCommentColor;
 

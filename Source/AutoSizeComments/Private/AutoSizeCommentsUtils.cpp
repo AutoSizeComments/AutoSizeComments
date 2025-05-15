@@ -489,3 +489,21 @@ bool FASCUtils::AddNodesIntoComment(UEdGraphNode_Comment* Comment, const TSet<UO
 
 	return true;
 }
+
+FASCMetaData* FASCUtils::GetPackageMetaData(UPackage* Package)
+{
+#if ASC_UE_VERSION_OR_LATER(5, 6)
+	return &Package->GetMetaData();
+#else
+	return Package->GetMetaData();
+#endif
+}
+
+FASCVector2 FASCUtils::GetNodePos(const SGraphNode* Node)
+{
+#if ASC_UE_VERSION_OR_LATER(5, 6)
+	return Node->GetPosition2f();
+#else
+	return Node->GetPosition();
+#endif
+}

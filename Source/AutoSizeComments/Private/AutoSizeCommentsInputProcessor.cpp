@@ -8,26 +8,26 @@
 #include "SGraphPanel.h"
 #include "Framework/Application/SlateApplication.h"
 
-static TSharedPtr<FAutoSizeCommentsInputProcessor> Instance;
+static TSharedPtr<FAutoSizeCommentsInputProcessor> ASCInputProcessor;
 
 void FAutoSizeCommentsInputProcessor::Create()
 {
-	Instance = MakeShareable(new FAutoSizeCommentsInputProcessor());
-	FSlateApplication::Get().RegisterInputPreProcessor(Instance);
+	ASCInputProcessor = MakeShareable(new FAutoSizeCommentsInputProcessor());
+	FSlateApplication::Get().RegisterInputPreProcessor(ASCInputProcessor);
 
-	Instance->Init();
+	ASCInputProcessor->Init();
 }
 
 void FAutoSizeCommentsInputProcessor::Cleanup()
 {
-	if (Instance.IsValid())
+	if (ASCInputProcessor.IsValid())
 	{
 		if (FSlateApplication::IsInitialized())
 		{
-			FSlateApplication::Get().UnregisterInputPreProcessor(Instance);
+			FSlateApplication::Get().UnregisterInputPreProcessor(ASCInputProcessor);
 		}
 
-		Instance.Reset();
+		ASCInputProcessor.Reset();
 	}
 }
 
@@ -38,7 +38,7 @@ void FAutoSizeCommentsInputProcessor::Init()
 
 FAutoSizeCommentsInputProcessor& FAutoSizeCommentsInputProcessor::Get()
 {
-	return *Instance;
+	return *ASCInputProcessor;
 }
 
 bool FAutoSizeCommentsInputProcessor::HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)

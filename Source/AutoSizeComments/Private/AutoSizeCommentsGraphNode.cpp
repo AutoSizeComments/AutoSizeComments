@@ -165,11 +165,7 @@ void SAutoSizeCommentsGraphNode::InitializeCommentBubbleSettings()
 	}
 }
 
-#if ASC_UE_VERSION_OR_LATER(4, 27)
-void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
-#else
-void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter)
-#endif
+void SAutoSizeCommentsGraphNode::MoveTo(const FASCVector2& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 {
 	/** Copied from SGraphNodeComment::MoveTo */
 	if (!bIsMoving)
@@ -181,15 +177,8 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& 
 		}
 	}
 
-	FVector2D PositionDelta = NewPosition - GetPosition();
-
-	FVector2D NewPos = GetPosition() + PositionDelta;
-
-#if ASC_UE_VERSION_OR_LATER(4, 27)
-	SGraphNode::MoveTo(NewPos, NodeFilter, bMarkDirty);
-#else
-	SGraphNode::MoveTo(NewPos, NodeFilter);
-#endif
+	const FASCVector2 PositionDelta = NewPosition - GetPos();
+	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
 
 	FModifierKeysState KeysState = FSlateApplication::Get().GetModifierKeys();
 
@@ -277,7 +266,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 	
 	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
-		const FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+		const FASCVector2 MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
 		if (CanBeSelected(MousePositionInNode))
 		{
 			if (UAutoSizeCommentsSettings::Get().bRefreshContainingNodesOnMove)
@@ -315,15 +304,15 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 {
 	if (bUserIsDragging)
 	{
-		FVector2D Padding(5, 5);
-		FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+		static const FASCVector2 Padding(5, 5);
+		FASCVector2 MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
 		MousePositionInNode.X = FMath::RoundToInt(MousePositionInNode.X);
 		MousePositionInNode.Y = FMath::RoundToInt(MousePositionInNode.Y);
 
 		int32 OldNodeWidth = GraphNode->NodeWidth;
 		int32 OldNodeHeight = GraphNode->NodeHeight;
 
-		FVector2D NewSize = UserSize;
+		FASCVector2 NewSize = UserSize;
 
 		bool bAnchorLeft = false;
 		bool bAnchorTop = false;
@@ -393,7 +382,7 @@ FReply SAutoSizeCommentsGraphNode::OnMouseMove(const FGeometry& MyGeometry, cons
 FReply SAutoSizeCommentsGraphNode::OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent)
 {
 	/** Copied from SGraphNodeComment::OnMouseButtonDoubleClick */
-	FVector2D LocalMouseCoordinates = InMyGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+	FASCVector2 LocalMouseCoordinates = InMyGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 
 	// If user double-clicked in the title bar area
 	if (LocalMouseCoordinates.Y < GetTitleBarHeight())
@@ -600,8 +589,13 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
 		GetOrAddSlot(ENodeZone::TopCenter)
-			.SlotOffset(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetOffset))
-			.SlotSize(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetSize))
+#if ASC_UE_VERSION_OR_LATER(5, 6)
+			.SlotOffset2f(TAttribute<FASCVector2>(CommentBubble.Get(), &SCommentBubble::GetOffset2f))
+			.SlotSize2f(TAttribute<FASCVector2>(CommentBubble.Get(), &SCommentBubble::GetSize2f))
+#else
+			.SlotOffset(TAttribute<FASCVector2>(CommentBubble.Get(), &SCommentBubble::GetOffset))
+			.SlotSize(TAttribute<FASCVector2>(CommentBubble.Get(), &SCommentBubble::GetSize))
+#endif
 			.AllowScaling(TAttribute<bool>(CommentBubble.Get(), &SCommentBubble::IsScalingAllowed))
 			.VAlign(VAlign_Top)
 			[
@@ -741,7 +735,11 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 
 FVector2D SAutoSizeCommentsGraphNode::ComputeDesiredSize(float) const
 {
+#if ASC_UE_VERSION_OR_LATER(5, 6)
+	return FVector2D(UserSize);
+#else
 	return UserSize;
+#endif
 }
 
 bool SAutoSizeCommentsGraphNode::IsNameReadOnly() const
@@ -914,15 +912,19 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 	}
 }
 
-bool SAutoSizeCommentsGraphNode::CanBeSelected(const FVector2D& MousePositionInNode) const
+bool SAutoSizeCommentsGraphNode::CanBeSelected(const FASCVector2& MousePositionInNode) const
 {
-	const FVector2D Size = GetDesiredSize();
+	const FASCVector2 Size = GetDesiredSize();
 	return MousePositionInNode.X >= 0 && MousePositionInNode.X <= Size.X && MousePositionInNode.Y >= 0 && MousePositionInNode.Y <= GetTitleBarHeight();
 }
 
-FVector2D SAutoSizeCommentsGraphNode::GetDesiredSizeForMarquee() const
+#if ASC_UE_VERSION_OR_LATER(5, 6)
+FASCVector2 SAutoSizeCommentsGraphNode::GetDesiredSizeForMarquee2f() const
+#else
+FASCVector2 SAutoSizeCommentsGraphNode::GetDesiredSizeForMarquee() const
+#endif
 {
-	return FVector2D(UserSize.X, GetTitleBarHeight());
+	return FASCVector2(UserSize.X, GetTitleBarHeight());
 }
 
 FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeometry, const FPointerEvent& CursorEvent) const
@@ -960,7 +962,7 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 		}
 	}
 
-	const FVector2D LocalMouseCoordinates = MyGeometry.AbsoluteToLocal(CursorEvent.GetScreenSpacePosition());
+	const FASCVector2 LocalMouseCoordinates = MyGeometry.AbsoluteToLocal(CursorEvent.GetScreenSpacePosition());
 	if (CanBeSelected(LocalMouseCoordinates))
 	{
 		return FCursorReply::Cursor(EMouseCursor::CardinalCross);
@@ -987,7 +989,7 @@ int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 	}
 
 	// Check if mouse is above titlebar for sort depth so comments can be dragged on first click
-	const FVector2D LocalPos = GetCachedGeometry().AbsoluteToLocal(FSlateApplication::Get().GetCursorPos());
+	const FASCVector2 LocalPos = GetCachedGeometry().AbsoluteToLocal(FSlateApplication::Get().GetCursorPos());
 	if (CanBeSelected(LocalPos))
 	{
 		return 0;
@@ -1229,11 +1231,16 @@ void SAutoSizeCommentsGraphNode::UpdateColors(const float InDeltaTime)
 
 FSlateRect SAutoSizeCommentsGraphNode::GetTitleRect() const
 {
-	const FVector2D NodePosition = GetPosition();
-	const FVector2D NodeSize = TitleBar.IsValid() ? TitleBar->GetDesiredSize() : GetDesiredSize();
+	const FASCVector2 NodePosition = GetPos();
+	const FASCVector2 NodeSize = TitleBar.IsValid() ? TitleBar->GetDesiredSize() : GetDesiredSize();
 	const FSlateRect TitleBarOffset(13, 8, -3, 0);
 
 	return FSlateRect(NodePosition.X, NodePosition.Y, NodePosition.X + NodeSize.X, NodePosition.Y + NodeSize.Y) + TitleBarOffset;
+}
+
+FASCVector2 SAutoSizeCommentsGraphNode::GetPos() const
+{
+	return FASCUtils::GetNodePos(this);
 }
 
 FSlateColor SAutoSizeCommentsGraphNode::GetCommentTextColor() const
@@ -1249,8 +1256,8 @@ void SAutoSizeCommentsGraphNode::UpdateRefreshDelay()
 		return;
 	}
 
-	const FVector2D NodePosition = GetPosition();
-	const FVector2D BottomRight = NodePosition + FVector2D(1, 1);
+	const FASCVector2 NodePosition = GetPos();
+	const FASCVector2 BottomRight = NodePosition + FASCVector2(1, 1);
 	if (!OwnerGraphPanelPtr.Pin().Get()->IsRectVisible(NodePosition, BottomRight))
 	{
 		return;
@@ -1535,7 +1542,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit_Impl()
 		const UAutoSizeCommentsSettings& ASCSettings = UAutoSizeCommentsSettings::Get();
 
 		// get bounds and apply padding
-		const FVector2D Padding = ASCSettings.CommentNodePadding;
+		const FVector2D& Padding = ASCSettings.CommentNodePadding;
 
 		const float VerticalPadding = FMath::Max(ASCSettings.MinimumVerticalPadding, Padding.Y); // ensure we can always see the buttons
 
@@ -1548,7 +1555,7 @@ void SAutoSizeCommentsGraphNode::ResizeToFit_Impl()
 		const float TitleBarHeight = GetTitleBarHeight();
 
 		// check if size has changed
-		FVector2D CurrSize = Bounds.GetSize();
+		FASCVector2 CurrSize = Bounds.GetSize();
 		CurrSize.Y += TitleBarHeight;
 
 		if (!UserSize.Equals(CurrSize, .1f))
@@ -1558,11 +1565,11 @@ void SAutoSizeCommentsGraphNode::ResizeToFit_Impl()
 		}
 
 		// check if location has changed
-		FVector2D DesiredPos = Bounds.GetTopLeft();
+		FASCVector2 DesiredPos = Bounds.GetTopLeft();
 		DesiredPos.Y -= TitleBarHeight;
 
 		// move to desired pos
-		if (!GetPosition().Equals(DesiredPos, .1f))
+		if (!GetPos().Equals(DesiredPos, .1f))
 		{
 			GraphNode->NodePosX = DesiredPos.X;
 			GraphNode->NodePosY = DesiredPos.Y;
@@ -1675,7 +1682,7 @@ void SAutoSizeCommentsGraphNode::MoveEmptyCommentBoxes()
 	// if the comment node is empty, move away from other comment nodes
 	if (UnderComment.Num() == 0 && UAutoSizeCommentsSettings::Get().bMoveEmptyCommentBoxes && !bIsSelected && !bIsContained && !IsHeaderComment())
 	{
-		FVector2D TotalMovement(0, 0);
+		FASCVector2 TotalMovement(0, 0);
 
 		bool bAnyCollision = false;
 
@@ -1961,12 +1968,12 @@ TArray<UEdGraphNode_Comment*> SAutoSizeCommentsGraphNode::GetParentComments() co
 
 FSlateRect SAutoSizeCommentsGraphNode::GetCommentBounds(UEdGraphNode_Comment* InCommentNode)
 {
-	FVector2D Point(InCommentNode->NodePosX, InCommentNode->NodePosY);
-	FVector2D Extent(InCommentNode->NodeWidth, InCommentNode->NodeHeight);
+	FASCVector2 Point(InCommentNode->NodePosX, InCommentNode->NodePosY);
+	FASCVector2 Extent(InCommentNode->NodeWidth, InCommentNode->NodeHeight);
 	return FSlateRect::FromPointAndExtent(Point, Extent);
 }
 
-void SAutoSizeCommentsGraphNode::SnapVectorToGrid(FVector2D& Vector)
+void SAutoSizeCommentsGraphNode::SnapVectorToGrid(FASCVector2& Vector)
 {
 	const float SnapSize = SNodePanel::GetSnapGridSize();
 	Vector.X = SnapSize * FMath::RoundToFloat(Vector.X / SnapSize);
@@ -1982,17 +1989,17 @@ void SAutoSizeCommentsGraphNode::SnapBoundsToGrid(FSlateRect& Bounds, int GridMu
 	Bounds.Bottom = SnapSize * FMath::CeilToInt(Bounds.Bottom / SnapSize);
 }
 
-bool SAutoSizeCommentsGraphNode::IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const
+bool SAutoSizeCommentsGraphNode::IsLocalPositionInCorner(const FASCVector2& MousePositionInNode) const
 {
-	FVector2D CornerBounds = GetDesiredSize() - FVector2D(40, 40);
+	FASCVector2 CornerBounds = GetDesiredSize() - FASCVector2(40, 40);
 	return MousePositionInNode.Y >= CornerBounds.Y && MousePositionInNode.X >= CornerBounds.X;
 }
 
 EASCAnchorPoint SAutoSizeCommentsGraphNode::GetAnchorPoint(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const
 {
-	const FVector2D MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+	const FASCVector2 MousePositionInNode = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
 
-	const FVector2D Size = GetDesiredSize();
+	const FASCVector2 Size = GetDesiredSize();
 
 	// check the mouse position is actually in the node
 	if (MousePositionInNode.X < 0 || MousePositionInNode.X > Size.X ||
@@ -2279,10 +2286,10 @@ void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraph
 
 	float TitleBarHeight = GetTitleBarHeight();
 
-	const FVector2D NodeSize(UserSize.X, UserSize.Y - TitleBarHeight);
+	const FASCVector2 NodeSize(UserSize.X, UserSize.Y - TitleBarHeight);
 
 	// Get our geometry
-	FVector2D NodePosition = GetPosition();
+	FASCVector2 NodePosition = GetPos();
 	NodePosition.Y += TitleBarHeight;
 
 	const FSlateRect CommentRect = FSlateRect::FromPointAndExtent(NodePosition, NodeSize).ExtendBy(1);
@@ -2302,14 +2309,13 @@ void SAutoSizeCommentsGraphNode::QueryNodesUnderComment(TArray<TSharedPtr<SGraph
 		}
 
 		// check if the node bounds collides with our bounds
-		const FVector2D SomeNodePosition = SomeNodeWidget->GetPosition();
-		const FVector2D SomeNodeSize = SomeNodeWidget->GetDesiredSize();
+		const FASCVector2 SomeNodePosition = FASCUtils::GetNodePos(&SomeNodeWidget.Get());
+		const FASCVector2 SomeNodeSize = SomeNodeWidget->GetDesiredSize();
 		const FSlateRect NodeGeometryGraphSpace = FSlateRect::FromPointAndExtent(SomeNodePosition, SomeNodeSize);
 
 		bool bIsOverlapping = false;
-		ECommentCollisionMethod CollisionMethod = OverrideCollisionMethod;
 
-		switch (CollisionMethod)
+		switch (OverrideCollisionMethod)
 		{
 			case ECommentCollisionMethod::Point:
 				bIsOverlapping = CommentRect.ContainsPoint(SomeNodePosition);
@@ -2349,10 +2355,10 @@ void SAutoSizeCommentsGraphNode::RandomizeColor()
 	}
 }
 
-void SAutoSizeCommentsGraphNode::AdjustMinSize(FVector2D& InSize)
+void SAutoSizeCommentsGraphNode::AdjustMinSize(FASCVector2& InSize)
 {
 	const float MinY = IsHeaderComment() ? 0 : 80;
-	InSize = FVector2D(FMath::Max(125.f, InSize.X), FMath::Max(GetTitleBarHeight() + MinY, InSize.Y));
+	InSize = FASCVector2(FMath::Max(125.f, InSize.X), FMath::Max(GetTitleBarHeight() + MinY, InSize.Y));
 }
 
 bool SAutoSizeCommentsGraphNode::HasNodeBeenDeleted(UEdGraphNode* Node)
@@ -2430,13 +2436,13 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 		return FSlateRect();
 	}
 
-	FVector2D Pos(Node->NodePosX, Node->NodePosY);
-	FVector2D Size(300, 150);
+	FASCVector2 Pos(Node->NodePosX, Node->NodePosY);
+	FASCVector2 Size(300, 150);
 
 	TSharedPtr<SGraphNode> LocalGraphNode = FASCUtils::GetGraphNode(GetOwnerPanel(), Node);
 	if (LocalGraphNode.IsValid())
 	{
-		Pos = LocalGraphNode->GetPosition();
+		Pos = FASCUtils::GetNodePos(LocalGraphNode.Get());
 		Size = LocalGraphNode->GetDesiredSize();
 
 		if (UAutoSizeCommentsSettings::Get().bUseCommentBubbleBounds && Node->bCommentBubbleVisible)
@@ -2447,7 +2453,7 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 
 				if (LocalCommentBubble.IsValid() && LocalCommentBubble->IsBubbleVisible())
 				{
-					FVector2D CommentBubbleSize = LocalCommentBubble->GetSize();
+					FASCVector2 CommentBubbleSize = LocalCommentBubble->GetDesiredSize();
 					Pos.Y -= CommentBubbleSize.Y;
 					Size.Y += CommentBubbleSize.Y;
 					Size.X = FMath::Max(Size.X, CommentBubbleSize.X);

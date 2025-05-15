@@ -308,7 +308,7 @@ void FAutoSizeCommentsCacheFile::ClearPackageMetaData(UEdGraph* Graph)
 {
 	if (UPackage* AssetPackage = Graph->GetPackage())
 	{
-		if (UMetaData* MetaData = AssetPackage->GetMetaData())
+		if (FASCMetaData* MetaData = FASCUtils::GetPackageMetaData(AssetPackage))
 		{
 			MetaData->RemoveValue(Graph, NAME_ASC_GRAPH_DATA);
 		}
@@ -493,7 +493,7 @@ bool FASCGraphData::LoadFromPackageMetaData(UEdGraph* Graph)
 
 	if (UPackage* AssetPackage = Graph->GetPackage())
 	{
-		if (UMetaData* MetaData = AssetPackage->GetMetaData())
+		if (FASCMetaData* MetaData = FASCUtils::GetPackageMetaData(AssetPackage))
 		{
 			if (const FString* GraphDataAsString = MetaData->FindValue(Graph, NAME_ASC_GRAPH_DATA))
 			{
@@ -517,7 +517,7 @@ void FASCGraphData::SaveToPackageMetaData(UEdGraph* Graph)
 
 	if (UPackage* AssetPackage = Graph->GetPackage())
 	{
-		if (UMetaData* MetaData = AssetPackage->GetMetaData())
+		if (FASCMetaData* MetaData = FASCUtils::GetPackageMetaData(AssetPackage))
 		{
 			CleanupGraph(Graph);
 
@@ -527,7 +527,11 @@ void FASCGraphData::SaveToPackageMetaData(UEdGraph* Graph)
 				MetaData->SetValue(Graph, NAME_ASC_GRAPH_DATA, *GraphDataAsString);
 			}
 
+#if ASC_UE_VERSION_OR_LATER(5, 6)
+			MetaData->RemoveMetaDataOutsidePackage(AssetPackage);
+#else
 			MetaData->RemoveMetaDataOutsidePackage();
+#endif
 		}
 	}
 }

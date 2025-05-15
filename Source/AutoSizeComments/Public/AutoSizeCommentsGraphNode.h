@@ -49,7 +49,7 @@ public:
 	bool bPreviousAltDown = false;
 
 	/** Variables related to resizing the comment box by dragging anchor corner points */
-	FVector2D DragSize;
+	FASCVector2 DragSize;
 	bool bUserIsDragging = false;
 
 	EASCAnchorPoint CachedAnchorPoint = EASCAnchorPoint::None;
@@ -58,11 +58,7 @@ public:
 
 	bool bRequireUpdate = false;
 
-#if ASC_UE_VERSION_OR_LATER(4, 27)
-	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
-#else
-	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter) override;
-#endif
+	virtual void MoveTo(const FASCVector2& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 
 public:
 	// @formatter:off
@@ -98,13 +94,19 @@ public:
 	//~ End SGraphNode Interface
 
 	/** return if the node can be selected, by pointing given location */
-	virtual bool CanBeSelected(const FVector2D& MousePositionInNode) const override;
+	virtual bool CanBeSelected(const FASCVector2& MousePositionInNode) const override;
 
 	/** return size of the title bar */
-	virtual FVector2D GetDesiredSizeForMarquee() const override;
+#if ASC_UE_VERSION_OR_LATER(5, 6)
+	virtual FASCVector2 GetDesiredSizeForMarquee2f() const override;
+#else
+	virtual FASCVector2 GetDesiredSizeForMarquee() const override;
+#endif
 
 	/** return rect of the title bar */
 	virtual FSlateRect GetTitleRect() const override;
+
+	FASCVector2 GetPos() const;
 
 	class UEdGraphNode_Comment* GetCommentNodeObj() const { return CommentNode; }
 
@@ -176,7 +178,7 @@ private:
 
 	bool AreControlsEnabled() const;
 
-	FVector2D UserSize;
+	FASCVector2 UserSize = FASCVector2(200, 200);
 
 	bool bHasSetNodesUnderComment = false;
 
@@ -241,9 +243,9 @@ public:
 	void UpdateExistingCommentNodes();
 	bool AnySelectedNodes();
 	static FSlateRect GetCommentBounds(UEdGraphNode_Comment* InCommentNode);
-	void SnapVectorToGrid(FVector2D& Vector);
+	void SnapVectorToGrid(FASCVector2& Vector);
 	void SnapBoundsToGrid(FSlateRect& Bounds, int GridMultiplier);
-	bool IsLocalPositionInCorner(const FVector2D& MousePositionInNode) const;
+	bool IsLocalPositionInCorner(const FASCVector2& MousePositionInNode) const;
 	TArray<UEdGraphNode*> GetNodesUnderComment() const;
 	bool AddAllNodesUnderComment(const TArray<UObject*>& Nodes, const bool bUpdateExistingComments = true);
 	bool IsValidGraphPanel(TSharedPtr<SGraphPanel> GraphPanel);
@@ -263,7 +265,7 @@ public:
 
 	void RandomizeColor();
 
-	void AdjustMinSize(FVector2D& InSize);
+	void AdjustMinSize(FASCVector2& InSize);
 
 	bool HasNodeBeenDeleted(UEdGraphNode* Node);
 
