@@ -192,8 +192,11 @@ void SAutoSizeCommentsGraphNode::MoveTo(const FASCVector2& NewPosition, FNodeSet
 	}
 	else if (IsSingleSelectedNode())
 	{
-		const TArray<UEdGraphNode*> NodesUnderComment = GetNodesUnderComment();
-		SetNodesRelated(NodesUnderComment);
+		if (UAutoSizeCommentsSettings::Get().bHighlightContainingNodesOnSelection)
+		{
+			const TArray<UEdGraphNode*> NodesUnderComment = GetNodesUnderComment();
+			SetNodesRelated(NodesUnderComment);
+		}
 	}
 
 	if (!(KeysState.IsAltDown() && KeysState.IsControlDown()) && !IsHeaderComment())
@@ -281,13 +284,16 @@ FReply SAutoSizeCommentsGraphNode::OnMouseButtonDown(const FGeometry& MyGeometry
 
 FReply SAutoSizeCommentsGraphNode::OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
+	if (bUserIsDragging)
+	{
+		ResetNodesUnrelated();
+	}
+
 	if ((MouseEvent.GetEffectingButton() == GetResizeKey()) && bUserIsDragging)
 	{
 		bUserIsDragging = false;
 		CachedAnchorPoint = EASCAnchorPoint::None;
 		RefreshNodesInsideComment(UAutoSizeCommentsSettings::Get().ResizeCollisionMethod, UAutoSizeCommentsSettings::Get().bIgnoreKnotNodesWhenResizing);
-
-		ResetNodesUnrelated();
 
 		if (UAutoSizeCommentsSettings::Get().ShouldResizeToFit())
 		{
@@ -2422,6 +2428,11 @@ bool SAutoSizeCommentsGraphNode::CanAddNode(const UObject* Node, const bool bIgn
 void SAutoSizeCommentsGraphNode::OnAltReleased()
 {
 	FAutoSizeCommentGraphHandler::Get().ProcessAltReleased(GetOwnerPanel());
+
+	if (!UAutoSizeCommentsSettings::Get().bHighlightContainingNodesOnSelection)
+	{
+		ResetNodesUnrelated();
+	}
 }
 
 bool SAutoSizeCommentsGraphNode::IsCommentNode(UObject* Object)
