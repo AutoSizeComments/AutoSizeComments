@@ -654,7 +654,8 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		.WrapTextAt(this, &SAutoSizeCommentsGraphNode::GetWrapAt)
 		.MultiLine(true)
 		.ModiferKeyForNewLine(EModifierKey::Shift)
-		.Justification(CommentTextAlignment);
+		.Justification(CommentTextAlignment)
+		.DelayedLeftClickEntersEditMode(false);
 
 	// Create the top horizontal box containing anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> TopHBox = SNew(SHorizontalBox);
