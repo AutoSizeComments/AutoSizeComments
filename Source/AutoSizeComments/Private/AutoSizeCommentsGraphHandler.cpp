@@ -814,6 +814,19 @@ void FAutoSizeCommentGraphHandler::ClearUnrelatedNodes()
 	}
 }
 
+void FAutoSizeCommentGraphHandler::ClearGraphData()
+{
+	for (const auto& Kvp : GraphDatas)
+	{
+		if (Kvp.Key.IsValid())
+		{
+			Kvp.Key->RemoveOnGraphChangedHandler(Kvp.Value.OnGraphChangedHandle);
+		}
+	}
+
+	GraphDatas.Empty();
+}
+
 void FAutoSizeCommentGraphHandler::OnNodeAdded(TWeakObjectPtr<UEdGraphNode> NewNodePtr)
 {
 	if (!NewNodePtr.IsValid())

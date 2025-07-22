@@ -5,6 +5,7 @@
 #include "AutoSizeCommentsCacheFile.h"
 #include "AutoSizeCommentsGraphHandler.h"
 #include "AutoSizeCommentsMacros.h"
+#include "AutoSizeCommentsState.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
@@ -144,6 +145,11 @@ void FASCSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 		{
 			SizeCache.DeleteCache();
 		}
+
+#if 0 // Testing to full clear all cache data 
+		FASCState::Get().CommentToASCMapping.Empty();
+		FAutoSizeCommentGraphHandler::Get().ClearGraphData();
+#endif
 
 		return FReply::Handled();
 	};

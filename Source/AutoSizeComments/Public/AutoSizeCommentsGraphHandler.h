@@ -57,6 +57,8 @@ public:
 
 	void ClearUnrelatedNodes();
 
+	void ClearGraphData();
+
 private:
 	TMap<TWeakObjectPtr<UEdGraph>, FASCGraphHandlerData> GraphDatas;
 
