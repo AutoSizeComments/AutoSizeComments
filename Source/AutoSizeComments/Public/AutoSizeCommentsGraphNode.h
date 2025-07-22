@@ -37,9 +37,6 @@ enum class EASCAnchorPoint : uint8
 class SAutoSizeCommentsGraphNode final : public SGraphNode
 {
 public:
-	/** This delay is to ensure that all nodes exist on the graph and have their bounds properly set */
-	uint8 RefreshNodesDelay = 0;
-
 	uint8 TwoPassResizeDelay = 0;
 
 	bool bIsDragging = false;
@@ -140,6 +137,7 @@ protected:
 
 	void InitializeASCNode(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes);
 	void InitializeNodesUnderComment(const TArray<TWeakObjectPtr<UObject>>& InitialSelectedNodes);
+	void InitialDetectNodes();
 
 	bool AddAllSelectedNodes(bool bExpandComments = false);
 	bool RemoveAllSelectedNodes(bool bExpandComments = false);
@@ -227,9 +225,6 @@ private:
 	FString OldNodeTitle;
 
 public:
-	/** Update the nodes */
-	void UpdateRefreshDelay();
-
 	void RefreshNodesInsideComment(const ECommentCollisionMethod OverrideCollisionMethod, const bool bIgnoreKnots = false, const bool bUpdateExistingComments = true);
 
 	float GetTitleBarHeight() const;
