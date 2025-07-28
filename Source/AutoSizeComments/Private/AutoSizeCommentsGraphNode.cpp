@@ -653,7 +653,10 @@ void SAutoSizeCommentsGraphNode::UpdateGraphNode()
 		.MultiLine(true)
 		.ModiferKeyForNewLine(EModifierKey::Shift)
 		.Justification(CommentTextAlignment)
-		.DelayedLeftClickEntersEditMode(false);
+#if ASC_UE_VERSION_OR_LATER(5, 6)
+		.DelayedLeftClickEntersEditMode(false)
+#endif
+		; // ending semicolon because of macro (is there a nicer way of doing this?)
 
 	// Create the top horizontal box containing anchor points (header comments don't need these)
 	TSharedRef<SHorizontalBox> TopHBox = SNew(SHorizontalBox);
