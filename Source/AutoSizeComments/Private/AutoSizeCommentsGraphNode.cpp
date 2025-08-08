@@ -2071,14 +2071,18 @@ void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue, bool bUpdateStyle)
 	FASCCommentData& CommentData = GetCommentData();
 	CommentData.SetHeader(bNewValue);
 
-	if (bUpdateStyle)
+	if (bIsHeader) // apply header style
 	{
-		if (bIsHeader) // apply header style
+		if (bUpdateStyle)
 		{
 			ApplyHeaderStyle();
-			FASCUtils::ClearCommentNodes(CommentNode);
 		}
-		else // undo header style
+
+		FASCUtils::ClearCommentNodes(CommentNode);
+	}
+	else // undo header style
+	{
+		if (bUpdateStyle)
 		{
 			// only refresh the color if the color matches the header style color 
 			if (CommentNode->CommentColor == UAutoSizeCommentsSettings::Get().HeaderStyle.Color)
@@ -2094,9 +2098,10 @@ void SAutoSizeCommentsGraphNode::SetIsHeader(bool bNewValue, bool bUpdateStyle)
 			}
 
 			CommentNode->FontSize = UAutoSizeCommentsSettings::Get().DefaultFontSize;
-			AdjustMinSize(UserSize);
-			CommentNode->ResizeNode(UserSize);
 		}
+
+		AdjustMinSize(UserSize);
+		CommentNode->ResizeNode(UserSize);
 	}
 
 	UpdateGraphNode();
