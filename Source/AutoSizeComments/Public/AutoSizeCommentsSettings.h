@@ -87,14 +87,37 @@ struct FPresetCommentStyle
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, config, Category = Default)
+	UPROPERTY(EditAnywhere, config, Category = Default, meta=(DisplayPriority=0))
 	FLinearColor Color = FLinearColor::White;
 
-	UPROPERTY(EditAnywhere, config, Category = Default)
+	UPROPERTY(EditAnywhere, config, Category = Default, meta=(DisplayPriority=0))
 	int FontSize = 18;
 
-	UPROPERTY(EditAnywhere, config, Category = Default)
+	/* Show as header comment */
+	UPROPERTY(EditAnywhere, config, Category = Default, meta=(DisplayPriority=0))
 	bool bSetHeader = false;
+};
+
+USTRUCT()
+struct FPresetCommentButtonStyle : public FPresetCommentStyle
+{
+	GENERATED_BODY()
+
+	/* Show this preset as a button in the comment controls */
+	UPROPERTY(EditAnywhere, config, Category = Default, meta=(DisplayPriority=1))
+	bool bShowAsButton = true;
+
+	/* Tooltip to be shown for the preset button */
+	UPROPERTY(EditAnywhere, config, Category = Default, meta=(DisplayPriority=1))
+	FString PresetTooltip;
+
+	/* Apply this preset style if the title begins with this prefix */
+	UPROPERTY(EditAnywhere, config, Category = Default, meta=(DisplayPriority=1))
+	FString PresetPrefix;
+
+	/* Write the prefix to the comment when switching to this preset */ 
+	UPROPERTY(EditAnywhere, config, Category = Default, meta=(DisplayPriority=1))
+	bool bWritePrefix = true;
 };
 
 USTRUCT()
@@ -160,10 +183,10 @@ public:
 
 	/** Preset styles (each style will have its own button on the comment box) */
 	UPROPERTY(EditAnywhere, config, Category = Styles)
-	TArray<FPresetCommentStyle> PresetStyles;
+	TArray<FPresetCommentButtonStyle> PresetStyles;
 
-	/** Preset style that will apply if the title starts with the according prefix */
-	UPROPERTY(EditAnywhere, config, Category = Styles)
+	/** Deprecated, use the "PrefixTag" in PresetStyles */
+	UPROPERTY(EditAnywhere, config, Category = "Styles|Deprecated", meta=(DeprecatedProperty, DeprecationMessage = "Use property `PrefixTag` in PresetStyles instead"))
 	TMap<FString, FPresetCommentStyle> TaggedPresets;
 
 	/** The title bar uses a minimal style when being edited (requires UE5 or later) */

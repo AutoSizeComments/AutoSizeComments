@@ -6,6 +6,7 @@
 #include "AutoSizeCommentsMacros.h"
 #include "SGraphNode.h"
 
+struct FPresetCommentButtonStyle;
 class SHorizontalBox;
 class SButton;
 enum class EASCResizingMode : uint8;
@@ -114,6 +115,7 @@ public:
 
 	void ApplyHeaderStyle();
 	void ApplyPresetStyle(const FPresetCommentStyle& Style);
+	void ApplyPresetButtonStyle(const FPresetCommentButtonStyle& Style);
 
 	void OnTitleChanged(const FString& OldTitle, const FString& NewTitle);
 
@@ -130,7 +132,7 @@ protected:
 	FReply HandleResizeButtonClicked();
 	FReply HandleHeaderButtonClicked();
 	FReply HandleRefreshButtonClicked();
-	FReply HandlePresetButtonClicked(const FPresetCommentStyle Style);
+	FReply HandlePresetButtonClicked(const FPresetCommentButtonStyle Style);
 	FReply HandleAddButtonClicked();
 	FReply HandleSubtractButtonClicked();
 	FReply HandleClearButtonClicked();

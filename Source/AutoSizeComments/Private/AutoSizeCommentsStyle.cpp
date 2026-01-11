@@ -74,6 +74,12 @@ void FASCStyle::Initialize()
 			.SetEditableTextBoxStyle(GraphCommentBlockTitleEditableText);
 
 		StyleSet->Set("ASC.CommentTitleTextBoxStyle", InlineEditableTextBoxStyle);
+
+		const FSlateRoundedBoxBrush RoundedBoxBrush(FLinearColor::White, 6.f);
+		StyleSet->Set("ASC.PresetButtonStyle", FButtonStyle()
+			.SetNormal(RoundedBoxBrush)
+			.SetHovered(RoundedBoxBrush)
+			.SetPressed(RoundedBoxBrush));
 	}
 #endif
 
