@@ -9,6 +9,7 @@
 #include "AutoSizeCommentsSettings.h"
 #include "AutoSizeCommentsState.h"
 #include "AutoSizeCommentsStyle.h"
+#include "AutoSizeCommentsSubsystem.h"
 #include "AutoSizeCommentsUtils.h"
 #include "EdGraphNode_Comment.h"
 #include "Editor.h"
@@ -511,6 +512,11 @@ void SAutoSizeCommentsGraphNode::Tick(const FGeometry& AllottedGeometry, const d
 	if (CurrentWidth != CachedWidth)
 	{
 		CachedWidth = CurrentWidth;
+	}
+
+	if (UAutoSizeCommentsSubsystem::Get().IsDirty(CommentNode))
+	{
+		UpdateCache();
 	}
 
 	// Otherwise update when cached values have changed
