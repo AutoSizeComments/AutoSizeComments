@@ -1009,29 +1009,7 @@ FCursorReply SAutoSizeCommentsGraphNode::OnCursorQuery(const FGeometry& MyGeomet
 
 int32 SAutoSizeCommentsGraphNode::GetSortDepth() const
 {
-	if (!CommentNode)
-	{
-		return -1;
-	}
-
-	if (IsHeaderComment())
-	{
-		return 0;
-	}
-
-	if (IsSelectedExclusively())
-	{
-		return 0;
-	}
-
-	// Check if mouse is above titlebar for sort depth so comments can be dragged on first click
-	const FASCVector2 LocalPos = GetCachedGeometry().AbsoluteToLocal(FSlateApplication::Get().GetCursorPos());
-	if (CanBeSelected(LocalPos))
-	{
-		return 0;
-	}
-
-	return CommentNode->CommentDepth;
+	return CommentNode ? CommentNode->CommentDepth : -1;
 }
 
 FReply SAutoSizeCommentsGraphNode::HandleRandomizeColorButtonClicked()
