@@ -26,6 +26,17 @@ void FAutoSizeCommentsModule::StartupModule()
 #endif
 }
 
+bool FAutoSizeCommentsModule::IsBlueprintAssistEnabled()
+{
+	static bool bIsBlueprintAssistEnabled = false;
+	UE_CALL_ONCE([&]()
+	{
+		bIsBlueprintAssistEnabled = FModuleManager::Get().IsModuleLoaded("BlueprintAssist");
+	});
+
+	return bIsBlueprintAssistEnabled;
+}
+
 void FAutoSizeCommentsModule::OnPostEngineInit()
 {
 	UE_LOG(LogAutoSizeComments, Log, TEXT("Startup AutoSizeComments"));

@@ -31,6 +31,8 @@ public:
 		return FModuleManager::Get().IsModuleLoaded("AutoSizeComments");
 	}
 
+	static bool IsBlueprintAssistEnabled();
+
 private:
 	TSharedPtr<FAutoSizeCommentsGraphPanelNodeFactory> ASCNodeFactory;
 

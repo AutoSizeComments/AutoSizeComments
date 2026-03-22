@@ -2512,7 +2512,17 @@ FSlateRect SAutoSizeCommentsGraphNode::GetNodeBounds(UEdGraphNode* Node)
 	if (LocalGraphNode.IsValid())
 	{
 		Pos = FASCUtils::GetNodePos(LocalGraphNode.Get());
-		Size = LocalGraphNode->GetDesiredSize();
+
+		// BlueprintAssist will write into NodeWidth and NodeHeight for non-resizable nodes
+		if (Node->bCanResizeNode || (UAutoSizeCommentsSettings::Get().bUseNodeSizeForBounds && FAutoSizeCommentsModule::IsBlueprintAssistEnabled() && Node->NodeWidth != 0 && Node->NodeHeight != 0))
+		{
+			Size.X = Node->NodeWidth;
+			Size.Y = Node->NodeHeight;
+		}
+		else
+		{
+			Size = LocalGraphNode->GetDesiredSize();
+		}
 
 		if (UAutoSizeCommentsSettings::Get().bUseCommentBubbleBounds && Node->bCommentBubbleVisible)
 		{

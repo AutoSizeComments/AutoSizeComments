@@ -249,6 +249,10 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	TEnumAsByte<ETextJustify::Type> CommentTextAlignment;
 
+	/** Use the node size for bounds (this will be ignored if BlueprintAssist is not installed) */
+	UPROPERTY(EditAnywhere, config, Category = Misc)
+	bool bUseNodeSizeForBounds;
+
 	/** If enabled, add any containing node's comment bubble to the comment bounds */
 	UPROPERTY(EditAnywhere, config, Category = Misc)
 	bool bUseCommentBubbleBounds;
