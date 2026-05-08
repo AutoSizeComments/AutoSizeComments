@@ -890,7 +890,7 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 	// if this node is selected then we have been copy pasted, don't add all selected nodes
 	if (InitialSelectedNodes.Contains(CommentNode))
 	{
-		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &SAutoSizeCommentsGraphNode::InitialDetectNodes));
+		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateSP(this, &SAutoSizeCommentsGraphNode::InitialDetectNodes));
 		return;
 	}
 
@@ -916,14 +916,14 @@ void SAutoSizeCommentsGraphNode::InitializeNodesUnderComment(const TArray<TWeakO
 		}
 
 		AddAllNodesUnderComment(SelectedNodes.Array());
-		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &SAutoSizeCommentsGraphNode::ResizeToFit));
+		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateSP(this, &SAutoSizeCommentsGraphNode::ResizeToFit));
 		return;
 	}
 
 	if (UAutoSizeCommentsSettings::Get().bDetectNodesContainedForNewComments)
 	{
 		// Refresh the nodes under the comment
-		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateRaw(this, &SAutoSizeCommentsGraphNode::InitialDetectNodes));
+		GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateSP(this, &SAutoSizeCommentsGraphNode::InitialDetectNodes));
 	}
 }
 

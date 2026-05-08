@@ -321,21 +321,18 @@ void FAutoSizeCommentGraphHandler::RegisterActiveGraphPanel(TSharedPtr<SGraphPan
 
 void FAutoSizeCommentGraphHandler::RequestGraphVisualRefresh(TSharedPtr<SGraphPanel> GraphPanel)
 {
-	if (bPendingGraphVisualRequest)
+	if (FASCPendingGraphPurge* Purge = PendingPurge.Find(GraphPanel))
 	{
-		return;
+		Purge->Timer = 2;
 	}
-
-	bPendingGraphVisualRequest = true;
-
-	const auto Delegate = FTimerDelegate::CreateRaw(this, &FAutoSizeCommentGraphHandler::RefreshGraphVisualRefresh, TWeakPtr<SGraphPanel>(GraphPanel));
-	GEditor->GetTimerManager()->SetTimerForNextTick(Delegate);
+	else
+	{
+		PendingPurge.Add(GraphPanel, FASCPendingGraphPurge());
+	}
 }
 
 void FAutoSizeCommentGraphHandler::RefreshGraphVisualRefresh(TWeakPtr<SGraphPanel> GraphPanel)
 {
-	bPendingGraphVisualRequest = false;
-
 	if (!GraphPanel.IsValid())
 	{
 		return;
@@ -696,6 +693,8 @@ bool FAutoSizeCommentGraphHandler::Tick(float DeltaTime)
 {
 	UpdateNodeUnrelatedState();
 
+	UpdateGraphPurgeTimer();
+
 	return true;
 }
 
@@ -795,6 +794,25 @@ void FAutoSizeCommentGraphHandler::UpdateNodeUnrelatedState()
 						Node->SetNodeUnrelated(false);
 					}
 				}
+			}
+		}
+	}
+}
+
+void FAutoSizeCommentGraphHandler::UpdateGraphPurgeTimer()
+{
+	for (auto Iter = PendingPurge.CreateIterator(); Iter; ++Iter)
+	{
+		if (!Iter.Key().IsValid())
+		{
+			Iter.RemoveCurrent();
+		}
+		else
+		{
+			if (--Iter.Value().Timer == 0)
+			{
+				RefreshGraphVisualRefresh(Iter.Key());
+				Iter.RemoveCurrent();
 			}
 		}
 	}
