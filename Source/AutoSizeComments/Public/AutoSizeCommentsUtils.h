@@ -29,6 +29,7 @@ struct FASCUtils
 	static TSharedPtr<SGraphPin> GetGraphPin(TSharedPtr<SGraphPanel> GraphPanel, UEdGraphPin* Pin);
 	static TSharedPtr<SGraphNode> GetGraphNode(TSharedPtr<SGraphPanel> GraphPanel, UEdGraphNode* Node);
 
+	static TSharedPtr<SGraphNode> GetHoveredGraphNode(TSharedPtr<SGraphPanel> GraphPanel);
 	static TSharedPtr<SGraphPin> GetHoveredGraphPin(TSharedPtr<SGraphPanel> GraphPanel);
 
 	static TArray<UEdGraphNode_Comment*> GetSelectedComments(TSharedPtr<SGraphPanel> GraphPanel);
@@ -56,4 +57,7 @@ struct FASCUtils
 	static FASCMetaData* GetPackageMetaData(UPackage* Package);
 
 	static FASCVector2 GetNodePos(const SGraphNode* Node);
+	static FSlateRect GetNodeBounds(TSharedPtr<SGraphNode> Node);
+
+	static FVector2D ScreenSpaceToPanelCoord(TSharedPtr<SGraphPanel> GraphPanel, const FVector2D& ScreenSpace);
 };

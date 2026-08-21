@@ -4,6 +4,7 @@
 #include "AutoSizeCommentsGraphNode.h"
 #include "EdGraphNode_Comment.h"
 #include "SGraphPanel.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
 TArray<UEdGraphNode_Comment*> FASCUtils::GetContainingCommentNodes(const TArray<UEdGraphNode_Comment*>& Comments, UEdGraphNode* Node)
@@ -148,7 +149,7 @@ TSharedPtr<SGraphNode> FASCUtils::GetGraphNode(TSharedPtr<SGraphPanel> GraphPane
 	return nullptr;
 }
 
-TSharedPtr<SGraphPin> FASCUtils::GetHoveredGraphPin(TSharedPtr<SGraphPanel> GraphPanel)
+TSharedPtr<SGraphNode> FASCUtils::GetHoveredGraphNode(TSharedPtr<SGraphPanel> GraphPanel)
 {
 	if (!GraphPanel.IsValid())
 	{
@@ -161,25 +162,76 @@ TSharedPtr<SGraphPin> FASCUtils::GetHoveredGraphPin(TSharedPtr<SGraphPanel> Grap
 		return nullptr;
 	}
 
-	const bool bIsMaterialGraph = Graph->GetClass()->GetFName() == "MaterialGraph";
+	const FVector2D CursorInPanel = ScreenSpaceToPanelCoord(GraphPanel, FSlateApplication::Get().GetCursorPos());
 
-	// check if graph pin "IsHovered" function
+	TArray<UEdGraphNode*> CommentNodes;
+	TArray<UEdGraphNode*> RegularNodes;
 	for (UEdGraphNode* Node : Graph->Nodes)
 	{
-		for (UEdGraphPin* Pin : Node->Pins)
+		if (!Node)
 		{
-			if (!Pin->bHidden)
+			continue;
+		}
+
+		if (Node->IsA(UEdGraphNode_Comment::StaticClass()))
+		{
+			CommentNodes.Add(Node);
+		}
+		else
+		{
+			RegularNodes.Add(Node);
+		}
+	}
+
+	const auto NodeArrays = { &RegularNodes, &CommentNodes };
+	for (const auto& NodeArray : NodeArrays )
+	{
+		for (UEdGraphNode* Node : *NodeArray )
+		{
+			TSharedPtr<SGraphNode> GraphNode = GetGraphNode(GraphPanel, Node);
+			if (!GraphNode)
 			{
-				TSharedPtr<SGraphPin> GraphPin = GetGraphPin(GraphPanel, Pin);
-				if (GraphPin.IsValid())
-				{
-					const bool bIsHovered = bIsMaterialGraph ? GraphPin->IsDirectlyHovered() : GraphPin->IsHovered();
-					if (bIsHovered)
-					{
-						return GraphPin;
-					}
-				}
+				continue;
 			}
+
+			const FSlateRect Bounds = GetNodeBounds(GraphNode);
+			if (Bounds.ContainsPoint(CursorInPanel))
+			{
+				return GraphNode;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+TSharedPtr<SGraphPin> FASCUtils::GetHoveredGraphPin(TSharedPtr<SGraphPanel> GraphPanel)
+{
+	TSharedPtr<SGraphNode> HoveredNode = GetHoveredGraphNode(GraphPanel);
+	if (!HoveredNode.IsValid())
+	{
+		return nullptr;
+	}
+
+	TSet<TSharedRef<SWidget>> HoveredNodePins;
+	HoveredNode->GetPins(HoveredNodePins);
+
+	FSlateApplication& SlateApp = FSlateApplication::Get();
+	FWidgetPath WidgetPath = SlateApp.LocateWindowUnderMouse(SlateApp.GetCursorPos(), SlateApp.GetInteractiveTopLevelWindows());
+
+	for (int i = WidgetPath.Widgets.Num() - 1; i >= 0; --i)
+	{
+		const TSharedRef<SWidget>& Widget = WidgetPath.Widgets[i].Widget;
+
+		// don't bother checking past the graph panel
+		if (Widget == GraphPanel)
+		{
+			return nullptr;
+		}
+
+		if (HoveredNodePins.Contains(Widget))
+		{
+			return StaticCastSharedRef<SGraphPin>(Widget);
 		}
 	}
 
@@ -506,4 +558,19 @@ FASCVector2 FASCUtils::GetNodePos(const SGraphNode* Node)
 #else
 	return Node->GetPosition();
 #endif
+}
+
+FSlateRect FASCUtils::GetNodeBounds(TSharedPtr<SGraphNode> Node)
+{
+	if (Node)
+	{
+		return FSlateRect::FromPointAndExtent(GetNodePos(Node.Get()), Node->GetDesiredSize());
+	}
+
+	return FSlateRect();
+}
+
+FVector2D FASCUtils::ScreenSpaceToPanelCoord(TSharedPtr<SGraphPanel> GraphPanel, const FVector2D& ScreenSpace)
+{
+	return GraphPanel->PanelCoordToGraphCoord(GraphPanel->GetCachedGeometry().AbsoluteToLocal(ScreenSpace));
 }
